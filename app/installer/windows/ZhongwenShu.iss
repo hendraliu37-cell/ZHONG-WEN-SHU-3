@@ -1,5 +1,5 @@
 #define MyAppName "Zhongwen Shu"
-#define MyAppVersion "1.0.2"
+#define MyAppVersion "1.0.3"
 #define MyAppPublisher "Zhongwen Shu"
 #define MyAppExeName "zhongwen_shu.exe"
 #define SourceDir "..\..\build\windows\x64\runner\Release"

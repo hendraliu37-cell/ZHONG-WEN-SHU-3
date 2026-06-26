@@ -4,6 +4,7 @@ import '../models/vocab.dart';
 import '../state/app_controller.dart';
 import '../theme/tokens.dart';
 import '../theme/zws_theme.dart';
+import '../utils/test_exit_guard.dart';
 import '../widgets/common.dart';
 import '../widgets/ico.dart';
 
@@ -28,7 +29,7 @@ class ReviewOverlay extends StatelessWidget {
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) c.closeSub();
+        if (!didPop) closeSubWithTestGuard(context, c);
       },
       child: Container(
         color: t.bg,
@@ -36,7 +37,7 @@ class ReviewOverlay extends StatelessWidget {
           children: [
             OverlayBar(
               desktop: desktop,
-              onBack: c.closeSub,
+              onBack: () => closeSubWithTestGuard(context, c),
               title: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [

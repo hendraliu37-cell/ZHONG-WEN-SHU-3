@@ -104,6 +104,127 @@ class TranslateHistoryItem {
   };
 }
 
+class TestHistoryItem {
+  final String id;
+  final String mode; // 'mc' | 'self' | 'spell'
+  final String title;
+  final String? deckId;
+  final String direction;
+  final List<int> cardIds;
+  final int index;
+  final int score;
+  final String? picked;
+  final String spellInput;
+  final bool spellChecked;
+  final bool spellCorrect;
+  final bool flipped;
+  final bool completed;
+  final DateTime startedAt;
+  final DateTime updatedAt;
+
+  const TestHistoryItem({
+    required this.id,
+    required this.mode,
+    required this.title,
+    required this.direction,
+    required this.cardIds,
+    required this.index,
+    required this.score,
+    this.deckId,
+    this.picked,
+    this.spellInput = '',
+    this.spellChecked = false,
+    this.spellCorrect = false,
+    this.flipped = false,
+    this.completed = false,
+    required this.startedAt,
+    required this.updatedAt,
+  });
+
+  int get total => cardIds.length;
+  int get shownIndex => total == 0 ? 0 : index.clamp(0, total);
+  int get pct => total == 0 ? 0 : (score * 100 / total).round();
+
+  TestHistoryItem copyWith({
+    String? mode,
+    String? title,
+    String? deckId,
+    String? direction,
+    List<int>? cardIds,
+    int? index,
+    int? score,
+    Object? picked = _sentinel,
+    String? spellInput,
+    bool? spellChecked,
+    bool? spellCorrect,
+    bool? flipped,
+    bool? completed,
+    DateTime? startedAt,
+    DateTime? updatedAt,
+  }) => TestHistoryItem(
+    id: id,
+    mode: mode ?? this.mode,
+    title: title ?? this.title,
+    deckId: deckId ?? this.deckId,
+    direction: direction ?? this.direction,
+    cardIds: cardIds ?? this.cardIds,
+    index: index ?? this.index,
+    score: score ?? this.score,
+    picked: identical(picked, _sentinel) ? this.picked : picked as String?,
+    spellInput: spellInput ?? this.spellInput,
+    spellChecked: spellChecked ?? this.spellChecked,
+    spellCorrect: spellCorrect ?? this.spellCorrect,
+    flipped: flipped ?? this.flipped,
+    completed: completed ?? this.completed,
+    startedAt: startedAt ?? this.startedAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+
+  factory TestHistoryItem.fromJson(Map<String, dynamic> j) => TestHistoryItem(
+    id: (j['id'] as String?) ?? '',
+    mode: (j['mode'] as String?) ?? 'mc',
+    title: (j['title'] as String?) ?? 'Tes',
+    deckId: j['deckId'] as String?,
+    direction: (j['direction'] as String?) ?? 'zh2id',
+    cardIds: ((j['cardIds'] as List?) ?? [])
+        .map((e) => (e as num).toInt())
+        .toList(),
+    index: (j['index'] as num?)?.toInt() ?? 0,
+    score: (j['score'] as num?)?.toInt() ?? 0,
+    picked: j['picked'] as String?,
+    spellInput: (j['spellInput'] as String?) ?? '',
+    spellChecked: (j['spellChecked'] as bool?) ?? false,
+    spellCorrect: (j['spellCorrect'] as bool?) ?? false,
+    flipped: (j['flipped'] as bool?) ?? false,
+    completed: (j['completed'] as bool?) ?? false,
+    startedAt:
+        DateTime.tryParse((j['startedAt'] as String?) ?? '') ?? DateTime.now(),
+    updatedAt:
+        DateTime.tryParse((j['updatedAt'] as String?) ?? '') ?? DateTime.now(),
+  );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'mode': mode,
+    'title': title,
+    if (deckId != null) 'deckId': deckId,
+    'direction': direction,
+    'cardIds': cardIds,
+    'index': index,
+    'score': score,
+    if (picked != null) 'picked': picked,
+    'spellInput': spellInput,
+    'spellChecked': spellChecked,
+    'spellCorrect': spellCorrect,
+    'flipped': flipped,
+    'completed': completed,
+    'startedAt': startedAt.toIso8601String(),
+    'updatedAt': updatedAt.toIso8601String(),
+  };
+}
+
+const Object _sentinel = Object();
+
 /// A downloadable pack from the asset manifest.
 class PackInfo {
   final String id;
@@ -232,6 +353,9 @@ class AppController extends ChangeNotifier {
   int qCount = 20;
   List<int> baseCards = [];
   List<int> sessionCards = [];
+  List<TestHistoryItem> testHistory = [];
+  static const int _maxTestHistory = 80;
+  String? _activeTestHistoryId;
   String? openDeckId;
   bool adding = false;
   String deckIoMsg = '';
@@ -422,11 +546,30 @@ class AppController extends ChangeNotifier {
       avatarUrl = p.avatarUrl;
       lastActiveDate = p.lastActiveDate;
       onboarded = true;
+      await _mergeCloudTestHistory();
       _registerAttendanceToday();
       refreshLeaderboard();
       refreshMyRooms();
     }
     notifyListeners();
+  }
+
+  Future<void> _mergeCloudTestHistory() async {
+    final rows = await auth.fetchTestHistory();
+    if (rows.isEmpty) return;
+    final byId = {for (final h in testHistory) h.id: h};
+    for (final row in rows) {
+      final incoming = TestHistoryItem.fromJson(row);
+      if (incoming.id.isEmpty || incoming.cardIds.isEmpty) continue;
+      final old = byId[incoming.id];
+      if (old == null || incoming.updatedAt.isAfter(old.updatedAt)) {
+        byId[incoming.id] = incoming;
+      }
+    }
+    testHistory = byId.values.toList()
+      ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    testHistory = testHistory.take(_maxTestHistory).toList();
+    await _save();
   }
 
   /// The signed-in user's rank on the global leaderboard (0 = not ranked yet).
@@ -653,6 +796,12 @@ class AppController extends ChangeNotifier {
         .where((h) => h.source.trim().isNotEmpty && h.translation.isNotEmpty)
         .take(_maxTranslateHistory)
         .toList();
+    testHistory = (j['testHistory'] as List? ?? [])
+        .whereType<Map>()
+        .map((e) => TestHistoryItem.fromJson(Map<String, dynamic>.from(e)))
+        .where((h) => h.id.isNotEmpty && h.cardIds.isNotEmpty)
+        .take(_maxTestHistory)
+        .toList();
     // safety: ensure every card has an srs row
     for (final id in cards.keys) {
       srs.putIfAbsent(id, () => SrsState());
@@ -684,10 +833,17 @@ class AppController extends ChangeNotifier {
           .take(_maxTranslateHistory)
           .map((h) => h.toJson())
           .toList(),
+      'testHistory': testHistory
+          .take(_maxTestHistory)
+          .map((h) => h.toJson())
+          .toList(),
     });
     // Best-effort sync of progress to the cloud profile when signed in.
     if (auth.signedIn) {
       auth.pushStats(xp: xp, streak: streak, lastActiveDate: lastActiveDate);
+      unawaited(
+        auth.syncTestHistory(testHistory.map((h) => h.toJson()).toList()),
+      );
     }
   }
 
@@ -1118,8 +1274,12 @@ class AppController extends ChangeNotifier {
   // DECKS / AUTHORING
   // ===========================================================================
 
-  Deck? get openDeck =>
-      openDeckId == null ? null : decks.firstWhere((d) => d.id == openDeckId);
+  Deck? get openDeck {
+    final id = openDeckId;
+    if (id == null) return null;
+    final matches = decks.where((d) => d.id == id).toList();
+    return matches.isEmpty ? null : matches.first;
+  }
 
   void openDeckById(String id) {
     openDeckId = id;
@@ -1246,6 +1406,143 @@ class AppController extends ChangeNotifier {
     xp += correct ? xpCorrect : xpWrong;
   }
 
+  bool get hasActiveTestInProgress {
+    if (_activeTestHistoryId == null) return false;
+    if (sub != 'quiz' && sub != 'review' && sub != 'spell') return false;
+    final h = _activeTestHistory;
+    if (h == null || h.completed) return false;
+    if (h.mode == 'self') {
+      return reviewMode == 'self' && reviewIdx < sessionCards.length;
+    }
+    if (h.mode == 'mc') return quizIdx < quizTotal;
+    if (h.mode == 'spell') return spellIdx < sessionCards.length;
+    return false;
+  }
+
+  TestHistoryItem? get _activeTestHistory {
+    final id = _activeTestHistoryId;
+    if (id == null) return null;
+    for (final h in testHistory) {
+      if (h.id == id) return h;
+    }
+    return null;
+  }
+
+  String get _testTitle {
+    final d = openDeck;
+    if (d != null) return d.name;
+    if (_deckCtx != null) {
+      final matches = decks.where((deck) => deck.id == _deckCtx).toList();
+      if (matches.isNotEmpty) return matches.first.name;
+    }
+    return 'Tes ${sessionCards.length} kartu';
+  }
+
+  void _upsertTestHistory(TestHistoryItem item) {
+    testHistory = [
+      item,
+      ...testHistory.where((h) => h.id != item.id),
+    ].take(_maxTestHistory).toList();
+  }
+
+  void _beginTestHistory(String mode) {
+    final now = DateTime.now();
+    final id = 'test_${now.microsecondsSinceEpoch}_${rng.nextInt(9999)}';
+    _activeTestHistoryId = id;
+    _upsertTestHistory(
+      TestHistoryItem(
+        id: id,
+        mode: mode,
+        title: _testTitle,
+        deckId: openDeckId ?? _deckCtx,
+        direction: testDirection,
+        cardIds: List<int>.of(sessionCards),
+        index: 0,
+        score: 0,
+        startedAt: now,
+        updatedAt: now,
+      ),
+    );
+    _save();
+  }
+
+  void _updateActiveTestHistory({bool completed = false}) {
+    final h = _activeTestHistory;
+    if (h == null) return;
+    final mode = h.mode;
+    final index = switch (mode) {
+      'self' => reviewIdx,
+      'spell' => spellIdx,
+      _ => quizIdx,
+    };
+    final score = switch (mode) {
+      'self' => reviewScore,
+      'spell' => spellScore,
+      _ => quizScore,
+    };
+    final done = completed || index >= sessionCards.length;
+    _upsertTestHistory(
+      h.copyWith(
+        direction: testDirection,
+        cardIds: List<int>.of(sessionCards),
+        index: index,
+        score: score,
+        picked: mode == 'mc' ? quizPicked : null,
+        spellInput: spellInput,
+        spellChecked: spellChecked,
+        spellCorrect: spellCorrect,
+        flipped: flipped,
+        completed: done,
+        updatedAt: DateTime.now(),
+      ),
+    );
+    if (done) _activeTestHistoryId = null;
+    _save();
+  }
+
+  void abandonActiveTestToHistory() {
+    _updateActiveTestHistory();
+    _activeTestHistoryId = null;
+  }
+
+  void resumeTestHistory(TestHistoryItem item) {
+    final ids = item.cardIds.where((id) => cards.containsKey(id)).toList();
+    if (ids.isEmpty) return;
+    _activeTestHistoryId = item.id;
+    sessionCards = ids;
+    baseCards = ids;
+    testDirection = item.direction;
+    openDeckId = item.deckId;
+    _deckCtx = item.deckId;
+    qCount = ids.length;
+    switch (item.mode) {
+      case 'self':
+        reviewMode = 'self';
+        reviewIdx = item.index.clamp(0, ids.length);
+        reviewScore = item.score;
+        flipped = item.flipped;
+        sub = 'review';
+        break;
+      case 'spell':
+        spellIdx = item.index.clamp(0, ids.length);
+        spellScore = item.score;
+        spellInput = item.spellInput;
+        spellChecked = item.spellChecked;
+        spellCorrect = item.spellCorrect;
+        sub = 'spell';
+        break;
+      case 'mc':
+      default:
+        _quiz = _buildQuiz(sessionCards);
+        quizIdx = item.index.clamp(0, ids.length);
+        quizScore = item.score;
+        quizPicked = item.picked;
+        sub = 'quiz';
+        break;
+    }
+    notifyListeners();
+  }
+
   void startReview(List<int> ids, String mode) {
     sessionCards = ids.isEmpty ? makeSession(baseCards, qCount) : List.of(ids);
     reviewMode = mode;
@@ -1253,6 +1550,7 @@ class AppController extends ChangeNotifier {
     reviewIdx = 0;
     flipped = false;
     reviewScore = 0;
+    if (mode == 'self') _beginTestHistory('self');
     notifyListeners();
   }
 
@@ -1284,7 +1582,10 @@ class AppController extends ChangeNotifier {
     if (reviewIdx >= sessionCards.length) {
       if (reviewMode == 'self') {
         lastTestPct = ((reviewScore / sessionCards.length) * 100).round();
+        _updateActiveTestHistory(completed: true);
       }
+    } else if (reviewMode == 'self') {
+      _updateActiveTestHistory();
     }
     _save();
     notifyListeners();
@@ -1315,6 +1616,7 @@ class AppController extends ChangeNotifier {
     quizIdx = 0;
     quizScore = 0;
     quizPicked = null;
+    _beginTestHistory('mc');
     notifyListeners();
   }
 
@@ -1328,6 +1630,7 @@ class AppController extends ChangeNotifier {
     spellChecked = false;
     spellCorrect = false;
     spellScore = 0;
+    _beginTestHistory('spell');
     notifyListeners();
   }
 
@@ -1343,6 +1646,7 @@ class AppController extends ChangeNotifier {
     if (correct) quizScore++;
     _recordPractice(q.cardId, correct, xpCorrect: 0, xpWrong: 0);
     quizPicked = opt;
+    _updateActiveTestHistory();
     notifyListeners();
   }
 
@@ -1352,7 +1656,10 @@ class AppController extends ChangeNotifier {
     if (quizIdx >= quizTotal) {
       lastTestPct = ((quizScore / quizTotal) * 100).round();
       xp += quizScore;
+      _updateActiveTestHistory(completed: true);
       _save();
+    } else {
+      _updateActiveTestHistory();
     }
     notifyListeners();
   }
@@ -1362,6 +1669,7 @@ class AppController extends ChangeNotifier {
     quizIdx = 0;
     quizScore = 0;
     quizPicked = null;
+    _beginTestHistory('mc');
     notifyListeners();
   }
 
@@ -1371,6 +1679,7 @@ class AppController extends ChangeNotifier {
 
   void setSpellInput(String v) {
     spellInput = v;
+    _updateActiveTestHistory();
   }
 
   void checkSpell() {
@@ -1384,6 +1693,7 @@ class AppController extends ChangeNotifier {
     spellChecked = true;
     if (spellCorrect) spellScore++;
     _recordPractice(spellCardId, spellCorrect, xpCorrect: 0, xpWrong: 0);
+    _updateActiveTestHistory();
     notifyListeners();
   }
 
@@ -1394,7 +1704,10 @@ class AppController extends ChangeNotifier {
     spellCorrect = false;
     if (spellIdx >= sessionCards.length) {
       lastTestPct = ((spellScore / sessionCards.length) * 100).round();
+      _updateActiveTestHistory(completed: true);
       _save();
+    } else {
+      _updateActiveTestHistory();
     }
     notifyListeners();
   }
@@ -1405,6 +1718,7 @@ class AppController extends ChangeNotifier {
     spellChecked = false;
     spellCorrect = false;
     spellScore = 0;
+    _beginTestHistory('spell');
     notifyListeners();
   }
 

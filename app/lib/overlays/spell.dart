@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../state/app_controller.dart';
 import '../theme/tokens.dart';
 import '../theme/zws_theme.dart';
+import '../utils/test_exit_guard.dart';
 import '../widgets/common.dart';
 import '../widgets/ico.dart';
 
@@ -28,7 +29,7 @@ class SpellOverlay extends StatelessWidget {
         children: [
           OverlayBar(
             desktop: desktop,
-            onBack: c.closeSub,
+            onBack: () => closeSubWithTestGuard(context, c),
             title: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -74,6 +75,12 @@ class _ActiveState extends State<_Active> {
   void dispose() {
     _tec.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _tec.text = widget.controller.spellInput;
   }
 
   void _check() {
@@ -141,6 +148,7 @@ class _ActiveState extends State<_Active> {
                 controller: _tec,
                 enabled: !checked,
                 textAlign: TextAlign.center,
+                onChanged: c.setSpellInput,
                 onSubmitted: (_) => checked ? c.nextSpell() : _check(),
                 style: ZwsFonts.mono(
                   size: 17,

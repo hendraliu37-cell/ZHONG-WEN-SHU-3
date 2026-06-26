@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'state/app_controller.dart';
 import 'theme/tokens.dart';
 import 'theme/zws_theme.dart';
+import 'utils/test_exit_guard.dart';
 import 'widgets/common.dart';
 import 'widgets/ico.dart';
 
@@ -39,7 +40,7 @@ class AppShell extends StatelessWidget {
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) {
           if (controller.sub != null) {
-            controller.closeSub();
+            closeSubWithTestGuard(context, controller);
           } else if (controller.tab != 'beranda') {
             controller.go('beranda');
           }
@@ -48,29 +49,32 @@ class AppShell extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final desktop = constraints.maxWidth >= 720;
-        return Stack(
-          children: [
-            // Base layout — Positioned.fill gives it tight (bounded) height so
-            // the inner Column's Expanded is valid.
-            Positioned.fill(
-              child: desktop
-                  ? Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _DesktopRail(controller: controller),
-                        Expanded(
+          return Stack(
+            children: [
+              // Base layout — Positioned.fill gives it tight (bounded) height so
+              // the inner Column's Expanded is valid.
+              Positioned.fill(
+                child: desktop
+                    ? Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _DesktopRail(controller: controller),
+                          Expanded(
                             child: _MainColumn(
-                                controller: controller, desktop: true)),
-                      ],
-                    )
-                  : _MainColumn(controller: controller, desktop: false),
-            ),
-            // Overlays
-            ..._overlays(desktop),
-          ],
-        );
-      },
-    ),
+                              controller: controller,
+                              desktop: true,
+                            ),
+                          ),
+                        ],
+                      )
+                    : _MainColumn(controller: controller, desktop: false),
+              ),
+              // Overlays
+              ..._overlays(desktop),
+            ],
+          );
+        },
+      ),
     ); // PopScope
   }
 
@@ -118,8 +122,11 @@ class AppShell extends StatelessWidget {
     }
     if (sub != null) widgets.add(Positioned.fill(child: sub));
     if (c.leaderOpen) {
-      widgets.add(Positioned.fill(
-          child: LeaderboardOverlay(controller: c, desktop: desktop)));
+      widgets.add(
+        Positioned.fill(
+          child: LeaderboardOverlay(controller: c, desktop: desktop),
+        ),
+      );
     }
     return widgets;
   }
@@ -158,14 +165,17 @@ class _DesktopRail extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Han('中文书', size: 19, color: t.ink, letterSpacing: 0.8),
-                      Text('ZHONGWEN SHU',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: ZwsFonts.sans(
-                              size: 9,
-                              weight: FontWeight.w600,
-                              color: t.ink3,
-                              letterSpacing: 2.4)),
+                      Text(
+                        'ZHONGWEN SHU',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: ZwsFonts.sans(
+                          size: 9,
+                          weight: FontWeight.w600,
+                          color: t.ink3,
+                          letterSpacing: 2.4,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -178,7 +188,8 @@ class _DesktopRail extends StatelessWidget {
           Container(
             padding: const EdgeInsets.only(top: 14),
             decoration: BoxDecoration(
-                border: Border(top: BorderSide(color: t.line))),
+              border: Border(top: BorderSide(color: t.line)),
+            ),
             child: Row(
               children: [
                 Container(
@@ -189,15 +200,25 @@ class _DesktopRail extends StatelessWidget {
                     color: t.sealSoft,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Han('安', size: 13, color: t.seal, weight: FontWeight.w700),
+                  child: Han(
+                    '安',
+                    size: 13,
+                    color: t.seal,
+                    weight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(width: 9),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(controller.profileName,
-                        style: ZwsFonts.sans(
-                            size: 12, weight: FontWeight.w700, color: t.ink)),
+                    Text(
+                      controller.profileName,
+                      style: ZwsFonts.sans(
+                        size: 12,
+                        weight: FontWeight.w700,
+                        color: t.ink,
+                      ),
+                    ),
                     Mono(controller.profileId, size: 10, color: t.ink3),
                   ],
                 ),
@@ -234,13 +255,16 @@ class _RailItem extends StatelessWidget {
                 Icon(_iconFor(name), size: 22, color: on ? t.seal : t.ink2),
                 const SizedBox(width: 12),
                 Flexible(
-                  child: Text(_labelFor(name),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: ZwsFonts.sans(
-                          size: 14,
-                          weight: on ? FontWeight.w700 : FontWeight.w600,
-                          color: on ? t.seal : t.ink2)),
+                  child: Text(
+                    _labelFor(name),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: ZwsFonts.sans(
+                      size: 14,
+                      weight: on ? FontWeight.w700 : FontWeight.w600,
+                      color: on ? t.seal : t.ink2,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -273,11 +297,14 @@ class _MainColumn extends StatelessWidget {
             child: isChat
                 ? Padding(
                     padding: EdgeInsets.symmetric(
-                        horizontal: desktop ? 26 : 16, vertical: desktop ? 22 : 16),
+                      horizontal: desktop ? 26 : 16,
+                      vertical: desktop ? 22 : 16,
+                    ),
                     child: Center(
                       child: ConstrainedBox(
                         constraints: BoxConstraints(
-                            maxWidth: desktop ? 860 : double.infinity),
+                          maxWidth: desktop ? 860 : double.infinity,
+                        ),
                         child: _activeScreen(),
                       ),
                     ),
@@ -285,12 +312,14 @@ class _MainColumn extends StatelessWidget {
                 : SingleChildScrollView(
                     child: Padding(
                       padding: EdgeInsets.symmetric(
-                          horizontal: desktop ? 26 : 16,
-                          vertical: desktop ? 22 : 16),
+                        horizontal: desktop ? 26 : 16,
+                        vertical: desktop ? 22 : 16,
+                      ),
                       child: Center(
                         child: ConstrainedBox(
                           constraints: BoxConstraints(
-                              maxWidth: desktop ? 860 : double.infinity),
+                            maxWidth: desktop ? 860 : double.infinity,
+                          ),
                           child: _activeScreen(),
                         ),
                       ),
@@ -332,7 +361,9 @@ class _AppBar extends StatelessWidget {
     final (title, sub) = _titleFor(controller.tab);
     return Container(
       padding: EdgeInsets.symmetric(
-          horizontal: desktop ? 26 : 16, vertical: desktop ? 18 : 14),
+        horizontal: desktop ? 26 : 16,
+        vertical: desktop ? 18 : 14,
+      ),
       decoration: BoxDecoration(
         color: t.surface,
         border: Border(bottom: BorderSide(color: t.line)),
@@ -354,14 +385,22 @@ class _AppBar extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: beranda
                       ? ZwsFonts.han(
-                          size: 24, weight: FontWeight.w700, color: t.ink)
+                          size: 24,
+                          weight: FontWeight.w700,
+                          color: t.ink,
+                        )
                       : ZwsFonts.sans(
-                          size: 16, weight: FontWeight.w800, color: t.ink),
+                          size: 16,
+                          weight: FontWeight.w800,
+                          color: t.ink,
+                        ),
                 ),
-                Text(sub,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: ZwsFonts.sans(size: 11, color: t.ink3)),
+                Text(
+                  sub,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: ZwsFonts.sans(size: 11, color: t.ink3),
+                ),
               ],
             ),
           ),
@@ -376,13 +415,20 @@ class _AppBar extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                    width: 7,
-                    height: 7,
-                    decoration:
-                        BoxDecoration(color: t.seal, shape: BoxShape.circle)),
+                  width: 7,
+                  height: 7,
+                  decoration: BoxDecoration(
+                    color: t.seal,
+                    shape: BoxShape.circle,
+                  ),
+                ),
                 const SizedBox(width: 6),
-                Mono('${controller.streak}',
-                    size: 12, weight: FontWeight.w700, color: t.ink),
+                Mono(
+                  '${controller.streak}',
+                  size: 12,
+                  weight: FontWeight.w700,
+                  color: t.ink,
+                ),
                 const SizedBox(width: 4),
                 Text('hari', style: ZwsFonts.sans(size: 11, color: t.ink3)),
               ],
@@ -438,7 +484,9 @@ class _MobileNav extends StatelessWidget {
       child: Row(
         children: [
           for (final name in _tabs)
-            Expanded(child: _NavButton(controller: controller, name: name)),
+            Expanded(
+              child: _NavButton(controller: controller, name: name),
+            ),
         ],
       ),
     );
@@ -464,11 +512,14 @@ class _NavButton extends StatelessWidget {
           children: [
             Icon(_iconFor(name), size: 22, color: on ? t.seal : t.ink3),
             const SizedBox(height: 4),
-            Text(_labelFor(name),
-                style: ZwsFonts.sans(
-                    size: 10,
-                    weight: on ? FontWeight.w700 : FontWeight.w500,
-                    color: on ? t.seal : t.ink3)),
+            Text(
+              _labelFor(name),
+              style: ZwsFonts.sans(
+                size: 10,
+                weight: on ? FontWeight.w700 : FontWeight.w500,
+                color: on ? t.seal : t.ink3,
+              ),
+            ),
           ],
         ),
       ),
@@ -477,19 +528,19 @@ class _NavButton extends StatelessWidget {
 }
 
 IconData _iconFor(String name) => switch (name) {
-      'beranda' => ZwsIcons.home,
-      'belajar' => ZwsIcons.cards,
-      'chat' => ZwsIcons.chat,
-      'translate' => ZwsIcons.translate,
-      'profil' => ZwsIcons.user,
-      _ => ZwsIcons.home,
-    };
+  'beranda' => ZwsIcons.home,
+  'belajar' => ZwsIcons.cards,
+  'chat' => ZwsIcons.chat,
+  'translate' => ZwsIcons.translate,
+  'profil' => ZwsIcons.user,
+  _ => ZwsIcons.home,
+};
 
 String _labelFor(String name) => switch (name) {
-      'beranda' => 'Beranda',
-      'belajar' => 'Belajar',
-      'chat' => 'Chat',
-      'translate' => 'Translate',
-      'profil' => 'Profil',
-      _ => name,
-    };
+  'beranda' => 'Beranda',
+  'belajar' => 'Belajar',
+  'chat' => 'Chat',
+  'translate' => 'Translate',
+  'profil' => 'Profil',
+  _ => name,
+};

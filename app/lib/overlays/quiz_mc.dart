@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../state/app_controller.dart';
 import '../theme/tokens.dart';
 import '../theme/zws_theme.dart';
+import '../utils/test_exit_guard.dart';
 import '../widgets/common.dart';
 import 'quiz_shared.dart';
 
@@ -28,7 +29,7 @@ class McQuizOverlay extends StatelessWidget {
         children: [
           OverlayBar(
             desktop: desktop,
-            onBack: c.closeSub,
+            onBack: () => closeSubWithTestGuard(context, c),
             title: Column(
               mainAxisSize: MainAxisSize.min,
               children: [

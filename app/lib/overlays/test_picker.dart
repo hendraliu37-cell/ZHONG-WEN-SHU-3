@@ -88,6 +88,10 @@ class TestPickerOverlay extends StatelessWidget {
                         onInc: c.incCount,
                         onDec: c.decCount,
                       ),
+                      if (c.testHistory.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        _HistoryCard(controller: c),
+                      ],
                       const SizedBox(height: 12),
                       _PickCard(
                         icon: ZwsIcons.quiz,
@@ -115,6 +119,144 @@ class TestPickerOverlay extends StatelessWidget {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HistoryCard extends StatelessWidget {
+  final AppController controller;
+  const _HistoryCard({required this.controller});
+
+  String _modeLabel(String mode) => switch (mode) {
+    'self' => 'Self-check',
+    'spell' => 'Ejaan',
+    _ => 'Pilihan Ganda',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final t = ZwsTheme.of(context);
+    final items = controller.testHistory.take(6).toList();
+    return SurfaceBox(
+      radius: 16,
+      padding: EdgeInsets.zero,
+      clip: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+            child: Row(
+              children: [
+                const Expanded(child: SectionLabel('Riwayat tes')),
+                Mono(
+                  '${controller.testHistory.length}',
+                  size: 11,
+                  color: t.ink3,
+                ),
+              ],
+            ),
+          ),
+          for (var i = 0; i < items.length; i++)
+            _HistoryRow(
+              controller: controller,
+              item: items[i],
+              modeLabel: _modeLabel(items[i].mode),
+              last: i == items.length - 1,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HistoryRow extends StatelessWidget {
+  final AppController controller;
+  final TestHistoryItem item;
+  final String modeLabel;
+  final bool last;
+  const _HistoryRow({
+    required this.controller,
+    required this.item,
+    required this.modeLabel,
+    required this.last,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final t = ZwsTheme.of(context);
+    final done = item.completed;
+    final progress = item.total == 0 ? 0.0 : item.shownIndex / item.total;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
+      decoration: BoxDecoration(
+        border: last ? null : Border(bottom: BorderSide(color: t.line)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: ZwsFonts.sans(
+                    size: 13,
+                    weight: FontWeight.w700,
+                    color: t.ink,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  '$modeLabel · ${done ? 'selesai' : 'belum selesai'} · '
+                  '${item.shownIndex}/${item.total} · skor ${item.score}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: ZwsFonts.sans(size: 11, color: t.ink3),
+                ),
+                const SizedBox(height: 7),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(5),
+                  child: LinearProgressIndicator(
+                    value: progress.clamp(0, 1),
+                    minHeight: 4,
+                    backgroundColor: t.line2,
+                    valueColor: AlwaysStoppedAnimation(done ? t.green : t.seal),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          if (!done)
+            Material(
+              color: t.ink,
+              borderRadius: BorderRadius.circular(9),
+              child: InkWell(
+                onTap: () => controller.resumeTestHistory(item),
+                borderRadius: BorderRadius.circular(9),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  child: Text(
+                    'Lanjut',
+                    style: ZwsFonts.sans(
+                      size: 12,
+                      weight: FontWeight.w700,
+                      color: t.bg,
+                    ),
+                  ),
+                ),
+              ),
+            )
+          else
+            Mono('${item.pct}%', size: 12, color: t.ink3),
         ],
       ),
     );

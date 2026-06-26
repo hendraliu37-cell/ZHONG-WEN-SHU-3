@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zhongwen_shu/models/vocab.dart';
 import 'package:zhongwen_shu/state/app_controller.dart';
 
@@ -15,6 +16,7 @@ void main() {
   const recordChannel = MethodChannel('com.llfbandit.record/messages');
 
   setUp(() {
+    SharedPreferences.setMockInitialValues({});
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
           recordChannel,
@@ -67,5 +69,34 @@ void main() {
     expect(state!.reps, 1);
     expect(state.isNew, isFalse);
     expect(state.mastery, greaterThan(0));
+  });
+
+  test('unfinished multiple-choice test can be saved and resumed', () {
+    final c = AppController();
+    final ids = <int>[];
+    for (var i = 0; i < 6; i++) {
+      c.cards[i] = _vocab(i);
+      ids.add(i);
+    }
+
+    c.goTestPick(base: ids);
+    c.qCount = 6;
+    c.startMc();
+    final first = c.currentQuiz!;
+    c.pickQuiz(first.correct);
+    c.nextQuiz();
+    c.abandonActiveTestToHistory();
+
+    final saved = c.testHistory.first;
+    expect(saved.completed, isFalse);
+    expect(saved.index, 1);
+    expect(saved.score, 1);
+
+    c.closeSub();
+    c.resumeTestHistory(saved);
+    expect(c.sub, 'quiz');
+    expect(c.quizIdx, 1);
+    expect(c.quizScore, 1);
+    expect(c.sessionCards.length, 6);
   });
 }

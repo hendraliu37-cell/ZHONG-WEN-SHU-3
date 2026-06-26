@@ -251,4 +251,42 @@ class AuthService {
       return [];
     }
   }
+
+  Future<List<Map<String, dynamic>>> fetchTestHistory() async {
+    final id = uid;
+    if (id == null) return [];
+    try {
+      final rows = await _sb
+          .from('test_history')
+          .select('payload')
+          .eq('user_id', id)
+          .order('updated_at', ascending: false)
+          .limit(80);
+      return (rows as List)
+          .map((row) => Map<String, dynamic>.from(row['payload'] as Map))
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> syncTestHistory(List<Map<String, dynamic>> history) async {
+    final id = uid;
+    if (id == null || history.isEmpty) return;
+    try {
+      final rows = history.take(80).map((h) {
+        final updatedAt =
+            (h['updatedAt'] as String?) ?? DateTime.now().toIso8601String();
+        return {
+          'id': h['id'],
+          'user_id': id,
+          'payload': h,
+          'updated_at': updatedAt,
+        };
+      }).toList();
+      await _sb.from('test_history').upsert(rows, onConflict: 'id,user_id');
+    } catch (_) {
+      // Best-effort cloud history. Local history remains the source of truth.
+    }
+  }
 }
