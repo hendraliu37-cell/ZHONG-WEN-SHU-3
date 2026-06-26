@@ -10,7 +10,11 @@ import '../widgets/ico.dart';
 class BerandaScreen extends StatelessWidget {
   final AppController controller;
   final bool desktop;
-  const BerandaScreen({super.key, required this.controller, required this.desktop});
+  const BerandaScreen({
+    super.key,
+    required this.controller,
+    required this.desktop,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -20,8 +24,10 @@ class BerandaScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('Rabu, 11 Juni 2026',
-            style: ZwsFonts.sans(size: 13, color: t.ink2)),
+        Text(
+          'Rabu, 11 Juni 2026',
+          style: ZwsFonts.sans(size: 13, color: t.ink2),
+        ),
         const SizedBox(height: 14),
         // Rapor ring + due card
         _TwoCol(
@@ -35,18 +41,28 @@ class BerandaScreen extends StatelessWidget {
         Row(
           children: [
             Expanded(
-                child: _QuickButton(
-                    icon: ZwsIcons.quiz,
-                    label: 'Tes Harian',
-                    onTap: () => c.goTestPick(base: c.cards.keys.take(8).toList()))),
+              child: _QuickButton(
+                icon: ZwsIcons.quiz,
+                label: 'Tes Harian',
+                onTap: c.goDailyTest,
+              ),
+            ),
             const SizedBox(width: 10),
             Expanded(
-                child: _QuickButton(
-                    icon: ZwsIcons.game, label: 'Games', onTap: c.goGames)),
+              child: _QuickButton(
+                icon: ZwsIcons.game,
+                label: 'Games',
+                onTap: c.goGames,
+              ),
+            ),
             const SizedBox(width: 10),
             Expanded(
-                child: _QuickButton(
-                    icon: ZwsIcons.mic, label: 'Pelafalan', onTap: c.goVoice)),
+              child: _QuickButton(
+                icon: ZwsIcons.mic,
+                label: 'Pelafalan',
+                onTap: c.goVoice,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 10),
@@ -54,9 +70,10 @@ class BerandaScreen extends StatelessWidget {
           children: [
             Expanded(
               child: _QuickButton(
-                  icon: ZwsIcons.spell,
-                  label: 'Ujian Akhir',
-                  onTap: c.startUjianAkhir),
+                icon: ZwsIcons.spell,
+                label: 'Ujian Akhir',
+                onTap: c.startUjianAkhir,
+              ),
             ),
             const SizedBox(width: 10),
             const Expanded(child: SizedBox.shrink()),
@@ -75,7 +92,11 @@ class _TwoCol extends StatelessWidget {
   final bool desktop;
   final Widget left;
   final Widget right;
-  const _TwoCol({required this.desktop, required this.left, required this.right});
+  const _TwoCol({
+    required this.desktop,
+    required this.left,
+    required this.right,
+  });
   @override
   Widget build(BuildContext context) {
     if (!desktop) {
@@ -116,13 +137,19 @@ class _RaporCard extends StatelessWidget {
                 child: Container(
                   width: 74,
                   height: 74,
-                  decoration:
-                      BoxDecoration(color: t.surface, shape: BoxShape.circle),
+                  decoration: BoxDecoration(
+                    color: t.surface,
+                    shape: BoxShape.circle,
+                  ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Mono('$total',
-                          size: 30, weight: FontWeight.w800, color: t.ink),
+                      Mono(
+                        '$total',
+                        size: 30,
+                        weight: FontWeight.w800,
+                        color: t.ink,
+                      ),
                       Mono('/ 100', size: 10, color: t.ink3, letterSpacing: 1),
                     ],
                   ),
@@ -138,21 +165,37 @@ class _RaporCard extends StatelessWidget {
               children: [
                 const SectionLabel('Rapor berjalan'),
                 const SizedBox(height: 3),
-                Text('Tingkat ${controller.raporLetter}',
-                    style: ZwsFonts.sans(
-                        size: 24, weight: FontWeight.w800, color: t.ink)),
+                Text(
+                  'Tingkat ${controller.raporLetter}',
+                  style: ZwsFonts.sans(
+                    size: 24,
+                    weight: FontWeight.w800,
+                    color: t.ink,
+                  ),
+                ),
                 const SizedBox(height: 4),
                 Wrap(
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Text('XP ', style: ZwsFonts.sans(size: 12, color: t.ink2)),
-                    Mono('${controller.xp}',
-                        size: 12, weight: FontWeight.w700, color: t.seal),
-                    Text(' · Peringkat ',
-                        style: ZwsFonts.sans(size: 12, color: t.ink2)),
-                    Text(controller.myRank > 0 ? '#${controller.myRank}' : '—',
-                        style: ZwsFonts.sans(
-                            size: 12, weight: FontWeight.w700, color: t.ink)),
+                    Mono(
+                      '${controller.xp}',
+                      size: 12,
+                      weight: FontWeight.w700,
+                      color: t.seal,
+                    ),
+                    Text(
+                      ' · Peringkat ',
+                      style: ZwsFonts.sans(size: 12, color: t.ink2),
+                    ),
+                    Text(
+                      controller.myRank > 0 ? '#${controller.myRank}' : '—',
+                      style: ZwsFonts.sans(
+                        size: 12,
+                        weight: FontWeight.w700,
+                        color: t.ink,
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -184,7 +227,13 @@ class _RingPainter extends CustomPainter {
       ..strokeWidth = stroke
       ..strokeCap = StrokeCap.round;
     canvas.drawArc(inner, 0, 2 * math.pi, false, bgPaint);
-    canvas.drawArc(inner, -math.pi / 2, 2 * math.pi * pct.clamp(0, 1), false, fgPaint);
+    canvas.drawArc(
+      inner,
+      -math.pi / 2,
+      2 * math.pi * pct.clamp(0, 1),
+      false,
+      fgPaint,
+    );
   }
 
   @override
@@ -208,22 +257,34 @@ class _DueCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('JATUH TEMPO HARI INI',
-              style: ZwsFonts.sans(
-                  size: 11,
-                  weight: FontWeight.w600,
-                  color: Colors.white.withValues(alpha: 0.82),
-                  letterSpacing: 1.7)),
+          Text(
+            'JATUH TEMPO HARI INI',
+            style: ZwsFonts.sans(
+              size: 11,
+              weight: FontWeight.w600,
+              color: Colors.white.withValues(alpha: 0.82),
+              letterSpacing: 1.7,
+            ),
+          ),
           const SizedBox(height: 6),
           Row(
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              Mono('$due', size: 40, weight: FontWeight.w800, color: Colors.white),
+              Mono(
+                '$due',
+                size: 40,
+                weight: FontWeight.w800,
+                color: Colors.white,
+              ),
               const SizedBox(width: 8),
-              Text('kartu',
-                  style: ZwsFonts.sans(
-                      size: 14, color: Colors.white.withValues(alpha: 0.85))),
+              Text(
+                'kartu',
+                style: ZwsFonts.sans(
+                  size: 14,
+                  color: Colors.white.withValues(alpha: 0.85),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -238,9 +299,14 @@ class _DueCard extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   child: Center(
-                    child: Text('Mulai review',
-                        style: ZwsFonts.sans(
-                            size: 14, weight: FontWeight.w700, color: t.seal)),
+                    child: Text(
+                      'Mulai review',
+                      style: ZwsFonts.sans(
+                        size: 14,
+                        weight: FontWeight.w700,
+                        color: t.seal,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -267,7 +333,9 @@ class _MateriCard extends StatelessWidget {
         ? mat.vocab.first.pinyin
         : 'xǐhuan';
     final topic = mat?.topic ?? 'Kata kerja perasaan';
-    final desc = mat?.exercise ?? 'Latihan hari ini: buat 3 kalimat. Guru akan menilai PR-mu.';
+    final desc =
+        mat?.exercise ??
+        'Latihan hari ini: buat 3 kalimat. Guru akan menilai PR-mu.';
     return SurfaceBox(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -275,14 +343,17 @@ class _MateriCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Flexible(child: SectionLabel('Materi dari Guru · hari ini')),
+              const Flexible(
+                child: SectionLabel('Materi dari Guru · hari ini'),
+              ),
               const SizedBox(width: 8),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (c.curriculumLoading) ...[
                     const SizedBox(
-                      width: 12, height: 12,
+                      width: 12,
+                      height: 12,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     ),
                     const SizedBox(width: 6),
@@ -308,12 +379,23 @@ class _MateriCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(topic,
-                        style: ZwsFonts.sans(
-                            size: 15, weight: FontWeight.w700, color: t.ink)),
+                    Text(
+                      topic,
+                      style: ZwsFonts.sans(
+                        size: 15,
+                        weight: FontWeight.w700,
+                        color: t.ink,
+                      ),
+                    ),
                     const SizedBox(height: 3),
-                    Text(desc,
-                        style: ZwsFonts.sans(size: 12, color: t.ink2, height: 1.5)),
+                    Text(
+                      desc,
+                      style: ZwsFonts.sans(
+                        size: 12,
+                        color: t.ink2,
+                        height: 1.5,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -335,9 +417,14 @@ class _MateriCard extends StatelessWidget {
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 11),
                   child: Center(
-                    child: Text('Buka di Guru →',
-                        style: ZwsFonts.sans(
-                            size: 13, weight: FontWeight.w600, color: t.ink)),
+                    child: Text(
+                      'Buka di Guru →',
+                      style: ZwsFonts.sans(
+                        size: 13,
+                        weight: FontWeight.w600,
+                        color: t.ink,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -353,8 +440,11 @@ class _QuickButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-  const _QuickButton(
-      {required this.icon, required this.label, required this.onTap});
+  const _QuickButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
   @override
   Widget build(BuildContext context) {
     final t = ZwsTheme.of(context);
@@ -372,9 +462,14 @@ class _QuickButton extends StatelessWidget {
           children: [
             Icon(icon, size: 22, color: t.ink2),
             const SizedBox(height: 7),
-            Text(label,
-                style: ZwsFonts.sans(
-                    size: 12, weight: FontWeight.w600, color: t.ink2)),
+            Text(
+              label,
+              style: ZwsFonts.sans(
+                size: 12,
+                weight: FontWeight.w600,
+                color: t.ink2,
+              ),
+            ),
           ],
         ),
       ),
@@ -398,9 +493,14 @@ class _LeaderboardCard extends StatelessWidget {
               const SectionLabel('Leaderboard global'),
               InkWell(
                 onTap: controller.openLeader,
-                child: Text('Lihat semua →',
-                    style: ZwsFonts.sans(
-                        size: 12, weight: FontWeight.w700, color: t.seal)),
+                child: Text(
+                  'Lihat semua →',
+                  style: ZwsFonts.sans(
+                    size: 12,
+                    weight: FontWeight.w700,
+                    color: t.seal,
+                  ),
+                ),
               ),
             ],
           ),
@@ -408,15 +508,19 @@ class _LeaderboardCard extends StatelessWidget {
           if (controller.leaderRows.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 6),
-              child: Text('Belum ada peringkat. Mulai belajar untuk masuk papan ini.',
-                  style: ZwsFonts.sans(size: 12, color: t.ink3)),
+              child: Text(
+                'Belum ada peringkat. Mulai belajar untuk masuk papan ini.',
+                style: ZwsFonts.sans(size: 12, color: t.ink3),
+              ),
             ),
           for (final r in controller.leaderRows.take(3))
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 1),
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 11,
+                  vertical: 9,
+                ),
                 decoration: BoxDecoration(
                   color: r.you ? t.sealSoft : Colors.transparent,
                   borderRadius: BorderRadius.circular(11),
@@ -425,31 +529,38 @@ class _LeaderboardCard extends StatelessWidget {
                   children: [
                     SizedBox(
                       width: 22,
-                      child: Mono('${r.rank}',
-                          weight: FontWeight.w700,
-                          color: r.you
-                              ? t.seal
-                              : (r.rank <= 3 ? t.gold : t.ink3)),
+                      child: Mono(
+                        '${r.rank}',
+                        weight: FontWeight.w700,
+                        color: r.you ? t.seal : (r.rank <= 3 ? t.gold : t.ink3),
+                      ),
                     ),
                     Expanded(
                       child: Row(
                         children: [
                           Flexible(
-                            child: Text(r.name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: ZwsFonts.sans(
-                                    size: 13,
-                                    weight: FontWeight.w600,
-                                    color: t.ink)),
+                            child: Text(
+                              r.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: ZwsFonts.sans(
+                                size: 13,
+                                weight: FontWeight.w600,
+                                color: t.ink,
+                              ),
+                            ),
                           ),
                           const SizedBox(width: 6),
                           Mono('· ${r.id}', size: 11, color: t.ink3),
                         ],
                       ),
                     ),
-                    Mono('${r.score}',
-                        size: 13, weight: FontWeight.w700, color: t.ink),
+                    Mono(
+                      '${r.score}',
+                      size: 13,
+                      weight: FontWeight.w700,
+                      color: t.ink,
+                    ),
                   ],
                 ),
               ),

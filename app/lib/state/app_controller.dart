@@ -348,13 +348,16 @@ class AppController extends ChangeNotifier {
   // ---- curriculum / daily material ----
   DailyMaterial? dailyMaterial;
   bool curriculumLoading = false;
+  DateTime? dailyMaterialHiddenUntil;
 
   // ---- shared session ----
   int qCount = 20;
   List<int> baseCards = [];
   List<int> sessionCards = [];
   List<TestHistoryItem> testHistory = [];
+  List<int> aiFocusCardIds = [];
   static const int _maxTestHistory = 80;
+  static const int _maxAiFocusCards = 120;
   String? _activeTestHistoryId;
   String? openDeckId;
   bool adding = false;
@@ -763,6 +766,9 @@ class AppController extends ChangeNotifier {
     lastTestPct = j['lastTestPct'] as int? ?? 0;
     lastUjianAkhirPct = j['lastUjianAkhirPct'] as int? ?? 0;
     lastActiveDate = j['lastActiveDate'] as String?;
+    dailyMaterialHiddenUntil = DateTime.tryParse(
+      (j['dailyMaterialHiddenUntil'] as String?) ?? '',
+    );
     _nextId = j['nextId'] as int? ?? 0;
     installedPacks
       ..clear()
@@ -802,6 +808,12 @@ class AppController extends ChangeNotifier {
         .where((h) => h.id.isNotEmpty && h.cardIds.isNotEmpty)
         .take(_maxTestHistory)
         .toList();
+    aiFocusCardIds = (j['aiFocusCardIds'] as List? ?? [])
+        .whereType<num>()
+        .map((e) => e.toInt())
+        .where((id) => cards.containsKey(id))
+        .take(_maxAiFocusCards)
+        .toList();
     // safety: ensure every card has an srs row
     for (final id in cards.keys) {
       srs.putIfAbsent(id, () => SrsState());
@@ -820,6 +832,7 @@ class AppController extends ChangeNotifier {
       'lastTestPct': lastTestPct,
       'lastUjianAkhirPct': lastUjianAkhirPct,
       'lastActiveDate': lastActiveDate,
+      'dailyMaterialHiddenUntil': dailyMaterialHiddenUntil?.toIso8601String(),
       'nextId': _nextId,
       'installedPacks': installedPacks.toList(),
       'cards': cards.map((k, v) => MapEntry('$k', v.toJson())),
@@ -837,6 +850,7 @@ class AppController extends ChangeNotifier {
           .take(_maxTestHistory)
           .map((h) => h.toJson())
           .toList(),
+      'aiFocusCardIds': aiFocusCardIds.take(_maxAiFocusCards).toList(),
     });
     // Best-effort sync of progress to the cloud profile when signed in.
     if (auth.signedIn) {
@@ -915,6 +929,93 @@ class AppController extends ChangeNotifier {
 
   void _speak(String txt) =>
       speech.speak(txt, traditional: track == 'traditional');
+
+  bool get showDailyMaterialBanner =>
+      dailyMaterialHiddenUntil == null ||
+      DateTime.now().isAfter(dailyMaterialHiddenUntil!);
+
+  Future<void> snoozeDailyMaterial() async {
+    dailyMaterialHiddenUntil = DateTime.now().add(const Duration(hours: 2));
+    await _save();
+    notifyListeners();
+  }
+
+  List<int> smartPracticeBase({int? limit}) {
+    final out = <int>[];
+    final seen = <int>{};
+    void addAll(Iterable<int> ids) {
+      for (final id in ids) {
+        if (!cards.containsKey(id) || seen.contains(id)) continue;
+        seen.add(id);
+        out.add(id);
+        if (limit != null && out.length >= limit) return;
+      }
+    }
+
+    Deck? contextDeck = openDeck;
+    if (contextDeck == null && _deckCtx != null) {
+      for (final deck in decks) {
+        if (deck.id == _deckCtx) {
+          contextDeck = deck;
+          break;
+        }
+      }
+    }
+    if (contextDeck != null) addAll(contextDeck.cardIds);
+    if (limit != null && out.length >= limit) return out;
+    addAll(baseCards);
+    if (limit != null && out.length >= limit) return out;
+
+    final mat = dailyMaterial;
+    if (mat != null) addAll(_matchingCardIds('${mat.topic} ${mat.summary}'));
+    if (limit != null && out.length >= limit) return out;
+
+    addAll(aiFocusCardIds);
+    if (limit != null && out.length >= limit) return out;
+    addAll(reviewQueue());
+    if (limit != null && out.length >= limit) return out;
+    addAll(cards.keys);
+    return out;
+  }
+
+  bool _rememberLearningFromText(String text) {
+    final matches = _matchingCardIds(text, limit: 30);
+    if (matches.isEmpty) return false;
+    final next = <int>[];
+    final seen = <int>{};
+    for (final id in [...matches, ...aiFocusCardIds]) {
+      if (!cards.containsKey(id) || seen.contains(id)) continue;
+      seen.add(id);
+      next.add(id);
+      if (next.length >= _maxAiFocusCards) break;
+    }
+    if (listEquals(next, aiFocusCardIds)) return false;
+    aiFocusCardIds = next;
+    return true;
+  }
+
+  List<int> _matchingCardIds(String text, {int limit = 80}) {
+    final raw = text.toLowerCase();
+    final normalized = normalize(raw);
+    final out = <int>[];
+    for (final entry in cards.entries) {
+      final c = entry.value;
+      final hanMatch =
+          raw.contains(c.simplified) ||
+          (c.traditional != c.simplified && raw.contains(c.traditional));
+      final pinyin = normalize(c.pinyin);
+      final pyMatch = pinyin.isNotEmpty && normalized.contains(pinyin);
+      final meaningMatch = VocabEntry.splitMeanings(c.meaning).any((m) {
+        final mm = m.toLowerCase().trim();
+        return mm.length >= 4 && raw.contains(mm);
+      });
+      if (hanMatch || pyMatch || meaningMatch) {
+        out.add(entry.key);
+        if (out.length >= limit) break;
+      }
+    }
+    return out;
+  }
 
   /// All card ids that are due or new, due-first — the real FSRS review queue.
   List<int> reviewQueue() {
@@ -1030,7 +1131,7 @@ class AppController extends ChangeNotifier {
     tab = t;
     sub = null;
     _deckCtx = null;
-    closeRoomChannel();
+    closeRoomChannel(notify: false);
     leaderOpen = false;
     adding = false;
     notifyListeners();
@@ -1106,13 +1207,19 @@ class AppController extends ChangeNotifier {
 
   /// Opens a room: loads history and subscribes to realtime updates.
   Future<void> openRoomById(Room room) async {
-    closeRoomChannel();
+    closeRoomChannel(notify: false);
     currentRoom = room;
     roomMsgs = [];
     roomOnline = 0;
     roomLoading = true;
     notifyListeners();
     roomMsgs = await rooms.history(room.id);
+    var learnedFromHistory = false;
+    for (final m in roomMsgs) {
+      learnedFromHistory =
+          _rememberLearningFromText(m.body) || learnedFromHistory;
+    }
+    if (learnedFromHistory) unawaited(_save());
     roomLoading = false;
     _roomChannel = rooms.subscribe(
       room.id,
@@ -1132,6 +1239,7 @@ class AppController extends ChangeNotifier {
           }
         }
         roomMsgs = [...roomMsgs, m];
+        if (_rememberLearningFromText(m.body)) unawaited(_save());
         if (m.isGuru) roomGuruBusy = false;
         notifyListeners();
       },
@@ -1144,7 +1252,7 @@ class AppController extends ChangeNotifier {
   }
 
   /// Leaves the current room view (unsubscribes); keeps membership.
-  void closeRoomChannel() {
+  void closeRoomChannel({bool notify = true}) {
     final ch = _roomChannel;
     _roomChannel = null;
     currentRoom = null;
@@ -1156,6 +1264,7 @@ class AppController extends ChangeNotifier {
         ch.unsubscribe();
       } catch (_) {}
     }
+    if (notify) notifyListeners();
   }
 
   /// Leaves the room (drops membership) and returns to the room list.
@@ -1163,7 +1272,7 @@ class AppController extends ChangeNotifier {
     final r = currentRoom;
     if (r == null) return;
     await rooms.leaveRoom(r.id);
-    closeRoomChannel();
+    closeRoomChannel(notify: false);
     await refreshMyRooms();
   }
 
@@ -1596,13 +1705,15 @@ class AppController extends ChangeNotifier {
   // ===========================================================================
 
   void goTestPick({List<int>? base}) {
-    if (base != null) baseCards = base;
+    baseCards = base ?? smartPracticeBase();
     openDeckId = null;
     _deckCtx = null;
     _clampQCount();
     sub = 'testpick';
     notifyListeners();
   }
+
+  void goDailyTest() => goTestPick(base: smartPracticeBase());
 
   void toggleTestDirection() {
     testDirection = testDirection == 'zh2id' ? 'id2zh' : 'zh2id';
@@ -1729,6 +1840,8 @@ class AppController extends ChangeNotifier {
   void goGames() {
     _speedTimer?.cancel();
     recording = false;
+    if (baseCards.isEmpty) baseCards = smartPracticeBase();
+    _clampQCount();
     sub = 'games';
     notifyListeners();
   }
@@ -2427,6 +2540,7 @@ class AppController extends ChangeNotifier {
     final txt = chatInput.trim();
     if (txt.isEmpty) return;
     messages = [...messages, ChatMsg('me', txt)];
+    _rememberLearningFromText(txt);
     chatInput = '';
     tutorTyping = true;
     notifyListeners();
@@ -2455,6 +2569,7 @@ class AppController extends ChangeNotifier {
     }
     tutorTyping = false;
     messages = [...messages, ChatMsg('t', reply)];
+    _rememberLearningFromText(reply);
     if (messages.length > _maxChatHistory) {
       messages = messages.sublist(messages.length - _maxChatHistory);
     }
@@ -2476,6 +2591,9 @@ class AppController extends ChangeNotifier {
     if (it == null) return;
     final block = idiomBank.contextBlock([it]);
     messages = [...messages, ChatMsg('me', 'Ajari aku idiom ${it.simplified}')];
+    _rememberLearningFromText(
+      '${it.simplified} ${it.traditional} ${it.meaning}',
+    );
     tutorTyping = true;
     notifyListeners();
     String? reply;
@@ -2496,6 +2614,7 @@ class AppController extends ChangeNotifier {
         '${it.literal.isNotEmpty ? ' Harfiah: ${it.literal}.' : ''}';
     tutorTyping = false;
     messages = [...messages, ChatMsg('t', reply)];
+    _rememberLearningFromText(reply);
     if (messages.length > _maxChatHistory) {
       messages = messages.sublist(messages.length - _maxChatHistory);
     }
@@ -2529,6 +2648,7 @@ class AppController extends ChangeNotifier {
         createdAt: DateTime.now(),
       ),
     ];
+    final learned = _rememberLearningFromText(txt);
     final callGuru = mentionsGuru(txt);
     if (callGuru) roomGuruBusy = true;
     notifyListeners();
@@ -2540,12 +2660,13 @@ class AppController extends ChangeNotifier {
       authorHandle: profileHandle,
     );
     if (callGuru) {
-      final err = await rooms.callGuru(r.id);
+      final err = await rooms.callGuru(r.id, track: _zhTrack);
       if (err != null) {
         roomGuruBusy = false;
         notifyListeners();
       }
     }
+    if (learned) unawaited(_save());
   }
 
   // ===========================================================================

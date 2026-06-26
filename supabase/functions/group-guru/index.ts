@@ -24,7 +24,10 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
-function endpoint(baseRaw: string, path: "/v1/chat/completions" | "/v1/messages"): string {
+function endpoint(
+  baseRaw: string,
+  path: "/v1/chat/completions" | "/v1/messages",
+): string {
   const trimmed = baseRaw.trim().replace(/\/+$/, "");
   if (trimmed.endsWith(path)) return trimmed;
   const root = trimmed.replace(/\/v1$/, "");
@@ -38,7 +41,10 @@ function textFromOpenModelMessages(data: unknown): string {
   return content
     .map((part) => {
       if (typeof part === "string") return part;
-      if (part && typeof part === "object" && typeof (part as { text?: unknown }).text === "string") {
+      if (
+        part && typeof part === "object" &&
+        typeof (part as { text?: unknown }).text === "string"
+      ) {
         return (part as { text: string }).text;
       }
       return "";
@@ -47,13 +53,22 @@ function textFromOpenModelMessages(data: unknown): string {
     .trim();
 }
 
-const SYSTEM = [
-  "Kamu 'Guru', tutor Mandarin yang ramah di dalam ruang obrolan grup.",
-  "Beberapa murid mengobrol; kamu hanya menjawab saat dipanggil.",
-  "Jawab SINGKAT dan to the point (maks ~3 kalimat).",
-  "Tulis sisi Mandarin pakai 汉字 + pinyin bertanda nada, lalu glos Bahasa Indonesia singkat.",
-  "Sebut nama penanya bila jelas. Jangan pakai emoji. Jangan menulis ulang seluruh percakapan.",
-].join(" ");
+function buildSystem(track: string): string {
+  const variant = track === "traditional"
+    ? "TRADITIONAL_ONLY: pakai hanzi tradisional. Jangan tulis simplified kecuali user minta bandingkan."
+    : "SIMPLIFIED_ONLY: pakai hanzi sederhana. Jangan tulis traditional kecuali user minta bandingkan.";
+  return [
+    "Kamu 'Guru', tutor Mandarin yang ramah di dalam ruang obrolan grup.",
+    "Beberapa murid mengobrol; kamu hanya menjawab saat dipanggil.",
+    `Ikuti track hanzi secara ketat: ${variant}`,
+    "Jawab rapi dan singkat, maksimal 4 blok pendek.",
+    "Ringkas: jawaban inti.",
+    "Contoh: hanzi (pinyin) = arti Indonesia.",
+    "Catatan: koreksi/pola penting bila perlu.",
+    "Latihan: satu pertanyaan kecil bila cocok.",
+    "Sebut nama penanya bila jelas. Jangan pakai emoji, tabel, code fence, atau menulis ulang seluruh percakapan.",
+  ].join(" ");
+}
 
 async function callLLM(
   endpoint: string,
@@ -61,6 +76,7 @@ async function callLLM(
   model: string,
   messages: unknown,
   useMessagesProtocol: boolean,
+  system: string,
 ): Promise<string | null> {
   try {
     const resp = await fetch(endpoint, {
@@ -78,7 +94,7 @@ async function callLLM(
       body: useMessagesProtocol
         ? JSON.stringify({
           model,
-          system: SYSTEM,
+          system,
           messages,
           temperature: 0.4,
           max_tokens: 2048,
@@ -86,7 +102,10 @@ async function callLLM(
         })
         : JSON.stringify({
           model,
-          messages: [{ role: "system", content: SYSTEM }, ...(messages as unknown[])],
+          messages: [
+            { role: "system", content: system },
+            ...(messages as unknown[]),
+          ],
           temperature: 0.4,
           max_tokens: 2048,
           stream: false,
@@ -94,8 +113,12 @@ async function callLLM(
     });
     if (!resp.ok) return null;
     const data = await resp.json();
-    const reply = useMessagesProtocol ? textFromOpenModelMessages(data) : data?.choices?.[0]?.message?.content;
-    return typeof reply === "string" && reply.trim() !== "" ? reply.trim() : null;
+    const reply = useMessagesProtocol
+      ? textFromOpenModelMessages(data)
+      : data?.choices?.[0]?.message?.content;
+    return typeof reply === "string" && reply.trim() !== ""
+      ? reply.trim()
+      : null;
   } catch (_) {
     return null;
   }
@@ -108,18 +131,15 @@ Deno.serve(async (req: Request) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
-  const apiKey =
-    Deno.env.get("OPENMODEL_API_KEY") ??
+  const apiKey = Deno.env.get("OPENMODEL_API_KEY") ??
     Deno.env.get("OPENCODE_GO_API_KEY") ??
     Deno.env.get("OPENCODE_ZEN_API_KEY");
   const usingOpenModel = Boolean(Deno.env.get("OPENMODEL_API_KEY"));
-  const baseRaw =
-    Deno.env.get("OPENMODEL_BASE_URL") ??
+  const baseRaw = Deno.env.get("OPENMODEL_BASE_URL") ??
     Deno.env.get("OPENCODE_GO_BASE_URL") ??
     Deno.env.get("OPENCODE_ZEN_BASE_URL") ??
     (usingOpenModel ? "https://api.openmodel.ai" : "https://api.deepseek.com");
-  const model =
-    Deno.env.get("OPENMODEL_MODEL") ??
+  const model = Deno.env.get("OPENMODEL_MODEL") ??
     Deno.env.get("OPENCODE_GO_MODEL") ??
     Deno.env.get("OPENCODE_ZEN_MODEL") ??
     "deepseek-v4-flash";
@@ -131,14 +151,16 @@ Deno.serve(async (req: Request) => {
   const authHeader = req.headers.get("Authorization") ?? "";
   if (!authHeader.startsWith("Bearer ")) return json({ error: "no_auth" }, 401);
 
-  let payload: { room_id?: string };
+  let payload: { room_id?: string; track?: string };
   try {
     payload = await req.json();
   } catch (_) {
     return json({ error: "bad_json" }, 400);
   }
   const roomId = typeof payload.room_id === "string" ? payload.room_id : "";
+  const track = payload.track === "traditional" ? "traditional" : "simplified";
   if (roomId === "") return json({ error: "no_room" }, 400);
+  const system = buildSystem(track);
 
   // Caller-scoped client: verifies identity AND membership under RLS.
   const asUser = createClient(supabaseUrl, anonKey, {
@@ -167,24 +189,41 @@ Deno.serve(async (req: Request) => {
     .map((m) => `${m.is_guru ? "Guru" : m.author_name}: ${m.body}`)
     .join("\n");
 
-  const useMessagesProtocol = usingOpenModel || baseRaw.includes("openmodel.ai");
-  const llmEndpoint = endpoint(baseRaw, useMessagesProtocol ? "/v1/messages" : "/v1/chat/completions");
+  const useMessagesProtocol = usingOpenModel ||
+    baseRaw.includes("openmodel.ai");
+  const llmEndpoint = endpoint(
+    baseRaw,
+    useMessagesProtocol ? "/v1/messages" : "/v1/chat/completions",
+  );
 
   // Try known models in order
-  const models = [model, "deepseek-v4-flash", "deepseek-v4-flash-free", "deepseek-chat", "deepseek-v3"];
+  const models = [
+    model,
+    "deepseek-v4-flash",
+    "deepseek-v4-flash-free",
+    "deepseek-chat",
+    "deepseek-v3",
+  ];
   const seen = new Set<string>();
   const tryModels = models.filter((m) => !seen.has(m) && seen.add(m));
 
   let reply: string | null = null;
   for (const m of tryModels) {
-    reply = await callLLM(llmEndpoint, apiKey, m, [
-      {
-        role: "user",
-        content:
-          `Percakapan ruang sejauh ini:\n${convo}\n\nSeseorang memanggil @Guru. ` +
-          `Beri satu balasan singkat sebagai Guru.`,
-      },
-    ], useMessagesProtocol);
+    reply = await callLLM(
+      llmEndpoint,
+      apiKey,
+      m,
+      [
+        {
+          role: "user",
+          content:
+            `Percakapan ruang sejauh ini:\n${convo}\n\nSeseorang memanggil @Guru. ` +
+            `Beri satu balasan singkat sebagai Guru.`,
+        },
+      ],
+      useMessagesProtocol,
+      system,
+    );
     if (reply) break;
   }
   if (!reply) return json({ error: "llm_failed" }, 502);
@@ -197,7 +236,9 @@ Deno.serve(async (req: Request) => {
     is_guru: true,
     body: reply,
   });
-  if (insErr) return json({ error: "insert_failed", detail: insErr.message }, 500);
+  if (insErr) {
+    return json({ error: "insert_failed", detail: insErr.message }, 500);
+  }
 
   return json({ ok: true });
 });

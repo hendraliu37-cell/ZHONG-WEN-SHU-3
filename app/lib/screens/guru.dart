@@ -5,12 +5,17 @@ import '../theme/tokens.dart';
 import '../theme/zws_theme.dart';
 import '../widgets/common.dart';
 import '../widgets/ico.dart';
+import '../widgets/tutor_text.dart';
 import '../widgets/tuner_gauge.dart';
 
 class GuruScreen extends StatelessWidget {
   final AppController controller;
   final bool desktop;
-  const GuruScreen({super.key, required this.controller, required this.desktop});
+  const GuruScreen({
+    super.key,
+    required this.controller,
+    required this.desktop,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -40,9 +45,7 @@ class GuruScreen extends StatelessWidget {
           Expanded(child: _ChatPane(controller: c))
         else
           Expanded(
-            child: SingleChildScrollView(
-              child: _VoicePane(controller: c),
-            ),
+            child: SingleChildScrollView(child: _VoicePane(controller: c)),
           ),
       ],
     );
@@ -53,8 +56,11 @@ class _Seg extends StatelessWidget {
   final AppController controller;
   final String value;
   final String label;
-  const _Seg(
-      {required this.controller, required this.value, required this.label});
+  const _Seg({
+    required this.controller,
+    required this.value,
+    required this.label,
+  });
   @override
   Widget build(BuildContext context) {
     final t = ZwsTheme.of(context);
@@ -68,11 +74,14 @@ class _Seg extends StatelessWidget {
           color: on ? t.surface : Colors.transparent,
           borderRadius: BorderRadius.circular(9),
         ),
-        child: Text(label,
-            style: ZwsFonts.sans(
-                size: 13,
-                weight: FontWeight.w700,
-                color: on ? t.ink : t.ink3)),
+        child: Text(
+          label,
+          style: ZwsFonts.sans(
+            size: 13,
+            weight: FontWeight.w700,
+            color: on ? t.ink : t.ink3,
+          ),
+        ),
       ),
     );
   }
@@ -91,10 +100,12 @@ class _ChatPane extends StatefulWidget {
 
 class _ChatPaneState extends State<_ChatPane> {
   final _tec = TextEditingController();
+  final _scrollCtrl = ScrollController();
 
   @override
   void dispose() {
     _tec.dispose();
+    _scrollCtrl.dispose();
     super.dispose();
   }
 
@@ -110,75 +121,117 @@ class _ChatPaneState extends State<_ChatPane> {
   Widget build(BuildContext context) {
     final t = ZwsTheme.of(context);
     final c = widget.controller;
-    final scrollCtrl = ScrollController();
     // Auto-scroll to bottom when new messages arrive
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (scrollCtrl.hasClients) {
-        scrollCtrl.jumpTo(scrollCtrl.position.maxScrollExtent);
+      if (_scrollCtrl.hasClients) {
+        _scrollCtrl.jumpTo(_scrollCtrl.position.maxScrollExtent);
       }
     });
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // curriculum banner — dynamic from curriculum-gen, with fallback
-        Container(
-          clipBehavior: Clip.antiAlias,
-          decoration: BoxDecoration(
-            color: t.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: t.line),
-          ),
-          child: IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Container(width: 3, color: t.seal),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 15, vertical: 13),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('MATERI HARIAN · BERKESINAMBUNGAN',
+        if (c.showDailyMaterialBanner) ...[
+          Container(
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              color: t.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: t.line),
+            ),
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(width: 3, color: t.seal),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 15,
+                        vertical: 13,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  'MATERI HARIAN · BERKESINAMBUNGAN',
+                                  style: ZwsFonts.sans(
+                                    size: 10,
+                                    weight: FontWeight.w700,
+                                    color: t.seal,
+                                    letterSpacing: 1.5,
+                                  ),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: c.snoozeDailyMaterial,
+                                style: TextButton.styleFrom(
+                                  minimumSize: Size.zero,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 5,
+                                  ),
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                child: Text(
+                                  'Ingatkan nanti',
+                                  style: ZwsFonts.sans(
+                                    size: 11,
+                                    weight: FontWeight.w700,
+                                    color: t.seal,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            c.dailyMaterial != null
+                                ? '${c.dailyMaterial!.topic}. Target hari ini: ${c.dailyMaterial!.summary}.'
+                                : 'HSK 2 · Unit 4 - Kata kerja perasaan. Target hari ini: 喜欢, 想, 觉得.',
                             style: ZwsFonts.sans(
-                                size: 10,
-                                weight: FontWeight.w700,
-                                color: t.seal,
-                                letterSpacing: 1.5)),
-                        const SizedBox(height: 5),
-                        Text(
-                          c.dailyMaterial != null
-                              ? '${c.dailyMaterial!.topic}. Target hari ini: ${c.dailyMaterial!.summary}.'
-                              : 'HSK 2 · Unit 4 — Kata kerja perasaan. Target hari ini: 喜欢, 想, 觉得.',
-                          style:
-                              ZwsFonts.sans(size: 13, color: t.ink, height: 1.5),
-                        ),
-                      ],
+                              size: 13,
+                              color: t.ink,
+                              height: 1.5,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 8),
+          const SizedBox(height: 8),
+        ],
         // action button
         Row(
           children: [
             TextButton(
               onPressed: c.tutorTyping ? null : () => c.learnIdiomWithGuru(),
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
                 backgroundColor: t.sealSoft,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
-              child: Text('Belajar idiom',
-                  style: ZwsFonts.sans(
-                      size: 12,
-                      weight: FontWeight.w600,
-                      color: c.tutorTyping ? t.ink3 : t.seal)),
+              child: Text(
+                'Belajar idiom',
+                style: ZwsFonts.sans(
+                  size: 12,
+                  weight: FontWeight.w600,
+                  color: c.tutorTyping ? t.ink3 : t.seal,
+                ),
+              ),
             ),
           ],
         ),
@@ -186,7 +239,7 @@ class _ChatPaneState extends State<_ChatPane> {
         // messages — scrollable, takes all remaining space
         Expanded(
           child: ListView(
-            controller: scrollCtrl,
+            controller: _scrollCtrl,
             padding: const EdgeInsets.only(bottom: 8),
             children: [
               for (final m in c.messages) ...[
@@ -197,7 +250,10 @@ class _ChatPaneState extends State<_ChatPane> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 11,
+                    ),
                     decoration: BoxDecoration(
                       color: t.surface,
                       borderRadius: const BorderRadius.only(
@@ -208,8 +264,10 @@ class _ChatPaneState extends State<_ChatPane> {
                       ),
                       border: Border.all(color: t.line),
                     ),
-                    child: Text('Guru sedang mengetik…',
-                        style: ZwsFonts.sans(size: 13, color: t.ink3)),
+                    child: Text(
+                      'Guru sedang mengetik…',
+                      style: ZwsFonts.sans(size: 13, color: t.ink3),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -236,7 +294,9 @@ class _ChatPaneState extends State<_ChatPane> {
                   decoration: InputDecoration(
                     isDense: true,
                     contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 15, vertical: 13),
+                      horizontal: 15,
+                      vertical: 13,
+                    ),
                     border: InputBorder.none,
                     hintText: 'Tulis ke Guru… (cth. 我喜欢…)',
                     hintStyle: ZwsFonts.sans(size: 14, color: t.ink3),
@@ -264,7 +324,8 @@ class _Bubble extends StatelessWidget {
       alignment: tutor ? Alignment.centerLeft : Alignment.centerRight,
       child: ConstrainedBox(
         constraints: BoxConstraints(
-            maxWidth: MediaQuery.of(context).size.width * 0.82),
+          maxWidth: MediaQuery.of(context).size.width * 0.82,
+        ),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
@@ -277,11 +338,12 @@ class _Bubble extends StatelessWidget {
             ),
             border: tutor ? Border.all(color: t.line) : null,
           ),
-          child: Text(msg.text,
-              style: ZwsFonts.sans(
-                  size: 14,
-                  color: tutor ? t.ink : t.bg,
-                  height: 1.5)),
+          child: tutor
+              ? TutorText(text: msg.text, color: t.ink)
+              : SelectableText(
+                  msg.text,
+                  style: ZwsFonts.sans(size: 14, color: t.bg, height: 1.5),
+                ),
         ),
       ),
     );
@@ -362,8 +424,11 @@ class _VoicePaneState extends State<_VoicePane> {
                     child: Text(
                       'Penilaian pelafalan per suku kata (via Azure Speech) belum diaktifkan. '
                       'Untuk sekarang, latih nada secara real-time dengan Tuner Nada di bawah.',
-                      style:
-                          ZwsFonts.sans(size: 12, color: t.ink2, height: 1.5),
+                      style: ZwsFonts.sans(
+                        size: 12,
+                        color: t.ink2,
+                        height: 1.5,
+                      ),
                     ),
                   ),
                 ],
@@ -382,10 +447,11 @@ class _VoicePaneState extends State<_VoicePane> {
                 children: [
                   const SectionLabel('Tuner nada'),
                   Mono(
-                      'T${c.tunerTone} · ${toneHz[c.tunerTone]} · ${toneNames[c.tunerTone]}',
-                      size: 12,
-                      weight: FontWeight.w700,
-                      color: t.seal),
+                    'T${c.tunerTone} · ${toneHz[c.tunerTone]} · ${toneNames[c.tunerTone]}',
+                    size: 12,
+                    weight: FontWeight.w700,
+                    color: t.seal,
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
@@ -394,17 +460,20 @@ class _VoicePaneState extends State<_VoicePane> {
               Row(
                 children: [
                   for (final n in [1, 2, 3, 4]) ...[
-                    Expanded(child: _ToneSel(controller: c, tone: n)),
+                    Expanded(
+                      child: _ToneSel(controller: c, tone: n),
+                    ),
                     if (n != 4) const SizedBox(width: 7),
                   ],
                 ],
               ),
               const SizedBox(height: 13),
               TunerGauge(
-                  tone: c.tunerTone,
-                  recording: c.recording,
-                  trace: c.pitchTrace,
-                  score: c.tunerMatch),
+                tone: c.tunerTone,
+                recording: c.recording,
+                trace: c.pitchTrace,
+                score: c.tunerMatch,
+              ),
               if (c.recording && c.pitchTrace.length >= 12) ...[
                 const SizedBox(height: 10),
                 _MatchBar(score: c.tunerMatch),
@@ -413,8 +482,10 @@ class _VoicePaneState extends State<_VoicePane> {
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    Text('Level mic',
-                        style: ZwsFonts.sans(size: 11, color: t.ink3)),
+                    Text(
+                      'Level mic',
+                      style: ZwsFonts.sans(size: 11, color: t.ink3),
+                    ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: ClipRRect(
@@ -424,13 +495,17 @@ class _VoicePaneState extends State<_VoicePane> {
                           minHeight: 6,
                           backgroundColor: t.line2,
                           valueColor: AlwaysStoppedAnimation(
-                              c.micLevel > 0.04 ? t.green : t.ink3),
+                            c.micLevel > 0.04 ? t.green : t.ink3,
+                          ),
                         ),
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Mono(c.currentHz != null ? '${c.currentHz!.round()}Hz' : '—',
-                        size: 11, color: t.seal),
+                    Mono(
+                      c.currentHz != null ? '${c.currentHz!.round()}Hz' : '—',
+                      size: 11,
+                      color: t.seal,
+                    ),
                   ],
                 ),
               ],
@@ -446,15 +521,20 @@ class _VoicePaneState extends State<_VoicePane> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(ZwsIcons.mic,
-                            size: 18,
-                            color: c.recording ? Colors.white : t.seal),
+                        Icon(
+                          ZwsIcons.mic,
+                          size: 18,
+                          color: c.recording ? Colors.white : t.seal,
+                        ),
                         const SizedBox(width: 8),
-                        Text(c.recording ? 'Stop merekam' : 'Mulai rekam',
-                            style: ZwsFonts.sans(
-                                size: 14,
-                                weight: FontWeight.w700,
-                                color: c.recording ? Colors.white : t.seal)),
+                        Text(
+                          c.recording ? 'Stop merekam' : 'Mulai rekam',
+                          style: ZwsFonts.sans(
+                            size: 14,
+                            weight: FontWeight.w700,
+                            color: c.recording ? Colors.white : t.seal,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -465,12 +545,12 @@ class _VoicePaneState extends State<_VoicePane> {
                 c.micUnavailable
                     ? 'Mikrofon tidak aktif (${c.micStatus}). Di Windows: Settings → Privacy & security → Microphone → aktifkan "Let desktop apps access your microphone".'
                     : c.recording
-                        ? (c.micLevel <= 0.04
-                            ? 'Tidak ada suara masuk. Cek mic & izin Windows (Settings → Privacy → Microphone), lalu coba bicara lebih dekat.'
-                            : (c.currentHz != null
+                    ? (c.micLevel <= 0.04
+                          ? 'Tidak ada suara masuk. Cek mic & izin Windows (Settings → Privacy → Microphone), lalu coba bicara lebih dekat.'
+                          : (c.currentHz != null
                                 ? 'Bagus — terdengar ${c.currentHz!.round()} Hz. Ikuti bentuk kontur target.'
                                 : 'Mendengarkan… ucapkan suku kata panjang & jelas mengikuti kontur.'))
-                        : 'Tekan rekam, lalu ucapkan suku kata sesuai bentuk nada target.',
+                    : 'Tekan rekam, lalu ucapkan suku kata sesuai bentuk nada target.',
                 style: ZwsFonts.sans(size: 11, color: t.ink3, height: 1.5),
               ),
             ],
@@ -498,9 +578,14 @@ class _MatchBar extends StatelessWidget {
       children: [
         SizedBox(
           width: 64,
-          child: Text(verdict,
-              style: ZwsFonts.sans(
-                  size: 12, weight: FontWeight.w700, color: color)),
+          child: Text(
+            verdict,
+            style: ZwsFonts.sans(
+              size: 12,
+              weight: FontWeight.w700,
+              color: color,
+            ),
+          ),
         ),
         Expanded(
           child: ClipRRect(
@@ -534,12 +619,15 @@ class _MicPicker extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('MIKROFON (pilih yang aktif)',
-            style: ZwsFonts.sans(
-                size: 10,
-                weight: FontWeight.w600,
-                color: t.ink3,
-                letterSpacing: 1.2)),
+        Text(
+          'MIKROFON (pilih yang aktif)',
+          style: ZwsFonts.sans(
+            size: 10,
+            weight: FontWeight.w600,
+            color: t.ink3,
+            letterSpacing: 1.2,
+          ),
+        ),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
@@ -552,21 +640,25 @@ class _MicPicker extends StatelessWidget {
                   onTap: () => c.selectMic(d),
                   borderRadius: BorderRadius.circular(9),
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 11,
+                      vertical: 7,
+                    ),
                     decoration: BoxDecoration(
                       color: c.micDevice?.id == d.id ? t.sealSoft : t.surface,
                       borderRadius: BorderRadius.circular(9),
                       border: Border.all(
-                          color: c.micDevice?.id == d.id ? t.seal : t.line),
+                        color: c.micDevice?.id == d.id ? t.seal : t.line,
+                      ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(ZwsIcons.mic,
-                            size: 13,
-                            color:
-                                c.micDevice?.id == d.id ? t.seal : t.ink3),
+                        Icon(
+                          ZwsIcons.mic,
+                          size: 13,
+                          color: c.micDevice?.id == d.id ? t.seal : t.ink3,
+                        ),
                         const SizedBox(width: 6),
                         Flexible(
                           child: Text(
@@ -574,11 +666,10 @@ class _MicPicker extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: ZwsFonts.sans(
-                                size: 11,
-                                weight: FontWeight.w600,
-                                color: c.micDevice?.id == d.id
-                                    ? t.seal
-                                    : t.ink2),
+                              size: 11,
+                              weight: FontWeight.w600,
+                              color: c.micDevice?.id == d.id ? t.seal : t.ink2,
+                            ),
                           ),
                         ),
                       ],
@@ -613,11 +704,14 @@ class _ToneSel extends StatelessWidget {
           border: Border.all(color: on ? t.seal : t.line),
         ),
         child: Center(
-          child: Text(labels[tone]!,
-              style: ZwsFonts.sans(
-                  size: 12,
-                  weight: FontWeight.w700,
-                  color: on ? t.seal : t.ink2)),
+          child: Text(
+            labels[tone]!,
+            style: ZwsFonts.sans(
+              size: 12,
+              weight: FontWeight.w700,
+              color: on ? t.seal : t.ink2,
+            ),
+          ),
         ),
       ),
     );

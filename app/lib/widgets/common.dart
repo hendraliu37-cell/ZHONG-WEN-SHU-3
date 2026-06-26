@@ -190,18 +190,21 @@ class _SquareButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = ZwsTheme.of(context);
-    return InkWell(
-      onTap: onTap,
+    return Material(
+      color: t.surface,
       borderRadius: BorderRadius.circular(10),
-      child: Container(
-        width: 38,
-        height: 38,
-        decoration: BoxDecoration(
-          color: t.surface,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: t.line),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: t.line),
+          ),
+          child: Icon(icon, size: 20, color: t.ink2),
         ),
-        child: Icon(icon, size: 20, color: t.ink2),
       ),
     );
   }

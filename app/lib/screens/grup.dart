@@ -7,13 +7,18 @@ import '../theme/tokens.dart';
 import '../theme/zws_theme.dart';
 import '../widgets/common.dart';
 import '../widgets/ico.dart';
+import '../widgets/tutor_text.dart';
 
 /// Realtime study rooms (Grup / M3). Three states: signed-out empty state,
 /// the room list (with create + join), and an open room (live chat + presence).
 class GrupScreen extends StatefulWidget {
   final AppController controller;
   final bool desktop;
-  const GrupScreen({super.key, required this.controller, required this.desktop});
+  const GrupScreen({
+    super.key,
+    required this.controller,
+    required this.desktop,
+  });
 
   @override
   State<GrupScreen> createState() => _GrupScreenState();
@@ -98,9 +103,14 @@ class _GuestState extends StatelessWidget {
         children: [
           Icon(ZwsIcons.users, size: 34, color: t.ink3),
           const SizedBox(height: 12),
-          Text('Masuk untuk pakai grup',
-              style: ZwsFonts.sans(
-                  size: 16, weight: FontWeight.w800, color: t.ink)),
+          Text(
+            'Masuk untuk pakai grup',
+            style: ZwsFonts.sans(
+              size: 16,
+              weight: FontWeight.w800,
+              color: t.ink,
+            ),
+          ),
           const SizedBox(height: 6),
           Text(
             'Ruang belajar bareng (chat realtime + panggil Guru pakai @Guru) '
@@ -152,16 +162,21 @@ class _RoomList extends StatelessWidget {
                   const SectionLabel('Ruang kamu'),
                   if (c.roomLoading)
                     SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: t.ink3)),
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: t.ink3,
+                      ),
+                    ),
                 ],
               ),
               const SizedBox(height: 12),
               if (c.myRooms.isEmpty)
-                Text('Belum ada ruang. Buat ruang baru atau gabung pakai kode.',
-                    style: ZwsFonts.sans(size: 12, color: t.ink3, height: 1.5))
+                Text(
+                  'Belum ada ruang. Buat ruang baru atau gabung pakai kode.',
+                  style: ZwsFonts.sans(size: 12, color: t.ink3, height: 1.5),
+                )
               else
                 for (final r in c.myRooms) ...[
                   _RoomTile(room: r, onTap: () => c.openRoomById(r)),
@@ -181,9 +196,10 @@ class _RoomList extends StatelessWidget {
               _Field(controller: nameCtl, hint: 'Nama ruang (cth. Kelas Pagi)'),
               const SizedBox(height: 10),
               InkButton(
-                  label: busy ? 'Membuat…' : 'Buat ruang',
-                  icon: ZwsIcons.users,
-                  onTap: onCreate),
+                label: busy ? 'Membuat…' : 'Buat ruang',
+                icon: ZwsIcons.users,
+                onTap: onCreate,
+              ),
             ],
           ),
         ),
@@ -214,12 +230,17 @@ class _RoomList extends StatelessWidget {
                       borderRadius: BorderRadius.circular(11),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 18, vertical: 14),
-                        child: Text('Gabung',
-                            style: ZwsFonts.sans(
-                                size: 13,
-                                weight: FontWeight.w700,
-                                color: Colors.white)),
+                          horizontal: 18,
+                          vertical: 14,
+                        ),
+                        child: Text(
+                          'Gabung',
+                          style: ZwsFonts.sans(
+                            size: 13,
+                            weight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -256,15 +277,22 @@ class _RoomTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(room.name,
-                      style: ZwsFonts.sans(
-                          size: 14, weight: FontWeight.w700, color: t.ink)),
+                  Text(
+                    room.name,
+                    style: ZwsFonts.sans(
+                      size: 14,
+                      weight: FontWeight.w700,
+                      color: t.ink,
+                    ),
+                  ),
                   const SizedBox(height: 2),
                   Row(
                     children: [
                       Mono(room.code, size: 11, color: t.ink3),
-                      Text('  ·  ${room.memberCount} anggota',
-                          style: ZwsFonts.sans(size: 11, color: t.ink3)),
+                      Text(
+                        '  ·  ${room.memberCount} anggota',
+                        style: ZwsFonts.sans(size: 11, color: t.ink3),
+                      ),
                     ],
                   ),
                 ],
@@ -286,7 +314,7 @@ class _RoomTile extends StatelessWidget {
 // Open room
 // ---------------------------------------------------------------------------
 
-class _RoomView extends StatelessWidget {
+class _RoomView extends StatefulWidget {
   final AppController controller;
   final TextEditingController msgCtl;
   final VoidCallback onSend;
@@ -297,14 +325,83 @@ class _RoomView extends StatelessWidget {
   });
 
   @override
+  State<_RoomView> createState() => _RoomViewState();
+}
+
+class _RoomViewState extends State<_RoomView> {
+  final _scrollCtrl = ScrollController();
+  bool _showGuruSuggest = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.msgCtl.addListener(_syncSuggest);
+  }
+
+  @override
+  void didUpdateWidget(covariant _RoomView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.msgCtl != widget.msgCtl) {
+      oldWidget.msgCtl.removeListener(_syncSuggest);
+      widget.msgCtl.addListener(_syncSuggest);
+      _syncSuggest();
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.msgCtl.removeListener(_syncSuggest);
+    _scrollCtrl.dispose();
+    super.dispose();
+  }
+
+  void _syncSuggest() {
+    final v = widget.msgCtl.value;
+    final rawCaret = v.selection.baseOffset;
+    final caret = rawCaret < 0
+        ? v.text.length
+        : rawCaret.clamp(0, v.text.length).toInt();
+    final before = v.text.substring(0, caret);
+    final token = before.split(RegExp(r'\s')).last;
+    final show =
+        token == '@' ||
+        ('@guru'.startsWith(token.toLowerCase()) && token.startsWith('@'));
+    if (show != _showGuruSuggest && mounted) {
+      setState(() => _showGuruSuggest = show);
+    }
+  }
+
+  void _insertGuruMention() {
+    final ctl = widget.msgCtl;
+    final value = ctl.value;
+    final rawCaret = value.selection.baseOffset;
+    final caret = rawCaret < 0
+        ? value.text.length
+        : rawCaret.clamp(0, value.text.length).toInt();
+    final before = value.text.substring(0, caret);
+    final after = value.text.substring(caret);
+    final start = before.lastIndexOf(RegExp(r'\s'));
+    final tokenStart = start < 0 ? 0 : start + 1;
+    final nextText = '${before.substring(0, tokenStart)}@Guru $after'
+        .replaceAll('  ', ' ');
+    final nextCaret = tokenStart + 6;
+    ctl.value = TextEditingValue(
+      text: nextText,
+      selection: TextSelection.collapsed(
+        offset: nextCaret.clamp(0, nextText.length).toInt(),
+      ),
+    );
+    setState(() => _showGuruSuggest = false);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final t = ZwsTheme.of(context);
-    final c = controller;
+    final c = widget.controller;
     final room = c.currentRoom!;
-    final scrollCtrl = ScrollController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (scrollCtrl.hasClients) {
-        scrollCtrl.jumpTo(scrollCtrl.position.maxScrollExtent);
+      if (_scrollCtrl.hasClients) {
+        _scrollCtrl.jumpTo(_scrollCtrl.position.maxScrollExtent);
       }
     });
     return Column(
@@ -315,12 +412,17 @@ class _RoomView extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
             children: [
-              InkWell(
-                onTap: c.closeRoomChannel,
-                borderRadius: BorderRadius.circular(9),
-                child: Padding(
-                  padding: const EdgeInsets.all(4),
-                  child: Icon(ZwsIcons.back, size: 20, color: t.ink2),
+              Material(
+                color: t.surface2,
+                borderRadius: BorderRadius.circular(10),
+                child: InkWell(
+                  onTap: c.closeRoomChannel,
+                  borderRadius: BorderRadius.circular(10),
+                  child: SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: Icon(ZwsIcons.back, size: 20, color: t.ink2),
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
@@ -328,19 +430,29 @@ class _RoomView extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(room.name,
-                        style: ZwsFonts.sans(
-                            size: 16, weight: FontWeight.w800, color: t.ink)),
+                    Text(
+                      room.name,
+                      style: ZwsFonts.sans(
+                        size: 16,
+                        weight: FontWeight.w800,
+                        color: t.ink,
+                      ),
+                    ),
                     Row(
                       children: [
                         Container(
-                            width: 7,
-                            height: 7,
-                            decoration: BoxDecoration(
-                                color: t.green, shape: BoxShape.circle)),
+                          width: 7,
+                          height: 7,
+                          decoration: BoxDecoration(
+                            color: t.green,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
                         const SizedBox(width: 6),
-                        Text('${c.roomOnline} online',
-                            style: ZwsFonts.sans(size: 11, color: t.ink2)),
+                        Text(
+                          '${c.roomOnline} online',
+                          style: ZwsFonts.sans(size: 11, color: t.ink2),
+                        ),
                       ],
                     ),
                   ],
@@ -350,12 +462,15 @@ class _RoomView extends StatelessWidget {
                 onTap: () {
                   Clipboard.setData(ClipboardData(text: room.code));
                   ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Kode ${room.code} disalin')));
+                    SnackBar(content: Text('Kode ${room.code} disalin')),
+                  );
                 },
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: t.surface2,
                     borderRadius: BorderRadius.circular(8),
@@ -363,8 +478,12 @@ class _RoomView extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      Mono(room.code,
-                          size: 11, weight: FontWeight.w700, color: t.ink),
+                      Mono(
+                        room.code,
+                        size: 11,
+                        weight: FontWeight.w700,
+                        color: t.ink,
+                      ),
                       const SizedBox(width: 6),
                       Icon(ZwsIcons.copy, size: 13, color: t.ink3),
                     ],
@@ -379,7 +498,7 @@ class _RoomView extends StatelessWidget {
         // Messages — scrollable, fills remaining space
         Expanded(
           child: ListView(
-            controller: scrollCtrl,
+            controller: _scrollCtrl,
             padding: const EdgeInsets.only(bottom: 8),
             children: [
               if (c.roomMsgs.isEmpty && !c.roomLoading)
@@ -400,13 +519,18 @@ class _RoomView extends StatelessWidget {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: t.sealSoft,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text('Guru sedang mengetik…',
-                        style: ZwsFonts.sans(size: 12, color: t.seal)),
+                    child: Text(
+                      'Guru sedang mengetik…',
+                      style: ZwsFonts.sans(size: 12, color: t.seal),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -416,6 +540,41 @@ class _RoomView extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         // Input — pinned at bottom
+        if (_showGuruSuggest) ...[
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Material(
+              color: t.sealSoft,
+              borderRadius: BorderRadius.circular(10),
+              child: InkWell(
+                onTap: _insertGuruMention,
+                borderRadius: BorderRadius.circular(10),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(ZwsIcons.chat, size: 14, color: t.seal),
+                      const SizedBox(width: 6),
+                      Text(
+                        '@Guru',
+                        style: ZwsFonts.sans(
+                          size: 13,
+                          weight: FontWeight.w800,
+                          color: t.seal,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
@@ -427,15 +586,17 @@ class _RoomView extends StatelessWidget {
                   border: Border.all(color: t.line),
                 ),
                 child: TextField(
-                  controller: msgCtl,
+                  controller: widget.msgCtl,
                   style: ZwsFonts.sans(size: 14, color: t.ink),
-                  onSubmitted: (_) => onSend(),
+                  onSubmitted: (_) => widget.onSend(),
                   decoration: InputDecoration(
                     isDense: true,
                     contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 15, vertical: 13),
+                      horizontal: 15,
+                      vertical: 13,
+                    ),
                     border: InputBorder.none,
-                    hintText: 'Tulis pesan… (@Guru untuk tanya tutor)',
+                    hintText: 'Tulis pesan… (@ untuk pilih Guru)',
                     hintStyle: ZwsFonts.sans(size: 14, color: t.ink3),
                   ),
                 ),
@@ -446,7 +607,7 @@ class _RoomView extends StatelessWidget {
               color: t.seal,
               borderRadius: BorderRadius.circular(13),
               child: InkWell(
-                onTap: onSend,
+                onTap: widget.onSend,
                 borderRadius: BorderRadius.circular(13),
                 child: const SizedBox(
                   width: 46,
@@ -475,8 +636,10 @@ class _RoomMenu extends StatelessWidget {
         if (v == 'leave') {
           await controller.leaveCurrentRoom();
         } else if (v == 'delete') {
-          final ok = await _confirm(context,
-              'Bubarkan ruang ini? Semua pesan akan dihapus untuk semua anggota.');
+          final ok = await _confirm(
+            context,
+            'Bubarkan ruang ini? Semua pesan akan dihapus untuk semua anggota.',
+          );
           if (ok) await controller.deleteCurrentRoom();
         }
       },
@@ -495,11 +658,13 @@ class _RoomMenu extends StatelessWidget {
         content: Text(msg),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Batal')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal'),
+          ),
           TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Bubarkan')),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Bubarkan'),
+          ),
         ],
       ),
     );
@@ -521,11 +686,13 @@ class _RoomBubble extends StatelessWidget {
     return Align(
       alignment: align,
       child: ConstrainedBox(
-        constraints:
-            BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.82),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.82,
+        ),
         child: Column(
-          crossAxisAlignment:
-              mine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          crossAxisAlignment: mine
+              ? CrossAxisAlignment.end
+              : CrossAxisAlignment.start,
           children: [
             if (!mine)
               Padding(
@@ -533,14 +700,14 @@ class _RoomBubble extends StatelessWidget {
                 child: Text(
                   guru ? 'Guru' : msg.authorName,
                   style: ZwsFonts.sans(
-                      size: 11,
-                      weight: FontWeight.w700,
-                      color: guru ? t.seal : t.ink2),
+                    size: 11,
+                    weight: FontWeight.w700,
+                    color: guru ? t.seal : t.ink2,
+                  ),
                 ),
               ),
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
               decoration: BoxDecoration(
                 color: bg,
                 borderRadius: BorderRadius.only(
@@ -551,8 +718,12 @@ class _RoomBubble extends StatelessWidget {
                 ),
                 border: (!mine && !guru) ? Border.all(color: t.line) : null,
               ),
-              child: Text(msg.body,
-                  style: ZwsFonts.sans(size: 14, color: fg, height: 1.5)),
+              child: guru
+                  ? TutorText(text: msg.body, color: fg, compact: true)
+                  : SelectableText(
+                      msg.body,
+                      style: ZwsFonts.sans(size: 14, color: fg, height: 1.5),
+                    ),
             ),
           ],
         ),
@@ -583,15 +754,18 @@ class _Field extends StatelessWidget {
       ),
       child: TextField(
         controller: controller,
-        textCapitalization:
-            caps ? TextCapitalization.characters : TextCapitalization.sentences,
+        textCapitalization: caps
+            ? TextCapitalization.characters
+            : TextCapitalization.sentences,
         style: mono
             ? ZwsFonts.mono(size: 13, color: t.ink)
             : ZwsFonts.sans(size: 14, color: t.ink),
         decoration: InputDecoration(
           isDense: true,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 13,
+          ),
           border: InputBorder.none,
           hintText: hint,
           hintStyle: mono

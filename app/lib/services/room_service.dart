@@ -41,8 +41,10 @@ class RoomService {
   Future<Room?> createRoom(String name, String level) async {
     if (!enabled || _uid == null) return null;
     try {
-      final row = await _sb
-          .rpc('create_room', params: {'p_name': name, 'p_level': level});
+      final row = await _sb.rpc(
+        'create_room',
+        params: {'p_name': name, 'p_level': level},
+      );
       final map = (row is List ? row.first : row) as Map;
       return Room.fromJson(map, memberCount: 1);
     } catch (_) {
@@ -71,7 +73,9 @@ class RoomService {
           .delete()
           .eq('room_id', roomId)
           .eq('user_id', _uid!);
-    } catch (_) {/* best-effort */}
+    } catch (_) {
+      /* best-effort */
+    }
   }
 
   /// Owner-only: deletes the room (cascades members + messages via FK).
@@ -79,7 +83,9 @@ class RoomService {
     if (!enabled || _uid == null) return;
     try {
       await _sb.from('rooms').delete().eq('id', roomId);
-    } catch (_) {/* best-effort */}
+    } catch (_) {
+      /* best-effort */
+    }
   }
 
   /// Last [limit] messages in chronological order.
@@ -128,14 +134,18 @@ class RoomService {
 
   /// Asks the AI tutor to reply in the room (writes its own message server-side
   /// via the Edge Function). Returns null on success or an error code.
-  Future<String?> callGuru(String roomId) async {
+  Future<String?> callGuru(String roomId, {String track = 'simplified'}) async {
     if (!enabled || _uid == null) return 'offline';
     try {
-      final res =
-          await _sb.functions.invoke('group-guru', body: {'room_id': roomId});
+      final res = await _sb.functions.invoke(
+        'group-guru',
+        body: {'room_id': roomId, 'track': track},
+      );
       final data = res.data;
       if (data is Map && data['ok'] == true) return null;
-      if (data is Map && data['error'] is String) return data['error'] as String;
+      if (data is Map && data['error'] is String) {
+        return data['error'] as String;
+      }
       return 'failed';
     } catch (_) {
       return 'failed';
@@ -166,17 +176,19 @@ class RoomService {
           callback: (payload) {
             try {
               onMessage(RoomMessage.fromJson(payload.newRecord));
-            } catch (_) {/* ignore malformed */}
+            } catch (_) {
+              /* ignore malformed */
+            }
           },
         )
         .onPresenceSync((_) => onPresence(_countPresence(ch)))
         .onPresenceJoin((_) => onPresence(_countPresence(ch)))
         .onPresenceLeave((_) => onPresence(_countPresence(ch)))
         .subscribe((status, _) async {
-      if (status == RealtimeSubscribeStatus.subscribed) {
-        await ch.track(presencePayload ?? {'user_id': _uid});
-      }
-    });
+          if (status == RealtimeSubscribeStatus.subscribed) {
+            await ch.track(presencePayload ?? {'user_id': _uid});
+          }
+        });
     return ch;
   }
 

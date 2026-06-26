@@ -10,7 +10,11 @@ import '../widgets/ico.dart';
 class BelajarScreen extends StatelessWidget {
   final AppController controller;
   final bool desktop;
-  const BelajarScreen({super.key, required this.controller, required this.desktop});
+  const BelajarScreen({
+    super.key,
+    required this.controller,
+    required this.desktop,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -40,11 +44,18 @@ class BelajarScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Lanjutkan review',
-                        style: ZwsFonts.sans(
-                            size: 14, weight: FontWeight.w700, color: t.ink)),
-                    Text('${c.dueCount} kartu siap diulang',
-                        style: ZwsFonts.sans(size: 12, color: t.ink2)),
+                    Text(
+                      'Lanjutkan review',
+                      style: ZwsFonts.sans(
+                        size: 14,
+                        weight: FontWeight.w700,
+                        color: t.ink,
+                      ),
+                    ),
+                    Text(
+                      '${c.dueCount} kartu siap diulang',
+                      style: ZwsFonts.sans(size: 12, color: t.ink2),
+                    ),
                   ],
                 ),
               ),
@@ -55,11 +66,18 @@ class BelajarScreen extends StatelessWidget {
                   onTap: c.startReviewFromQueue,
                   borderRadius: BorderRadius.circular(10),
                   child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    child: Text('Mulai',
-                        style: ZwsFonts.sans(
-                            size: 13, weight: FontWeight.w700, color: t.bg)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                    child: Text(
+                      'Mulai',
+                      style: ZwsFonts.sans(
+                        size: 13,
+                        weight: FontWeight.w700,
+                        color: t.bg,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -73,9 +91,14 @@ class BelajarScreen extends StatelessWidget {
             const SectionLabel('Deck kamu'),
             InkWell(
               onTap: c.openWrite,
-              child: Text('+ Tulis kartu',
-                  style: ZwsFonts.sans(
-                      size: 12, weight: FontWeight.w700, color: t.seal)),
+              child: Text(
+                '+ Tulis kartu',
+                style: ZwsFonts.sans(
+                  size: 12,
+                  weight: FontWeight.w700,
+                  color: t.seal,
+                ),
+              ),
             ),
           ],
         ),
@@ -91,7 +114,7 @@ class BelajarScreen extends StatelessWidget {
                 icon: ZwsIcons.quiz,
                 title: 'Mode Tes',
                 sub: 'Pilihan ganda · self-check · ejaan',
-                onTap: () => c.goTestPick(base: c.cards.keys.take(8).toList()),
+                onTap: c.goDailyTest,
               ),
             ),
             const SizedBox(width: 10),
@@ -130,7 +153,8 @@ class _DeckGrid extends StatelessWidget {
         crossAxisSpacing: 10,
         mainAxisExtent: 154,
       ),
-      itemBuilder: (context, i) => _DeckCard(controller: controller, deck: decks[i]),
+      itemBuilder: (context, i) =>
+          _DeckCard(controller: controller, deck: decks[i]),
     );
   }
 }
@@ -151,11 +175,13 @@ class _DeckCard extends StatelessWidget {
     final mastered = total == 0
         ? 0
         : ((deck.cardIds
-                    .where((id) => (controller.srs[id]?.mastery ?? 0) >= 2)
-                    .length /
-                total) *
-            100)
-            .round();
+                          .where(
+                            (id) => (controller.srs[id]?.mastery ?? 0) >= 2,
+                          )
+                          .length /
+                      total) *
+                  100)
+              .round();
     return InkWell(
       onTap: () => controller.openDeckById(deck.id),
       borderRadius: BorderRadius.circular(16),
@@ -172,40 +198,70 @@ class _DeckCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Mono('№ ${deck.displayIdx}', size: 11, color: t.ink3, letterSpacing: 1),
+                Mono(
+                  '№ ${deck.displayIdx}',
+                  size: 11,
+                  color: t.ink3,
+                  letterSpacing: 1,
+                ),
                 if (due > 0)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
-                        color: t.seal, borderRadius: BorderRadius.circular(20)),
-                    child: Text('$due due',
-                        style: ZwsFonts.sans(
-                            size: 11,
-                            weight: FontWeight.w700,
-                            color: Colors.white)),
+                      color: t.seal,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '$due due',
+                      style: ZwsFonts.sans(
+                        size: 11,
+                        weight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
                   )
                 else
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
-                        color: t.surface2,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: t.line)),
-                    child: Text('Selesai',
-                        style: ZwsFonts.sans(
-                            size: 11, weight: FontWeight.w600, color: t.ink3)),
+                      color: t.surface2,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: t.line),
+                    ),
+                    child: Text(
+                      'Selesai',
+                      style: ZwsFonts.sans(
+                        size: 11,
+                        weight: FontWeight.w600,
+                        color: t.ink3,
+                      ),
+                    ),
                   ),
               ],
             ),
             const Spacer(),
-            Text(deck.name,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: ZwsFonts.sans(
-                    size: 15, weight: FontWeight.w700, color: t.ink, height: 1.2)),
+            Text(
+              deck.name,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: ZwsFonts.sans(
+                size: 15,
+                weight: FontWeight.w700,
+                color: t.ink,
+                height: 1.2,
+              ),
+            ),
             const SizedBox(height: 2),
-            Text('$total kartu · $mastered% dikuasai',
-                style: ZwsFonts.sans(size: 12, color: t.ink3)),
+            Text(
+              '$total kartu · $mastered% dikuasai',
+              style: ZwsFonts.sans(size: 12, color: t.ink3),
+            ),
             const SizedBox(height: 10),
             ClipRRect(
               borderRadius: BorderRadius.circular(5),
@@ -228,11 +284,12 @@ class _ModeButton extends StatelessWidget {
   final String title;
   final String sub;
   final VoidCallback onTap;
-  const _ModeButton(
-      {required this.icon,
-      required this.title,
-      required this.sub,
-      required this.onTap});
+  const _ModeButton({
+    required this.icon,
+    required this.title,
+    required this.sub,
+    required this.onTap,
+  });
   @override
   Widget build(BuildContext context) {
     final t = ZwsTheme.of(context);
@@ -253,9 +310,14 @@ class _ModeButton extends StatelessWidget {
               children: [
                 Icon(icon, size: 20, color: t.seal),
                 const SizedBox(width: 10),
-                Text(title,
-                    style: ZwsFonts.sans(
-                        size: 14, weight: FontWeight.w700, color: t.ink)),
+                Text(
+                  title,
+                  style: ZwsFonts.sans(
+                    size: 14,
+                    weight: FontWeight.w700,
+                    color: t.ink,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 8),
@@ -277,8 +339,10 @@ class _PackList extends StatelessWidget {
     if (packs.isEmpty) {
       return SurfaceBox(
         radius: 16,
-        child: Text('Tidak ada paket tersedia.',
-            style: ZwsFonts.sans(size: 13, color: t.ink3)),
+        child: Text(
+          'Tidak ada paket tersedia.',
+          style: ZwsFonts.sans(size: 13, color: t.ink3),
+        ),
       );
     }
     return SurfaceBox(
@@ -301,13 +365,18 @@ class _PackList extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(packs[i].name,
-                            style: ZwsFonts.sans(
-                                size: 14,
-                                weight: FontWeight.w700,
-                                color: t.ink)),
-                        Text(packs[i].meta,
-                            style: ZwsFonts.sans(size: 11, color: t.ink3)),
+                        Text(
+                          packs[i].name,
+                          style: ZwsFonts.sans(
+                            size: 14,
+                            weight: FontWeight.w700,
+                            color: t.ink,
+                          ),
+                        ),
+                        Text(
+                          packs[i].meta,
+                          style: ZwsFonts.sans(size: 11, color: t.ink3),
+                        ),
                       ],
                     ),
                   ),
@@ -339,9 +408,14 @@ class _PackButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(9),
           border: Border.all(color: t.line),
         ),
-        child: Text('Terunduh',
-            style: ZwsFonts.sans(
-                size: 12, weight: FontWeight.w700, color: t.ink3)),
+        child: Text(
+          'Terunduh',
+          style: ZwsFonts.sans(
+            size: 12,
+            weight: FontWeight.w700,
+            color: t.ink3,
+          ),
+        ),
       );
     }
     return Material(
@@ -352,9 +426,14 @@ class _PackButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(9),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Text('Unduh',
-              style:
-                  ZwsFonts.sans(size: 12, weight: FontWeight.w700, color: t.bg)),
+          child: Text(
+            'Unduh',
+            style: ZwsFonts.sans(
+              size: 12,
+              weight: FontWeight.w700,
+              color: t.bg,
+            ),
+          ),
         ),
       ),
     );

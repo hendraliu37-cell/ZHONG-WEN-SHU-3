@@ -28,7 +28,7 @@ class _UjianAkhirOverlayState extends State<UjianAkhirOverlay> {
   }
 
   List<_UjianSoal> _generateSoal(AppController c) {
-    final allIds = c.cards.keys.toList();
+    final allIds = c.smartPracticeBase();
     if (allIds.isEmpty) return [];
     allIds.shuffle(c.rng);
 
@@ -40,7 +40,9 @@ class _UjianAkhirOverlayState extends State<UjianAkhirOverlay> {
       final card = c.cards[allIds[i]]!;
       if (used.contains(allIds[i])) continue;
       used.add(allIds[i]);
-      soal.add(_McSoal(c, allIds[i], card.simplified, card.primaryMeaning));
+      soal.add(
+        _McSoal(c, allIds[i], c.primaryHanzi(card), card.primaryMeaning),
+      );
     }
 
     // 6 spelling
@@ -52,7 +54,7 @@ class _UjianAkhirOverlayState extends State<UjianAkhirOverlay> {
         _SpellSoal(
           allIds[i],
           card.meaningPreview,
-          card.simplified,
+          c.primaryHanzi(card),
           card.pinyin,
         ),
       );
@@ -63,7 +65,9 @@ class _UjianAkhirOverlayState extends State<UjianAkhirOverlay> {
       if (used.contains(allIds[i])) continue;
       final card = c.cards[allIds[i]]!;
       used.add(allIds[i]);
-      soal.add(_ToneSoal(allIds[i], card.simplified, card.pinyin, card.tone));
+      soal.add(
+        _ToneSoal(allIds[i], c.primaryHanzi(card), card.pinyin, card.tone),
+      );
     }
 
     soal.shuffle(c.rng);
