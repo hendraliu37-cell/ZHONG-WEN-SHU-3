@@ -41,13 +41,39 @@ class AuthService {
 
   Stream<AuthState> get onAuthChange => _sb.auth.onAuthStateChange;
 
+  String _friendlyAuthError(Object error) {
+    final raw = error is AuthException ? error.message : error.toString();
+    final msg = raw.toLowerCase();
+    if (msg.contains('email rate limit') ||
+        msg.contains('rate limit') ||
+        msg.contains('too many') ||
+        msg.contains('over email send rate limit') ||
+        msg.contains('email address rate limit')) {
+      return 'Batas kirim email tercapai. Tunggu beberapa menit dulu, lalu coba lagi. Kalau akun sudah dibuat, langsung coba masuk tanpa daftar ulang.';
+    }
+    if (msg.contains('email not confirmed')) {
+      return 'Email belum dikonfirmasi. Cek inbox/spam, lalu buka link konfirmasi sebelum masuk.';
+    }
+    if (msg.contains('invalid login credentials')) {
+      return 'Email atau kata sandi salah.';
+    }
+    if (msg.contains('user already registered') ||
+        msg.contains('already registered') ||
+        msg.contains('already exists')) {
+      return 'Email ini sudah terdaftar. Coba masuk saja.';
+    }
+    return raw;
+  }
+
   /// True if [handle] is not yet taken. Falls back to `true` on any error so a
   /// transient check failure never blocks registration (the unique constraint
   /// is the real guard).
   Future<bool> handleAvailable(String handle) async {
     try {
-      final res =
-          await _sb.rpc('handle_available', params: {'p_handle': handle});
+      final res = await _sb.rpc(
+        'handle_available',
+        params: {'p_handle': handle},
+      );
       return res != false;
     } catch (_) {
       return true;
@@ -74,14 +100,14 @@ class AuthService {
       );
       return null;
     } on AuthException catch (e) {
-      return e.message;
+      return _friendlyAuthError(e);
     } catch (e) {
       // The signup trigger raises a unique-violation if the handle is taken.
       final s = e.toString();
       if (s.contains('profiles_handle') || s.contains('duplicate')) {
         return 'Username sudah dipakai.';
       }
-      return s;
+      return _friendlyAuthError(e);
     }
   }
 
@@ -94,9 +120,9 @@ class AuthService {
       await _sb.auth.signInWithPassword(email: email, password: password);
       return null;
     } on AuthException catch (e) {
-      return e.message;
+      return _friendlyAuthError(e);
     } catch (e) {
-      return e.toString();
+      return _friendlyAuthError(e);
     }
   }
 
@@ -109,15 +135,20 @@ class AuthService {
     if (id == null) return;
     try {
       await _sb.from('profiles').update({'track': track}).eq('id', id);
-    } catch (_) {/* best-effort */}
+    } catch (_) {
+      /* best-effort */
+    }
   }
 
   Future<ZwsProfile?> fetchProfile() async {
     final id = uid;
     if (id == null) return null;
     try {
-      final row =
-          await _sb.from('profiles').select().eq('id', id).maybeSingle();
+      final row = await _sb
+          .from('profiles')
+          .select()
+          .eq('id', id)
+          .maybeSingle();
       if (row == null) return null;
       return ZwsProfile(
         handle: (row['handle'] as String?) ?? '',
@@ -142,12 +173,17 @@ class AuthService {
     final id = uid;
     if (id == null) return;
     try {
-      await _sb.from('profiles').update({
-        'xp': xp,
-        'streak': streak,
-        'last_active_date': lastActiveDate,
-      }).eq('id', id);
-    } catch (_) {/* best-effort */}
+      await _sb
+          .from('profiles')
+          .update({
+            'xp': xp,
+            'streak': streak,
+            'last_active_date': lastActiveDate,
+          })
+          .eq('id', id);
+    } catch (_) {
+      /* best-effort */
+    }
   }
 
   /// Updates the username (handle). Returns null on success or an error message.
@@ -157,7 +193,8 @@ class AuthService {
     try {
       await _sb
           .from('profiles')
-          .update({'handle': handle.toLowerCase()}).eq('id', id);
+          .update({'handle': handle.toLowerCase()})
+          .eq('id', id);
       return null;
     } catch (e) {
       final s = e.toString();
@@ -173,7 +210,9 @@ class AuthService {
     if (id == null) return;
     try {
       await _sb.from('profiles').update({'avatar_url': url}).eq('id', id);
-    } catch (_) {/* best-effort */}
+    } catch (_) {
+      /* best-effort */
+    }
   }
 
   /// Uploads an avatar image and returns its public URL (or null on failure).
@@ -183,7 +222,9 @@ class AuthService {
     try {
       final e = (ext == 'jpg') ? 'jpeg' : ext;
       final path = '$id/avatar.$e';
-      await _sb.storage.from('avatars').uploadBinary(
+      await _sb.storage
+          .from('avatars')
+          .uploadBinary(
             path,
             bytes,
             fileOptions: FileOptions(upsert: true, contentType: 'image/$e'),

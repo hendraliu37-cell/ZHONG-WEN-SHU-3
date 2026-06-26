@@ -17,6 +17,7 @@ class AuthScreen extends StatefulWidget {
 
 class _AuthScreenState extends State<AuthScreen> {
   bool _register = false;
+  bool _hidePassword = true;
   final _email = TextEditingController();
   final _pass = TextEditingController();
   final _handle = TextEditingController();
@@ -86,9 +87,13 @@ class _AuthScreenState extends State<AuthScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Center(child: SealMark(size: 58, fontSize: 35, radius: 15)),
+                const Center(
+                  child: SealMark(size: 58, fontSize: 35, radius: 15),
+                ),
                 const SizedBox(height: 20),
-                Center(child: Han('中文书', size: 28, color: t.ink, letterSpacing: 1.6)),
+                Center(
+                  child: Han('中文书', size: 28, color: t.ink, letterSpacing: 1.6),
+                ),
                 const SizedBox(height: 6),
                 Center(
                   child: Text(
@@ -116,7 +121,22 @@ class _AuthScreenState extends State<AuthScreen> {
                   controller: _pass,
                   hint: 'Kata sandi',
                   icon: Icons.lock_outline,
-                  obscure: true,
+                  obscure: _hidePassword,
+                  suffixIcon: IconButton(
+                    tooltip: _hidePassword
+                        ? 'Tampilkan kata sandi'
+                        : 'Sembunyikan kata sandi',
+                    icon: Icon(
+                      _hidePassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                      size: 19,
+                      color: t.ink3,
+                    ),
+                    onPressed: () {
+                      setState(() => _hidePassword = !_hidePassword);
+                    },
+                  ),
                   onSubmitted: (_) => _submit(),
                 ),
                 if (_register) ...[
@@ -128,14 +148,22 @@ class _AuthScreenState extends State<AuthScreen> {
                 if (error != null) ...[
                   const SizedBox(height: 14),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 13,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: t.sealSoft,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Text(error,
-                        style: ZwsFonts.sans(
-                            size: 12, color: t.seal, weight: FontWeight.w600)),
+                    child: Text(
+                      error,
+                      style: ZwsFonts.sans(
+                        size: 12,
+                        color: t.seal,
+                        weight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ],
                 const SizedBox(height: 20),
@@ -155,13 +183,18 @@ class _AuthScreenState extends State<AuthScreen> {
                                   width: 18,
                                   height: 18,
                                   child: CircularProgressIndicator(
-                                      strokeWidth: 2.2, color: t.bg),
+                                    strokeWidth: 2.2,
+                                    color: t.bg,
+                                  ),
                                 )
-                              : Text(_register ? 'Daftar' : 'Masuk',
+                              : Text(
+                                  _register ? 'Daftar' : 'Masuk',
                                   style: ZwsFonts.sans(
-                                      size: 15,
-                                      weight: FontWeight.w700,
-                                      color: t.bg)),
+                                    size: 15,
+                                    weight: FontWeight.w700,
+                                    color: t.bg,
+                                  ),
+                                ),
                         ),
                       ),
                     ),
@@ -176,15 +209,17 @@ class _AuthScreenState extends State<AuthScreen> {
                         style: ZwsFonts.sans(size: 13, color: t.ink2),
                         children: [
                           TextSpan(
-                              text: _register
-                                  ? 'Sudah punya akun? '
-                                  : 'Belum punya akun? '),
+                            text: _register
+                                ? 'Sudah punya akun? '
+                                : 'Belum punya akun? ',
+                          ),
                           TextSpan(
                             text: _register ? 'Masuk' : 'Daftar',
                             style: ZwsFonts.sans(
-                                size: 13,
-                                color: t.seal,
-                                weight: FontWeight.w700),
+                              size: 13,
+                              color: t.seal,
+                              weight: FontWeight.w700,
+                            ),
                           ),
                         ],
                       ),
@@ -207,6 +242,7 @@ class _Field extends StatelessWidget {
   final bool obscure;
   final TextInputType? keyboardType;
   final ValueChanged<String>? onSubmitted;
+  final Widget? suffixIcon;
   const _Field({
     required this.controller,
     required this.hint,
@@ -214,6 +250,7 @@ class _Field extends StatelessWidget {
     this.obscure = false,
     this.keyboardType,
     this.onSubmitted,
+    this.suffixIcon,
   });
 
   @override
@@ -236,7 +273,11 @@ class _Field extends StatelessWidget {
         decoration: InputDecoration(
           isDense: true,
           prefixIcon: Icon(icon, size: 19, color: t.ink3),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 15),
+          suffixIcon: suffixIcon,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 4,
+            vertical: 15,
+          ),
           border: InputBorder.none,
           hintText: hint,
           hintStyle: ZwsFonts.sans(size: 14, color: t.ink3),
@@ -270,12 +311,15 @@ class _TrackPicker extends StatelessWidget {
               children: [
                 Han(han, size: 20, color: on ? t.seal : t.ink2),
                 const SizedBox(height: 4),
-                Text(label,
-                    textAlign: TextAlign.center,
-                    style: ZwsFonts.sans(
-                        size: 10,
-                        weight: FontWeight.w600,
-                        color: on ? t.seal : t.ink2)),
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: ZwsFonts.sans(
+                    size: 10,
+                    weight: FontWeight.w600,
+                    color: on ? t.seal : t.ink2,
+                  ),
+                ),
               ],
             ),
           ),
