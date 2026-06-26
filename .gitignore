@@ -19,6 +19,9 @@ tokens
 *.aab
 *.keystore
 *.jks
+!installers/**/*.apk
+!installers/**/*.exe
+!installers/**/*.zip
 
 # --- Node ---
 node_modules/
