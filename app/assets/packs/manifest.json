@@ -1,0 +1,20 @@
+[
+  { "id": "hsk1", "name": "Paket HSK 1", "meta": "HSK 3.0 · 简+繁 · pinyin+注音", "standard": "hsk", "levelTag": "HSK 1", "asset": "assets/packs/hsk1.json" },
+  { "id": "hsk2", "name": "Paket HSK 2", "meta": "HSK 3.0 · 简+繁 · pinyin+注音", "standard": "hsk", "levelTag": "HSK 2", "asset": "assets/packs/hsk2.json" },
+  { "id": "hsk3", "name": "Paket HSK 3", "meta": "HSK 3.0 · 简+繁 · pinyin+注音", "standard": "hsk", "levelTag": "HSK 3", "asset": "assets/packs/hsk3.json" },
+  { "id": "hsk4", "name": "Paket HSK 4", "meta": "HSK 3.0 · 简+繁 · pinyin+注音", "standard": "hsk", "levelTag": "HSK 4", "asset": "assets/packs/hsk4.json" },
+  { "id": "hsk5", "name": "Paket HSK 5", "meta": "HSK 3.0 · 简+繁 · pinyin+注音", "standard": "hsk", "levelTag": "HSK 5", "asset": "assets/packs/hsk5.json" },
+  { "id": "hsk6", "name": "Paket HSK 6", "meta": "HSK 3.0 · 简+繁 · pinyin+注音", "standard": "hsk", "levelTag": "HSK 6", "asset": "assets/packs/hsk6.json" },
+  { "id": "hsk7", "name": "Paket HSK 7", "meta": "HSK 3.0 · band 7-9 · 简+繁", "standard": "hsk", "levelTag": "HSK 7", "asset": "assets/packs/hsk7.json" },
+  { "id": "hsk8", "name": "Paket HSK 8", "meta": "HSK 3.0 · band 7-9 · 简+繁", "standard": "hsk", "levelTag": "HSK 8", "asset": "assets/packs/hsk8.json" },
+  { "id": "hsk9", "name": "Paket HSK 9", "meta": "HSK 3.0 · band 7-9 · 简+繁", "standard": "hsk", "levelTag": "HSK 9", "asset": "assets/packs/hsk9.json" },
+  { "id": "tocfl_novice1", "name": "TOCFL Novice 1", "meta": "準備級一級 · 繁+简 · 注音", "standard": "tocfl", "levelTag": "TOCFL Novice 1", "asset": "assets/packs/tocfl_novice1.json" },
+  { "id": "tocfl_novice2", "name": "TOCFL Novice 2", "meta": "準備級二級 · 繁+简 · 注音", "standard": "tocfl", "levelTag": "TOCFL Novice 2", "asset": "assets/packs/tocfl_novice2.json" },
+  { "id": "tocfl_band_a1", "name": "TOCFL Band A · Level 1", "meta": "入門級 · 繁+简 · 注音", "standard": "tocfl", "levelTag": "TOCFL Band A · Level 1", "asset": "assets/packs/tocfl_band_a1.json" },
+  { "id": "tocfl_band_a2", "name": "TOCFL Band A · Level 2", "meta": "基礎級 · 繁+简 · 注音", "standard": "tocfl", "levelTag": "TOCFL Band A · Level 2", "asset": "assets/packs/tocfl_band_a2.json" },
+  { "id": "tocfl_band_b1", "name": "TOCFL Band B · Level 3", "meta": "進階級 · 繁+简 · 注音", "standard": "tocfl", "levelTag": "TOCFL Band B · Level 3", "asset": "assets/packs/tocfl_band_b1.json" },
+  { "id": "tocfl_band_b2", "name": "TOCFL Band B · Level 4", "meta": "高階級 · 繁+简 · 注音", "standard": "tocfl", "levelTag": "TOCFL Band B · Level 4", "asset": "assets/packs/tocfl_band_b2.json" },
+  { "id": "tocfl_band_c1", "name": "TOCFL Band C · Level 5", "meta": "流利級 · 繁+简 · 注音", "standard": "tocfl", "levelTag": "TOCFL Band C · Level 5", "asset": "assets/packs/tocfl_band_c1.json" },
+  { "id": "tocfl_band_c2", "name": "TOCFL Band C · Level 6", "meta": "精通級 · 繁+简 · 注音", "standard": "tocfl", "levelTag": "TOCFL Band C · Level 6", "asset": "assets/packs/tocfl_band_c2.json" },
+  { "id": "idioms", "name": "Idiom & Peribahasa 成语·谚语", "meta": "成语 + 谚语/俗语 · 简+繁 · pinyin+注音", "standard": "idiom", "levelTag": "Idiom", "asset": "assets/packs/idioms.json" }
+]

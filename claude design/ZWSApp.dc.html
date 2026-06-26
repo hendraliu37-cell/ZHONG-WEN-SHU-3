@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&family=Noto+Serif+SC:wght@500;700&family=Noto+Serif+TC:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+  ::-webkit-scrollbar{width:8px;height:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  @keyframes zwsScan{0%{left:6%}100%{left:94%}}
+  @keyframes zwsSeal{0%{transform:scale(.5) rotate(-16deg);opacity:.3}60%{transform:scale(1.1) rotate(-6deg);opacity:1}100%{transform:scale(1) rotate(-7deg);opacity:1}}
+  @keyframes zwsFlip{0%{transform:rotateY(-88deg);opacity:0}45%{opacity:1}100%{transform:rotateY(0deg);opacity:1}}
+  .zws-flip{animation:zwsFlip .46s cubic-bezier(.25,.7,.3,1) forwards;transform-origin:center center;}
+  input,button,textarea{font-family:inherit;}
+  input:focus{outline:none;}
+</style>
+</helmet>
+<div style="{{ rootStyle }}">
+
+  <!-- ============ ONBOARDING ============ -->
+  <sc-if value="{{ showOnboarding }}" hint-placeholder-val="{{ true }}">
+    <div style="position:absolute;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:34px;text-align:center;overflow-y:auto;">
+      <div style="width:62px;height:62px;border-radius:16px;background:var(--seal);display:flex;align-items:center;justify-content:center;transform:rotate(-6deg);margin-bottom:26px;box-shadow:0 8px 22px rgba(178,59,46,.28);">
+        <span style="font-family:var(--han);color:#fff;font-size:38px;line-height:1;margin-top:2px;">书</span>
+      </div>
+      <div style="font-family:var(--han);font-size:30px;color:var(--ink);letter-spacing:.06em;">中文书</div>
+      <div style="font-size:13px;color:var(--ink-2);margin-top:6px;letter-spacing:.22em;text-transform:uppercase;font-weight:600;">Zhongwen Shu</div>
+      <div style="font-size:14px;color:var(--ink-2);margin-top:18px;max-width:280px;line-height:1.55;">Pilih jalur belajarmu. Setiap kata disimpan dalam 简 · 繁 · 拼音 · 注音.</div>
+      <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:300px;margin-top:24px;">
+        <button onClick="{{ ob_simplified }}" style="{{ obTrackStyle.simplified }}">
+          <div style="display:flex;align-items:center;gap:12px;"><span style="font-family:var(--han);font-size:24px;">简</span><div style="text-align:left;"><div style="font-weight:700;font-size:14px;line-height:1.25;white-space:nowrap;">Mandarin Daratan</div><div style="font-size:11px;opacity:.7;line-height:1.3;">HSK · 简体 · 拼音 pinyin</div></div></div>
+        </button>
+        <button onClick="{{ ob_traditional }}" style="{{ obTrackStyle.traditional }}">
+          <div style="display:flex;align-items:center;gap:12px;"><span style="font-family:var(--han);font-size:24px;">繁</span><div style="text-align:left;"><div style="font-weight:700;font-size:14px;line-height:1.25;white-space:nowrap;">Mandarin Taiwan</div><div style="font-size:11px;opacity:.7;line-height:1.3;">TOCFL · 繁體 · 注音 zhuyin</div></div></div>
+        </button>
+        <button onClick="{{ ob_both }}" style="{{ obTrackStyle.both }}">
+          <div style="display:flex;align-items:center;gap:12px;"><span style="font-family:var(--han);font-size:22px;">简繁</span><div style="text-align:left;"><div style="font-weight:700;font-size:14px;line-height:1.25;white-space:nowrap;">Dua-duanya</div><div style="font-size:11px;opacity:.7;line-height:1.3;">Belajar simplified &amp; traditional</div></div></div>
+        </button>
+      </div>
+      <button onClick="{{ finishOnboard }}" style="margin-top:26px;width:100%;max-width:300px;background:var(--ink);color:var(--bg);border:none;border-radius:13px;padding:15px;font-size:15px;font-weight:700;cursor:pointer;">Masuk</button>
+    </div>
+  </sc-if>
+
+  <!-- ============ DESKTOP RAIL ============ -->
+  <sc-if value="{{ isDesktop }}" hint-placeholder-val="{{ true }}">
+    <aside style="width:236px;flex-shrink:0;height:100%;border-right:1px solid var(--line);background:var(--surface);display:flex;flex-direction:column;padding:22px 16px;">
+      <div style="display:flex;align-items:center;gap:11px;padding:4px 8px 22px;">
+        <div style="width:36px;height:36px;border-radius:10px;background:var(--seal);display:flex;align-items:center;justify-content:center;transform:rotate(-5deg);"><span style="font-family:var(--han);color:#fff;font-size:23px;line-height:1;margin-top:1px;">书</span></div>
+        <div><div style="font-family:var(--han);font-size:19px;color:var(--ink);letter-spacing:.04em;">中文书</div><div style="font-size:9px;letter-spacing:.24em;color:var(--ink-3);text-transform:uppercase;font-weight:600;">Zhongwen Shu</div></div>
+      </div>
+      <button onClick="{{ nav_beranda }}" style="{{ railStyle.beranda }}"><span style="display:flex">{{ icoHome }}</span>Beranda</button>
+      <button onClick="{{ nav_belajar }}" style="{{ railStyle.belajar }}"><span style="display:flex">{{ icoCards }}</span>Belajar</button>
+      <button onClick="{{ nav_grup }}" style="{{ railStyle.grup }}"><span style="display:flex">{{ icoUsers }}</span>Grup</button>
+      <button onClick="{{ nav_guru }}" style="{{ railStyle.guru }}"><span style="display:flex">{{ icoChat }}</span>Guru</button>
+      <button onClick="{{ nav_profil }}" style="{{ railStyle.profil }}"><span style="display:flex">{{ icoUser }}</span>Profil</button>
+      <div style="margin-top:auto;border-top:1px solid var(--line);padding-top:14px;display:flex;align-items:center;gap:9px;">
+        <div style="width:30px;height:30px;border-radius:8px;background:var(--seal-soft);color:var(--seal);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;font-family:var(--han);">安</div><div><div style="font-size:12px;font-weight:700;color:var(--ink);">Andi</div><div style="font-family:var(--mono);font-size:10px;color:var(--ink-3);">#2207</div></div>
+      </div>
+    </aside>
+  </sc-if>
+
+  <!-- ============ MAIN COLUMN ============ -->
+  <div style="flex:1;min-width:0;height:100%;display:flex;flex-direction:column;position:relative;background:var(--bg);">
+
+    <!-- app bar -->
+    <header style="{{ appbarStyle }}">
+      <div style="display:flex;align-items:center;gap:11px;min-width:0;">
+        <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ true }}">
+          <div style="width:32px;height:32px;border-radius:9px;background:var(--seal);display:flex;align-items:center;justify-content:center;transform:rotate(-5deg);flex-shrink:0;"><span style="font-family:var(--han);color:#fff;font-size:20px;line-height:1;margin-top:1px;">书</span></div>
+        </sc-if>
+        <div style="min-width:0;"><div style="{{ appTitleStyle }}">{{ screenTitle }}</div><div style="font-size:11px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ screenSub }}</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:5px 9px;flex-shrink:0;"><span style="width:7px;height:7px;border-radius:50%;background:var(--seal);"></span><span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--ink);">12</span><span style="font-size:11px;color:var(--ink-3);">hari</span></div>
+    </header>
+
+    <!-- scroll content -->
+    <div style="flex:1;overflow-y:auto;overflow-x:hidden;">
+      <div style="{{ contentWrapStyle }}">
+
+        <!-- ===== BERANDA ===== -->
+        <sc-if value="{{ isBeranda }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <div style="font-size:13px;color:var(--ink-2);">Rabu, 11 Juni 2026</div>
+            <div style="{{ gridTwoStyle }}">
+              <div style="background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;display:flex;align-items:center;gap:18px;">
+                <div style="width:96px;height:96px;border-radius:50%;flex-shrink:0;background:{{ raporRing }};display:flex;align-items:center;justify-content:center;"><div style="width:74px;height:74px;border-radius:50%;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;"><div style="font-size:30px;font-weight:800;color:var(--ink);line-height:1;font-family:var(--mono);">86</div><div style="font-size:10px;color:var(--ink-3);letter-spacing:.1em;">/ 100</div></div></div>
+                <div><div style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);font-weight:600;">Rapor berjalan</div><div style="font-size:24px;font-weight:800;color:var(--ink);margin-top:3px;">Tingkat A−</div><div style="font-size:12px;color:var(--ink-2);margin-top:4px;">XP <span style="font-family:var(--mono);color:var(--seal);font-weight:700;">2.480</span> · Peringkat <span style="font-weight:700;color:var(--ink);">#3</span></div></div>
+              </div>
+              <div style="background:var(--seal);border-radius:18px;padding:20px;color:#fff;display:flex;flex-direction:column;justify-content:space-between;">
+                <div><div style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;opacity:.82;font-weight:600;">Jatuh tempo hari ini</div><div style="display:flex;align-items:baseline;gap:8px;margin-top:6px;"><span style="font-size:40px;font-weight:800;font-family:var(--mono);line-height:1;">21</span><span style="font-size:14px;opacity:.85;">kartu</span></div></div>
+                <button onClick="{{ go_review }}" style="margin-top:16px;background:#fff;color:var(--seal);border:none;border-radius:11px;padding:12px;font-weight:700;font-size:14px;cursor:pointer;">Mulai review</button>
+              </div>
+            </div>
+            <div style="background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;"><div style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);font-weight:600;">Materi dari Guru · hari ini</div><span style="font-size:11px;color:var(--seal);font-weight:700;background:var(--seal-soft);padding:3px 9px;border-radius:20px;">HSK 2</span></div>
+              <div style="display:flex;align-items:center;gap:16px;">
+                <div style="text-align:center;"><div style="font-size:10px;color:var(--ink-3);font-family:var(--mono);margin-bottom:2px;">xǐhuan</div><div style="font-family:var(--han);font-size:38px;color:var(--ink);line-height:1;">{{ materiHanzi }}</div></div>
+                <div style="flex:1;min-width:0;"><div style="font-weight:700;color:var(--ink);font-size:15px;">"suka" — kata kerja</div><div style="font-size:12px;color:var(--ink-2);margin-top:3px;line-height:1.5;">Latihan hari ini: buat 3 kalimat memakai 喜欢. Guru akan menilai PR-mu.</div></div>
+              </div>
+              <button onClick="{{ nav_guru }}" style="margin-top:14px;width:100%;background:var(--surface-2);border:1px solid var(--line);color:var(--ink);border-radius:11px;padding:11px;font-weight:600;font-size:13px;cursor:pointer;">Buka di Guru →</button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+              <button onClick="{{ go_testpick }}" style="{{ quickBtn }}">{{ icoQuiz }}<span>Tes Harian</span></button>
+              <button onClick="{{ go_games }}" style="{{ quickBtn }}">{{ icoGame }}<span>Games</span></button>
+              <button onClick="{{ go_voice }}" style="{{ quickBtn }}">{{ icoMic }}<span>Pelafalan</span></button>
+            </div>
+            <div style="background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;"><div style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);font-weight:600;">Leaderboard global</div><button onClick="{{ openLeader }}" style="background:none;border:none;color:var(--seal);font-weight:700;font-size:12px;cursor:pointer;">Lihat semua →</button></div>
+              <sc-for list="{{ leaderTop }}" as="row" hint-placeholder-count="3">
+                <div style="{{ row.style }}">
+                  <span style="font-family:var(--mono);font-weight:700;width:22px;color:{{ row.rankColor }};">{{ row.rank }}</span>
+                  <span style="flex:1;font-weight:600;color:var(--ink);font-size:13px;">{{ row.name }} <span style="font-family:var(--mono);color:var(--ink-3);font-weight:400;font-size:11px;">· {{ row.id }}</span></span>
+                  <span style="font-family:var(--mono);font-weight:700;color:var(--ink);font-size:13px;">{{ row.score }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ===== BELAJAR ===== -->
+        <sc-if value="{{ isBelajar }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+              <div style="display:flex;align-items:center;gap:13px;min-width:0;"><div style="width:42px;height:42px;border-radius:11px;background:var(--seal-soft);color:var(--seal);display:flex;align-items:center;justify-content:center;flex-shrink:0;">{{ icoCards }}</div><div style="min-width:0;"><div style="font-weight:700;color:var(--ink);font-size:14px;">Lanjutkan review</div><div style="font-size:12px;color:var(--ink-2);">21 kartu siap diulang</div></div></div>
+              <button onClick="{{ go_review }}" style="background:var(--ink);color:var(--bg);border:none;border-radius:10px;padding:10px 16px;font-weight:700;font-size:13px;cursor:pointer;flex-shrink:0;">Mulai</button>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:2px;"><div style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);font-weight:600;">Deck kamu</div><button onClick="{{ openWrite }}" style="background:none;border:none;color:var(--seal);font-weight:700;font-size:12px;cursor:pointer;">+ Tulis kartu</button></div>
+            <div style="{{ deckGridStyle }}">
+              <sc-for list="{{ decks }}" as="d" hint-placeholder-count="4">
+                <button onClick="{{ d.onOpen }}" style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:12px;">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;"><span style="font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.1em;">№ {{ d.idx }}</span><span style="{{ d.dueStyle }}">{{ d.dueLabel }}</span></div>
+                  <div><div style="font-weight:700;color:var(--ink);font-size:15px;line-height:1.2;">{{ d.name }}</div><div style="font-size:12px;color:var(--ink-3);margin-top:2px;">{{ d.cnt }} kartu · {{ d.masteredPct }} dikuasai</div></div>
+                  <div style="height:5px;border-radius:5px;background:var(--line-2);overflow:hidden;"><div style="height:100%;border-radius:5px;background:var(--seal);width:{{ d.masteredPct }};"></div></div>
+                </button>
+              </sc-for>
+            </div>
+            <div style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin-top:2px;">Latihan</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <button onClick="{{ go_testpick }}" style="{{ modeBtn }}"><div style="display:flex;align-items:center;gap:10px;"><span style="color:var(--seal)">{{ icoQuiz }}</span><span style="font-weight:700;color:var(--ink);font-size:14px;">Mode Tes</span></div><span style="font-size:11px;color:var(--ink-3);">Pilihan ganda · self-check · ejaan</span></button>
+              <button onClick="{{ go_games }}" style="{{ modeBtn }}"><div style="display:flex;align-items:center;gap:10px;"><span style="color:var(--seal)">{{ icoGame }}</span><span style="font-weight:700;color:var(--ink);font-size:14px;">Games</span></div><span style="font-size:11px;color:var(--ink-3);">Match · Tebak Nada · Speed</span></button>
+            </div>
+            <div style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin-top:2px;">Paket materi siap pakai</div>
+            <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;">
+              <sc-for list="{{ packs }}" as="p" hint-placeholder-count="3">
+                <div style="{{ p.rowStyle }}">
+                  <div style="min-width:0;"><div style="font-weight:700;color:var(--ink);font-size:14px;">{{ p.name }}</div><div style="font-size:11px;color:var(--ink-3);">{{ p.meta }}</div></div>
+                  <button onClick="{{ p.onClick }}" style="{{ p.btnStyle }}">{{ p.btnLabel }}</button>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ===== GRUP ===== -->
+        <sc-if value="{{ isGrup }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <div style="background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;"><div style="display:flex;align-items:center;gap:6px;"><span style="width:7px;height:7px;border-radius:50%;background:#3a9e6a;"></span><span style="font-size:11px;color:var(--ink-2);font-weight:600;">8 anggota online</span></div><span style="font-size:11px;color:var(--seal);font-weight:700;background:var(--seal-soft);padding:3px 9px;border-radius:20px;">HSK 2</span></div>
+              <div style="font-weight:800;color:var(--ink);font-size:20px;margin-top:10px;">Kelas Pagi · 早班</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:8px;"><span style="font-size:12px;color:var(--ink-2);">Kode undangan</span><span style="font-family:var(--mono);font-weight:700;color:var(--ink);background:var(--surface-2);border:1px dashed var(--line);padding:3px 10px;border-radius:8px;letter-spacing:.12em;">ZWS-7F3K</span></div>
+              <div style="margin-top:14px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px;"><div style="width:38px;height:38px;border-radius:10px;background:var(--seal-soft);color:var(--seal);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:var(--han);font-size:20px;">量</div><div style="min-width:0;"><div style="font-weight:700;color:var(--ink);font-size:13px;">Sesi terjadwal · 19:30</div><div style="font-size:11px;color:var(--ink-2);">量词 — kata bantu bilangan (oleh Guru AI)</div></div></div>
+              <button onClick="{{ openRoom }}" style="margin-top:14px;width:100%;background:var(--ink);color:var(--bg);border:none;border-radius:12px;padding:13px;font-weight:700;font-size:14px;cursor:pointer;">Buka ruang</button>
+            </div>
+            <div style="background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;">
+              <div style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin-bottom:12px;">Gabung ruang lain</div>
+              <div style="display:flex;gap:9px;"><input placeholder="Masukkan kode (cth. ZWS-XXXX)" style="flex:1;background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:12px 14px;font-size:13px;color:var(--ink);font-family:var(--mono);"><button onClick="{{ noop }}" style="background:var(--seal);color:#fff;border:none;border-radius:11px;padding:0 18px;font-weight:700;font-size:13px;cursor:pointer;">Gabung</button></div>
+            </div>
+            <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:15px 16px;display:flex;align-items:center;justify-content:space-between;">
+              <div><div style="font-weight:700;color:var(--ink);font-size:14px;">Tetangga Bahasa · 繁體 TOCFL</div><div style="font-size:11px;color:var(--ink-3);">14 anggota · terakhir aktif 2 jam lalu</div></div>
+              <span style="font-size:11px;color:var(--ink-3);font-weight:600;border:1px solid var(--line);padding:5px 11px;border-radius:20px;">Murid</span>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ===== GURU ===== -->
+        <sc-if value="{{ isGuru }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:14px;height:100%;">
+            <div style="display:inline-flex;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:4px;align-self:flex-start;">
+              <button onClick="{{ guru_chat }}" style="{{ guruTabStyle.chat }}">Chat privat</button>
+              <button onClick="{{ guru_voice }}" style="{{ guruTabStyle.voice }}">Suara &amp; Nada</button>
+            </div>
+            <sc-if value="{{ isGuruChat }}" hint-placeholder-val="{{ true }}">
+              <div style="flex:1;display:flex;flex-direction:column;gap:12px;min-height:340px;">
+                <div style="flex:1;display:flex;flex-direction:column;gap:12px;overflow-y:auto;padding-right:2px;">
+                  <div style="background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--seal);border-radius:12px;padding:13px 15px;"><div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--seal);font-weight:700;margin-bottom:5px;">Materi harian · berkesinambungan</div><div style="font-size:13px;color:var(--ink);line-height:1.5;">HSK 2 · Unit 4 — Kata kerja perasaan. Target hari ini: 喜欢, 想, 觉得.</div></div>
+                  <sc-for list="{{ messages }}" as="m" hint-placeholder-count="3">
+                    <div style="{{ m.wrapStyle }}"><div style="{{ m.bubbleStyle }}">{{ m.text }}</div></div>
+                  </sc-for>
+                </div>
+                <div style="display:flex;gap:9px;align-items:flex-end;">
+                  <input value="{{ chatInput }}" onChange="{{ onChatInput }}" onKeyDown="{{ onChatKey }}" placeholder="Tulis ke Guru… (cth. 我喜欢…)" style="flex:1;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:13px 15px;font-size:14px;color:var(--ink);">
+                  <button onClick="{{ sendChat }}" style="background:var(--seal);color:#fff;border:none;border-radius:13px;width:46px;height:46px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">{{ icoSend }}</button>
+                </div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ isGuruVoice }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;flex-direction:column;gap:14px;">
+                <div style="background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;">
+                  <div style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);font-weight:600;">Skor pelafalan</div>
+                  <div style="display:flex;align-items:center;gap:18px;margin-top:14px;">
+                    <div style="text-align:center;"><div style="font-family:var(--mono);font-size:11px;color:var(--ink-3);">nǐ hǎo</div><div style="font-family:var(--han);font-size:44px;color:var(--ink);line-height:1.05;">{{ voiceHanzi }}</div></div>
+                    <div style="flex:1;display:flex;flex-direction:column;gap:7px;">
+                      <div style="{{ sylRow }}"><span style="font-family:var(--han);font-size:18px;color:var(--ink);">{{ voiceSyl1 }}</span><div style="flex:1;height:6px;border-radius:6px;background:var(--line-2);overflow:hidden;"><div style="height:100%;width:92%;background:#3a9e6a;border-radius:6px;"></div></div><span style="font-family:var(--mono);font-size:12px;font-weight:700;color:#3a9e6a;">92</span></div>
+                      <div style="{{ sylRow }}"><span style="font-family:var(--han);font-size:18px;color:var(--ink);">{{ voiceSyl2 }}</span><div style="flex:1;height:6px;border-radius:6px;background:var(--line-2);overflow:hidden;"><div style="height:100%;width:74%;background:var(--gold);border-radius:6px;"></div></div><span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--gold);">74</span></div>
+                    </div>
+                  </div>
+                  <button onClick="{{ noop }}" style="margin-top:16px;width:100%;background:var(--seal-soft);color:var(--seal);border:none;border-radius:12px;padding:13px;font-weight:700;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">{{ icoMic }} Rekam ulang</button>
+                </div>
+                <div style="background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;"><div style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);font-weight:600;">Tuner nada</div><span style="font-family:var(--mono);font-size:12px;color:var(--seal);font-weight:700;">{{ tunerReadout }}</span></div>
+                  <div style="display:flex;gap:7px;margin-top:13px;">
+                    <button onClick="{{ tuner_1 }}" style="{{ toneSelStyle.1 }}">一声 ˉ</button>
+                    <button onClick="{{ tuner_2 }}" style="{{ toneSelStyle.2 }}">二声 ˊ</button>
+                    <button onClick="{{ tuner_3 }}" style="{{ toneSelStyle.3 }}">三声 ˇ</button>
+                    <button onClick="{{ tuner_4 }}" style="{{ toneSelStyle.4 }}">四声 ˋ</button>
+                  </div>
+                  <div style="position:relative;margin-top:13px;height:140px;background:var(--surface-2);border:1px solid var(--line);border-radius:14px;overflow:hidden;">
+                    <div style="position:absolute;left:0;right:0;top:50%;border-top:1px dashed var(--line);"></div>
+                    {{ tunerContour }}
+                    <canvas ref="{{ tunerCanvasRef }}" style="position:absolute;inset:0;width:100%;height:100%;"></canvas>
+                  </div>
+                  <button onClick="{{ toggleMic }}" style="{{ micBtnStyle }}">{{ icoMic }} {{ micBtnLabel }}</button>
+                  <div style="font-size:11px;color:var(--ink-3);margin-top:10px;line-height:1.5;">{{ tunerHint }}</div>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <!-- ===== PROFIL ===== -->
+        <sc-if value="{{ isProfil }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <div style="background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;display:flex;align-items:center;gap:16px;">
+              <div style="width:64px;height:64px;border-radius:16px;background:var(--seal);display:flex;align-items:center;justify-content:center;transform:rotate(-4deg);flex-shrink:0;"><span style="font-family:var(--han);color:#fff;font-size:34px;line-height:1;">安</span></div>
+              <div style="min-width:0;"><div style="font-size:22px;font-weight:800;color:var(--ink);">Andi</div><div style="font-family:var(--mono);font-size:13px;color:var(--ink-3);">[ andi ] · #2207</div><div style="font-size:12px;color:var(--ink-2);margin-top:4px;">Belajar Mandarin sejak Maret · 中文加油！</div></div>
+            </div>
+            <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;">
+              <div style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin-bottom:12px;">Jalur belajar</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+                <button onClick="{{ track_s }}" style="{{ trackStyle.simplified }}"><span style="font-family:var(--han);font-size:22px;">简</span><span style="font-size:11px;font-weight:600;">Simplified</span></button>
+                <button onClick="{{ track_t }}" style="{{ trackStyle.traditional }}"><span style="font-family:var(--han);font-size:22px;">繁</span><span style="font-size:11px;font-weight:600;">Traditional</span></button>
+                <button onClick="{{ track_b }}" style="{{ trackStyle.both }}"><span style="font-family:var(--han);font-size:20px;">简繁</span><span style="font-size:11px;font-weight:600;">Keduanya</span></button>
+              </div>
+            </div>
+            <div style="background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;"><div style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);font-weight:600;">Rapor berbobot</div><div style="font-size:13px;font-weight:800;color:var(--seal);font-family:var(--mono);">86 / A−</div></div>
+              <div style="display:flex;flex-direction:column;gap:12px;">
+                <sc-for list="{{ rapor }}" as="r" hint-placeholder-count="5">
+                  <div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;"><span style="font-size:13px;color:var(--ink);font-weight:600;">{{ r.name }} <span style="color:var(--ink-3);font-weight:400;font-size:11px;">· bobot {{ r.weight }}</span></span><span style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--ink);">{{ r.score }}</span></div>
+                    <div style="height:6px;border-radius:6px;background:var(--line-2);overflow:hidden;"><div style="height:100%;border-radius:6px;background:{{ r.color }};width:{{ r.score }}%;"></div></div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden;">
+              <div style="padding:14px 16px;border-bottom:1px solid var(--line);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);font-weight:600;">Pengaturan</div>
+              <div style="{{ setRow }}"><div><div style="font-weight:600;color:var(--ink);font-size:14px;">Mode tampilan</div><div style="font-size:11px;color:var(--ink-3);">{{ themeLabel }}</div></div><div style="display:inline-flex;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:3px;"><button onClick="{{ setLight }}" style="{{ themeSeg.light }}">Terang</button><button onClick="{{ setDark }}" style="{{ themeSeg.dark }}">Gelap</button></div></div>
+              <div style="{{ setRow }}"><div><div style="font-weight:600;color:var(--ink);font-size:14px;">Tampilkan 注音 (zhuyin)</div><div style="font-size:11px;color:var(--ink-3);">Romanisasi Taiwan di kartu</div></div><button onClick="{{ toggleZhuyin }}" style="{{ zhuyinSwitch }}"><span style="{{ zhuyinKnob }}"></span></button></div>
+              <div style="{{ setRow }}"><div><div style="font-weight:600;color:var(--ink);font-size:14px;">Sumber suara</div><div style="font-size:11px;color:var(--ink-3);">Suara daratan &amp; Taiwan</div></div><span style="font-family:var(--mono);font-size:12px;color:var(--ink-3);">Otomatis</span></div>
+              <div style="{{ setRow }}"><div><div style="font-weight:600;color:var(--ink);font-size:14px;">Bahasa antarmuka</div><div style="font-size:11px;color:var(--ink-3);">Indonesia</div></div><span style="font-family:var(--mono);font-size:12px;color:var(--ink-3);">ID / EN</span></div>
+              <div style="padding:14px 16px;display:flex;align-items:center;justify-content:space-between;"><div><div style="font-weight:600;color:var(--ink);font-size:14px;">Atur ulang jalur belajar</div><div style="font-size:11px;color:var(--ink-3);">Buka kembali layar onboarding</div></div><button onClick="{{ resetOnboard }}" style="background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:9px 14px;font-weight:600;font-size:13px;color:var(--seal);cursor:pointer;">Buka</button></div>
+            </div>
+          </div>
+        </sc-if>
+
+      </div>
+    </div>
+
+    <!-- ===== MOBILE BOTTOM NAV ===== -->
+    <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ true }}">
+      <nav style="display:flex;border-top:1px solid var(--line);background:var(--surface);padding:8px 6px 10px;flex-shrink:0;">
+        <button onClick="{{ nav_beranda }}" style="{{ tabStyle.beranda }}">{{ icoHome }}<span>Beranda</span></button>
+        <button onClick="{{ nav_belajar }}" style="{{ tabStyle.belajar }}">{{ icoCards }}<span>Belajar</span></button>
+        <button onClick="{{ nav_grup }}" style="{{ tabStyle.grup }}">{{ icoUsers }}<span>Grup</span></button>
+        <button onClick="{{ nav_guru }}" style="{{ tabStyle.guru }}">{{ icoChat }}<span>Guru</span></button>
+        <button onClick="{{ nav_profil }}" style="{{ tabStyle.profil }}">{{ icoUser }}<span>Profil</span></button>
+      </nav>
+    </sc-if>
+
+    <!-- ===== OVERLAY: DECK DETAIL ===== -->
+    <sc-if value="{{ subDeck }}" hint-placeholder-val="{{ true }}">
+      <div style="position:absolute;inset:0;z-index:40;background:var(--bg);display:flex;flex-direction:column;">
+        <div style="{{ overlayBar }}"><button onClick="{{ closeSub }}" style="{{ backBtn }}">{{ icoBack }}</button><div style="flex:1;min-width:0;"><div style="font-weight:800;color:var(--ink);font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ deckName }}</div><div style="font-size:11px;color:var(--ink-3);">{{ deckSub }}</div></div><div style="width:38px;"></div></div>
+        <div style="flex:1;overflow-y:auto;padding:16px;"><div style="max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:14px;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <button onClick="{{ deck_review }}" style="background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:13px;font-weight:700;font-size:14px;color:var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;"><span style="color:var(--seal)">{{ icoCards }}</span>Review</button>
+            <button onClick="{{ deck_test }}" style="background:var(--seal);border:none;border-radius:13px;padding:13px;font-weight:700;font-size:14px;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">{{ icoQuiz }} Tes deck</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:2px 2px;">
+            <span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);font-weight:600;">Penguasaan</span>
+            <sc-for list="{{ masteryLegend }}" as="L" hint-placeholder-count="4">
+              <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--ink-2);"><span style="width:9px;height:9px;border-radius:50%;background:{{ L.color }};"></span>{{ L.label }}</span>
+            </sc-for>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;">
+            <sc-for list="{{ deckCards }}" as="c" hint-placeholder-count="4">
+              <button onClick="{{ c.onSpeak }}" style="{{ c.rowStyle }}">
+                <div style="display:flex;align-items:center;gap:14px;min-width:0;">
+                  <span style="font-family:var(--han);font-size:30px;color:var(--ink);line-height:1;">{{ c.han }}</span>
+                  <div style="min-width:0;text-align:left;"><div style="font-family:var(--mono);font-size:11px;color:var(--ink-3);">{{ c.py }}</div><div style="font-size:13px;color:var(--ink-2);">{{ c.meaning }}</div></div>
+                </div>
+                <span style="display:inline-flex;align-items:center;gap:6px;flex-shrink:0;"><span style="width:8px;height:8px;border-radius:50%;background:{{ c.color }};"></span><span style="font-size:11px;font-weight:700;color:{{ c.color }};">{{ c.label }}</span></span>
+              </button>
+            </sc-for>
+          </div>
+          <sc-if value="{{ notAdding }}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{ openAdd }}" style="background:var(--surface);border:1px dashed var(--line);border-radius:14px;padding:14px;font-weight:700;font-size:14px;color:var(--seal);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">+ Tambah kartu ke deck</button>
+          </sc-if>
+          <sc-if value="{{ adding }}" hint-placeholder-val="{{ true }}">
+            <div style="background:var(--surface);border:1px solid var(--seal);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px;">
+              <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--seal);font-weight:700;">Kartu baru</div>
+              <input ref="{{ nfRefHan }}" placeholder="汉字 / 漢字" style="{{ nfInput }}">
+              <input ref="{{ nfRefPy }}" placeholder="pinyin (cth. nǐ hǎo)" style="{{ nfInput }}">
+              <input ref="{{ nfRefM }}" placeholder="arti (Bahasa Indonesia)" style="{{ nfInput }}">
+              <div style="display:flex;gap:9px;margin-top:2px;">
+                <button onClick="{{ cancelAdd }}" style="flex:1;background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:12px;font-weight:700;font-size:13px;color:var(--ink-2);cursor:pointer;">Batal</button>
+                <button onClick="{{ saveCard }}" style="flex:2;background:var(--seal);border:none;border-radius:11px;padding:12px;font-weight:700;font-size:13px;color:#fff;cursor:pointer;">Simpan kartu</button>
+              </div>
+            </div>
+          </sc-if>
+        </div></div>
+      </div>
+    </sc-if>
+
+    <!-- ===== OVERLAY: TEST PICKER ===== -->
+    <sc-if value="{{ subTestpick }}" hint-placeholder-val="{{ true }}">
+      <div style="position:absolute;inset:0;z-index:41;background:var(--bg);display:flex;flex-direction:column;">
+        <div style="{{ overlayBar }}"><button onClick="{{ closeSub }}" style="{{ backBtn }}">{{ icoBack }}</button><div style="flex:1;text-align:center;"><div style="font-weight:800;color:var(--ink);font-size:15px;">Pilih mode tes</div><div style="font-size:11px;color:var(--ink-3);">{{ testpickSub }}</div></div><div style="width:38px;"></div></div>
+        <div style="flex:1;overflow-y:auto;padding:18px;"><div style="max-width:480px;margin:0 auto;display:flex;flex-direction:column;gap:12px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 16px;">
+            <div><div style="font-size:14px;font-weight:700;color:var(--ink);">Jumlah soal</div><div style="font-size:11px;color:var(--ink-3);">Kelipatan 10 · maksimal 200</div></div>
+            <div style="display:flex;align-items:center;gap:10px;"><button onClick="{{ decCount }}" style="{{ stepBtn }}">−</button><span style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--ink);width:40px;text-align:center;">{{ qCount }}</span><button onClick="{{ incCount }}" style="{{ stepBtn }}">+</button></div>
+          </div>
+          <button onClick="{{ start_mc }}" style="{{ pickCard }}"><div style="display:flex;align-items:center;gap:14px;"><div style="{{ pickIcon }}">{{ icoQuiz }}</div><div style="text-align:left;"><div style="font-weight:700;color:var(--ink);font-size:15px;">Pilihan Ganda</div><div style="font-size:12px;color:var(--ink-3);margin-top:1px;">Pilih arti yang benar dari 4 opsi</div></div></div><span style="color:var(--ink-3);">{{ icoChevron }}</span></button>
+          <button onClick="{{ start_self }}" style="{{ pickCard }}"><div style="display:flex;align-items:center;gap:14px;"><div style="{{ pickIcon }}">{{ icoCards }}</div><div style="text-align:left;"><div style="font-weight:700;color:var(--ink);font-size:15px;">Self-check</div><div style="font-size:12px;color:var(--ink-3);margin-top:1px;">Balik kartu, nilai sendiri benar / salah</div></div></div><span style="color:var(--ink-3);">{{ icoChevron }}</span></button>
+          <button onClick="{{ start_spell }}" style="{{ pickCard }}"><div style="display:flex;align-items:center;gap:14px;"><div style="{{ pickIcon }}">{{ icoSpell }}</div><div style="text-align:left;"><div style="font-weight:700;color:var(--ink);font-size:15px;">Tes Ejaan</div><div style="font-size:12px;color:var(--ink-3);margin-top:1px;">Ketik pinyin dari kata yang muncul</div></div></div><span style="color:var(--ink-3);">{{ icoChevron }}</span></button>
+        </div></div>
+      </div>
+    </sc-if>
+
+    <!-- ===== OVERLAY: REVIEW / SELF-CHECK (3D FLIP) ===== -->
+    <sc-if value="{{ subReview }}" hint-placeholder-val="{{ true }}">
+      <div style="position:absolute;inset:0;z-index:42;background:var(--bg);display:flex;flex-direction:column;">
+        <div style="{{ overlayBar }}"><button onClick="{{ closeSub }}" style="{{ backBtn }}">{{ icoBack }}</button><div style="flex:1;text-align:center;"><div style="font-weight:800;color:var(--ink);font-size:15px;">{{ reviewTitle }}</div><div style="font-family:var(--mono);font-size:11px;color:var(--ink-3);">{{ reviewProgress }}</div></div><div style="width:38px;"></div></div>
+        <div style="height:4px;background:var(--line-2);"><div style="height:100%;background:var(--seal);width:{{ reviewBar }};transition:width .3s;"></div></div>
+
+        <sc-if value="{{ reviewActive }}" hint-placeholder-val="{{ true }}">
+          <div style="flex:1;display:flex;flex-direction:column;padding:22px;gap:16px;justify-content:center;align-items:center;">
+            <div onClick="{{ flipCard }}" style="width:100%;max-width:360px;height:330px;cursor:pointer;perspective:1400px;position:relative;">
+              <!-- FRONT -->
+              <sc-if value="{{ cardNotFlipped }}" hint-placeholder-val="{{ true }}">
+                <div class="zws-flip" key="{{ faceKeyFront }}" style="{{ faceStyle }}">
+                  <div style="position:absolute;top:14px;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:0 16px;">
+                    <span style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:600;">Kata</span>
+                    <button onClick="{{ speakReview }}" style="background:var(--surface-2);border:1px solid var(--line);border-radius:9px;width:34px;height:34px;color:var(--seal);cursor:pointer;display:flex;align-items:center;justify-content:center;">{{ icoSound }}</button>
+                  </div>
+                  <div style="font-family:var(--han);font-size:78px;color:var(--ink);line-height:1.05;">{{ cardHanzi }}</div>
+                  <sc-if value="{{ showSecondary }}" hint-placeholder-val="{{ true }}"><div style="font-size:13px;color:var(--ink-3);margin-top:8px;">繁體 <span style="font-family:var(--han);font-size:20px;color:var(--ink-2);">{{ cardSecondary }}</span></div></sc-if>
+                  <div style="position:absolute;bottom:16px;left:0;right:0;font-size:11px;color:var(--ink-3);">Ketuk kartu untuk lihat jawaban</div>
+                </div>
+              </sc-if>
+              <!-- BACK -->
+              <sc-if value="{{ cardFlipped }}" hint-placeholder-val="{{ true }}">
+                <div class="zws-flip" key="{{ faceKeyBack }}" style="{{ faceStyle }}">
+                  <div style="position:absolute;top:14px;right:16px;"><button onClick="{{ speakReview }}" style="background:var(--surface-2);border:1px solid var(--line);border-radius:9px;width:34px;height:34px;color:var(--seal);cursor:pointer;display:flex;align-items:center;justify-content:center;">{{ icoSound }}</button></div>
+                  <div style="font-family:var(--mono);font-size:13px;color:var(--ink-3);letter-spacing:.04em;">{{ cardPinyin }}</div>
+                  <sc-if value="{{ showZhuyin }}" hint-placeholder-val="{{ true }}"><div style="font-family:var(--han);font-size:15px;color:var(--seal);margin-top:3px;letter-spacing:.1em;">{{ cardZhuyin }}</div></sc-if>
+                  <div style="font-family:var(--han);font-size:34px;color:var(--ink);margin-top:8px;line-height:1.1;">{{ cardHanzi }}</div>
+                  <div style="font-size:22px;font-weight:800;color:var(--ink);margin-top:8px;">{{ cardMeaning }}</div>
+                  <div style="border-top:1px solid var(--line);margin-top:14px;padding-top:14px;width:100%;"><div style="font-family:var(--han);font-size:20px;color:var(--ink-2);">{{ cardExample }}</div><div style="font-size:12px;color:var(--ink-3);margin-top:4px;">{{ cardExampleId }}</div></div>
+                </div>
+              </sc-if>
+            </div>
+
+            <sc-if value="{{ cardFlipped }}" hint-placeholder-val="{{ true }}">
+              <div style="width:100%;max-width:360px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                <button onClick="{{ rate_wrong }}" style="{{ rateWrong }}">{{ icoCross }} Salah</button>
+                <button onClick="{{ rate_correct }}" style="{{ rateCorrect }}">{{ icoCheck }} Benar</button>
+              </div>
+            </sc-if>
+            <sc-if value="{{ cardNotFlipped }}" hint-placeholder-val="{{ true }}">
+              <button onClick="{{ flipCard }}" style="width:100%;max-width:360px;background:var(--ink);color:var(--bg);border:none;border-radius:14px;padding:15px;font-weight:700;font-size:15px;cursor:pointer;">Lihat jawaban</button>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ reviewFinished }}" hint-placeholder-val="{{ true }}">
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center;">
+            <div style="width:96px;height:96px;border-radius:20px;background:var(--seal);display:flex;align-items:center;justify-content:center;animation:zwsSeal .55s ease both;box-shadow:0 14px 34px rgba(178,59,46,.32);"><span style="font-family:var(--han);color:#fff;font-size:48px;">完</span></div>
+            <div style="font-size:24px;font-weight:800;color:var(--ink);margin-top:22px;">{{ reviewDoneTitle }}</div>
+            <div style="font-size:14px;color:var(--ink-2);margin-top:6px;max-width:280px;line-height:1.5;">{{ reviewDoneText }}</div>
+            <button onClick="{{ closeSub }}" style="margin-top:24px;background:var(--ink);color:var(--bg);border:none;border-radius:13px;padding:14px 30px;font-weight:700;font-size:15px;cursor:pointer;">Selesai</button>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- ===== OVERLAY: MULTIPLE CHOICE ===== -->
+    <sc-if value="{{ subQuiz }}" hint-placeholder-val="{{ true }}">
+      <div style="position:absolute;inset:0;z-index:42;background:var(--bg);display:flex;flex-direction:column;">
+        <div style="{{ overlayBar }}"><button onClick="{{ closeSub }}" style="{{ backBtn }}">{{ icoBack }}</button><div style="flex:1;text-align:center;"><div style="font-weight:800;color:var(--ink);font-size:15px;">Pilihan Ganda</div><div style="font-family:var(--mono);font-size:11px;color:var(--ink-3);">{{ quizProgress }} · skor {{ quizScore }}</div></div><div style="width:38px;"></div></div>
+        <div style="height:4px;background:var(--line-2);"><div style="height:100%;background:var(--seal);width:{{ quizBar }};transition:width .3s;"></div></div>
+        <sc-if value="{{ quizActive }}" hint-placeholder-val="{{ true }}">
+          <div style="flex:1;display:flex;flex-direction:column;padding:22px;gap:18px;justify-content:center;">
+            <div style="text-align:center;"><div style="font-size:12px;color:var(--ink-3);">Apa arti kata ini?</div><div style="font-family:var(--han);font-size:66px;color:var(--ink);line-height:1.1;margin-top:6px;">{{ quizHanzi }}</div><div style="font-family:var(--mono);font-size:14px;color:var(--ink-3);">{{ quizPinyin }}</div></div>
+            <div style="display:flex;flex-direction:column;gap:10px;max-width:420px;width:100%;align-self:center;">
+              <sc-for list="{{ quizOptions }}" as="o" hint-placeholder-count="4">
+                <button onClick="{{ o.onClick }}" style="{{ o.style }}"><span>{{ o.text }}</span><span style="font-family:var(--han);font-size:16px;">{{ o.mark }}</span></button>
+              </sc-for>
+            </div>
+            <sc-if value="{{ quizAnswered }}" hint-placeholder-val="{{ true }}">
+              <button onClick="{{ nextQuiz }}" style="max-width:420px;width:100%;align-self:center;background:var(--ink);color:var(--bg);border:none;border-radius:13px;padding:14px;font-weight:700;font-size:15px;cursor:pointer;">{{ quizNextLabel }}</button>
+            </sc-if>
+          </div>
+        </sc-if>
+        <sc-if value="{{ quizFinished }}" hint-placeholder-val="{{ true }}">
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center;">
+            <div style="font-family:var(--mono);font-size:64px;font-weight:700;color:var(--seal);">{{ quizScore }}<span style="font-size:24px;color:var(--ink-3);">/{{ quizTotal }}</span></div>
+            <div style="font-size:22px;font-weight:800;color:var(--ink);margin-top:8px;">{{ quizVerdict }}</div>
+            <div style="font-size:13px;color:var(--ink-2);margin-top:6px;">Masuk ke nilai Ujian Harian.</div>
+            <div style="display:flex;gap:10px;margin-top:22px;"><button onClick="{{ restartQuiz }}" style="background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:12px;padding:13px 22px;font-weight:700;font-size:14px;cursor:pointer;">Ulang</button><button onClick="{{ closeSub }}" style="background:var(--ink);color:var(--bg);border:none;border-radius:12px;padding:13px 22px;font-weight:700;font-size:14px;cursor:pointer;">Selesai</button></div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- ===== OVERLAY: SPELLING TEST ===== -->
+    <sc-if value="{{ subSpell }}" hint-placeholder-val="{{ true }}">
+      <div style="position:absolute;inset:0;z-index:42;background:var(--bg);display:flex;flex-direction:column;">
+        <div style="{{ overlayBar }}"><button onClick="{{ closeSub }}" style="{{ backBtn }}">{{ icoBack }}</button><div style="flex:1;text-align:center;"><div style="font-weight:800;color:var(--ink);font-size:15px;">Tes Ejaan</div><div style="font-family:var(--mono);font-size:11px;color:var(--ink-3);">{{ spellProgress }} · skor {{ spellScore }}</div></div><div style="width:38px;"></div></div>
+        <div style="height:4px;background:var(--line-2);"><div style="height:100%;background:var(--seal);width:{{ spellBar }};transition:width .3s;"></div></div>
+        <sc-if value="{{ spellActive }}" hint-placeholder-val="{{ true }}">
+          <div style="flex:1;display:flex;flex-direction:column;padding:22px;gap:18px;justify-content:center;align-items:center;">
+            <div style="text-align:center;"><div style="font-size:12px;color:var(--ink-3);">Ketik pinyin untuk kata ini</div><div style="display:flex;align-items:center;gap:12px;justify-content:center;margin-top:8px;"><div style="font-family:var(--han);font-size:72px;color:var(--ink);line-height:1.05;">{{ spellHanzi }}</div><button onClick="{{ speakSpell }}" style="background:var(--surface-2);border:1px solid var(--line);border-radius:10px;width:40px;height:40px;color:var(--seal);cursor:pointer;display:flex;align-items:center;justify-content:center;">{{ icoSound }}</button></div><div style="font-size:13px;color:var(--ink-2);margin-top:4px;">{{ spellMeaning }}</div></div>
+            <input value="{{ spellInputVal }}" onChange="{{ onSpellInput }}" onKeyDown="{{ onSpellKey }}" placeholder="Ketik di sini" style="{{ spellInputStyle }}">
+            <sc-if value="{{ spellChecked }}" hint-placeholder-val="{{ true }}">
+              <div style="{{ spellResultStyle }}">{{ spellResultText }}</div>
+              <button onClick="{{ nextSpell }}" style="width:100%;max-width:380px;background:var(--ink);color:var(--bg);border:none;border-radius:13px;padding:14px;font-weight:700;font-size:15px;cursor:pointer;">{{ spellNextLabel }}</button>
+            </sc-if>
+            <sc-if value="{{ spellNotChecked }}" hint-placeholder-val="{{ true }}">
+              <button onClick="{{ checkSpell }}" style="width:100%;max-width:380px;background:var(--seal);color:#fff;border:none;border-radius:13px;padding:14px;font-weight:700;font-size:15px;cursor:pointer;">Periksa</button>
+            </sc-if>
+          </div>
+        </sc-if>
+        <sc-if value="{{ spellFinished }}" hint-placeholder-val="{{ true }}">
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center;">
+            <div style="font-family:var(--mono);font-size:64px;font-weight:700;color:var(--seal);">{{ spellScore }}<span style="font-size:24px;color:var(--ink-3);">/{{ spellTotal }}</span></div>
+            <div style="font-size:22px;font-weight:800;color:var(--ink);margin-top:8px;">{{ spellVerdict }}</div>
+            <div style="display:flex;gap:10px;margin-top:22px;"><button onClick="{{ restartSpell }}" style="background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:12px;padding:13px 22px;font-weight:700;font-size:14px;cursor:pointer;">Ulang</button><button onClick="{{ closeSub }}" style="background:var(--ink);color:var(--bg);border:none;border-radius:12px;padding:13px 22px;font-weight:700;font-size:14px;cursor:pointer;">Selesai</button></div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- ===== OVERLAY: GAMES ===== -->
+    <sc-if value="{{ subGames }}" hint-placeholder-val="{{ true }}">
+      <div style="position:absolute;inset:0;z-index:41;background:var(--bg);display:flex;flex-direction:column;">
+        <div style="{{ overlayBar }}"><button onClick="{{ closeSub }}" style="{{ backBtn }}">{{ icoBack }}</button><div style="flex:1;text-align:center;font-weight:800;color:var(--ink);font-size:15px;">Games</div><div style="width:38px;"></div></div>
+        <div style="flex:1;overflow-y:auto;padding:18px;"><div style="max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:12px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 16px;">
+            <div><div style="font-size:14px;font-weight:700;color:var(--ink);">Jumlah soal</div><div style="font-size:11px;color:var(--ink-3);">Kelipatan 10 · maksimal 200</div></div>
+            <div style="display:flex;align-items:center;gap:10px;"><button onClick="{{ decCount }}" style="{{ stepBtn }}">−</button><span style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--ink);width:40px;text-align:center;">{{ qCount }}</span><button onClick="{{ incCount }}" style="{{ stepBtn }}">+</button></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;">
+          <button onClick="{{ go_tone }}" style="{{ gameCard }}"><div style="font-family:var(--han);font-size:30px;color:var(--seal);">声</div><div style="font-weight:700;color:var(--ink);font-size:14px;margin-top:8px;">Tebak Nada</div><div style="font-size:11px;color:var(--ink-3);margin-top:2px;">Dengar &amp; pilih nada 1–4</div></button>
+          <button onClick="{{ go_match }}" style="{{ gameCard }}"><div style="font-family:var(--han);font-size:30px;color:var(--seal);">配</div><div style="font-weight:700;color:var(--ink);font-size:14px;margin-top:8px;">Match</div><div style="font-size:11px;color:var(--ink-3);margin-top:2px;">Pasangkan 汉字 ↔ arti</div></button>
+          <button onClick="{{ go_listen }}" style="{{ gameCard }}"><div style="font-family:var(--han);font-size:30px;color:var(--seal);">听</div><div style="font-weight:700;color:var(--ink);font-size:14px;margin-top:8px;">Listening Quiz</div><div style="font-size:11px;color:var(--ink-3);margin-top:2px;">Dengar audio → jawab</div></button>
+          <button onClick="{{ go_speed }}" style="{{ gameCard }}"><div style="font-family:var(--han);font-size:30px;color:var(--seal);">速</div><div style="font-weight:700;color:var(--ink);font-size:14px;margin-top:8px;">Speed Recall</div><div style="font-size:11px;color:var(--ink-3);margin-top:2px;">Kebut kartu lawan waktu</div></button>
+          </div>
+        </div></div>
+      </div>
+    </sc-if>
+
+    <!-- ===== OVERLAY: TONE GAME ===== -->
+    <sc-if value="{{ subTone }}" hint-placeholder-val="{{ true }}">
+      <div style="position:absolute;inset:0;z-index:42;background:var(--bg);display:flex;flex-direction:column;">
+        <div style="{{ overlayBar }}"><button onClick="{{ go_games }}" style="{{ backBtn }}">{{ icoBack }}</button><div style="flex:1;text-align:center;"><div style="font-weight:800;color:var(--ink);font-size:15px;">Tebak Nada</div><div style="font-family:var(--mono);font-size:11px;color:var(--ink-3);">{{ toneProgress }} · {{ toneScore }} benar</div></div><div style="width:38px;"></div></div>
+        <sc-if value="{{ toneActive }}" hint-placeholder-val="{{ true }}">
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;gap:22px;">
+            <div style="text-align:center;"><div style="font-size:12px;color:var(--ink-3);">Nada keberapa kata ini?</div><div style="font-family:var(--han);font-size:96px;color:var(--ink);line-height:1.05;margin-top:6px;">{{ toneHanzi }}</div>
+              <button onClick="{{ toneReplay }}" style="margin-top:6px;background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:10px 18px;font-weight:700;font-size:13px;color:var(--seal);cursor:pointer;display:inline-flex;align-items:center;gap:8px;">{{ icoSound }} Putar lagi</button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:9px;width:100%;max-width:380px;">
+              <button onClick="{{ tone_p1 }}" style="{{ toneOpt.1 }}"><span style="font-size:22px;">ˉ</span><span style="font-size:11px;">1</span></button>
+              <button onClick="{{ tone_p2 }}" style="{{ toneOpt.2 }}"><span style="font-size:22px;">ˊ</span><span style="font-size:11px;">2</span></button>
+              <button onClick="{{ tone_p3 }}" style="{{ toneOpt.3 }}"><span style="font-size:22px;">ˇ</span><span style="font-size:11px;">3</span></button>
+              <button onClick="{{ tone_p4 }}" style="{{ toneOpt.4 }}"><span style="font-size:22px;">ˋ</span><span style="font-size:11px;">4</span></button>
+            </div>
+            <sc-if value="{{ toneAnswered }}" hint-placeholder-val="{{ true }}"><button onClick="{{ nextTone }}" style="width:100%;max-width:380px;background:var(--ink);color:var(--bg);border:none;border-radius:13px;padding:14px;font-weight:700;font-size:15px;cursor:pointer;">{{ toneNextLabel }}</button></sc-if>
+          </div>
+        </sc-if>
+        <sc-if value="{{ toneFinished }}" hint-placeholder-val="{{ true }}">
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center;">
+            <div style="font-family:var(--mono);font-size:60px;font-weight:700;color:var(--seal);">{{ toneScore }}<span style="font-size:22px;color:var(--ink-3);">/{{ toneTotal }}</span></div>
+            <div style="font-size:21px;font-weight:800;color:var(--ink);margin-top:8px;">Mantap!</div>
+            <div style="font-size:13px;color:var(--ink-2);margin-top:6px;">Menyumbang ke nilai Praktek.</div>
+            <button onClick="{{ restartTone }}" style="margin-top:22px;background:var(--ink);color:var(--bg);border:none;border-radius:12px;padding:13px 26px;font-weight:700;font-size:14px;cursor:pointer;">Main lagi</button>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- ===== OVERLAY: MATCH ===== -->
+    <sc-if value="{{ subMatch }}" hint-placeholder-val="{{ true }}">
+      <div style="position:absolute;inset:0;z-index:42;background:var(--bg);display:flex;flex-direction:column;">
+        <div style="{{ overlayBar }}"><button onClick="{{ go_games }}" style="{{ backBtn }}">{{ icoBack }}</button><div style="flex:1;text-align:center;"><div style="font-weight:800;color:var(--ink);font-size:15px;">Match · 配对</div><div style="font-family:var(--mono);font-size:11px;color:var(--ink-3);">{{ matchProgress }}</div></div><div style="width:38px;"></div></div>
+        <sc-if value="{{ matchActive }}" hint-placeholder-val="{{ true }}">
+          <div style="flex:1;overflow-y:auto;padding:18px;"><div style="max-width:460px;margin:0 auto;">
+            <div style="font-size:12px;color:var(--ink-3);text-align:center;margin-bottom:14px;">Ketuk 汉字 lalu artinya yang cocok</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <sc-for list="{{ matchTiles }}" as="t" hint-placeholder-count="8">
+                <button onClick="{{ t.onTap }}" style="{{ t.style }}">{{ t.label }}</button>
+              </sc-for>
+            </div>
+          </div></div>
+        </sc-if>
+        <sc-if value="{{ matchFinished }}" hint-placeholder-val="{{ true }}">
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center;">
+            <div style="width:96px;height:96px;border-radius:20px;background:var(--seal);display:flex;align-items:center;justify-content:center;animation:zwsSeal .55s ease both;box-shadow:0 14px 34px rgba(178,59,46,.32);"><span style="font-family:var(--han);color:#fff;font-size:48px;">配</span></div>
+            <div style="font-size:22px;font-weight:800;color:var(--ink);margin-top:20px;">Semua cocok!</div>
+            <div style="font-size:13px;color:var(--ink-2);margin-top:6px;">{{ matchMoves }} percobaan · {{ matchPairsN }} pasangan</div>
+            <button onClick="{{ restartMatch }}" style="margin-top:22px;background:var(--ink);color:var(--bg);border:none;border-radius:12px;padding:13px 26px;font-weight:700;font-size:14px;cursor:pointer;">Main lagi</button>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- ===== OVERLAY: LISTENING QUIZ ===== -->
+    <sc-if value="{{ subListen }}" hint-placeholder-val="{{ true }}">
+      <div style="position:absolute;inset:0;z-index:42;background:var(--bg);display:flex;flex-direction:column;">
+        <div style="{{ overlayBar }}"><button onClick="{{ go_games }}" style="{{ backBtn }}">{{ icoBack }}</button><div style="flex:1;text-align:center;"><div style="font-weight:800;color:var(--ink);font-size:15px;">Listening Quiz</div><div style="font-family:var(--mono);font-size:11px;color:var(--ink-3);">{{ quizProgress }} · skor {{ quizScore }}</div></div><div style="width:38px;"></div></div>
+        <div style="height:4px;background:var(--line-2);"><div style="height:100%;background:var(--seal);width:{{ quizBar }};transition:width .3s;"></div></div>
+        <sc-if value="{{ listenActive }}" hint-placeholder-val="{{ true }}">
+          <div style="flex:1;display:flex;flex-direction:column;padding:22px;gap:18px;justify-content:center;align-items:center;">
+            <div style="font-size:12px;color:var(--ink-3);">Dengarkan, lalu pilih artinya</div>
+            <button onClick="{{ playListen }}" style="width:120px;height:120px;border-radius:50%;background:var(--seal-soft);border:1px solid var(--seal);color:var(--seal);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;"><span style="transform:scale(2.2);">{{ icoSound }}</span></button>
+            <div style="display:flex;flex-direction:column;gap:10px;max-width:420px;width:100%;align-self:center;">
+              <sc-for list="{{ quizOptions }}" as="o" hint-placeholder-count="4">
+                <button onClick="{{ o.onClick }}" style="{{ o.style }}"><span>{{ o.text }}</span><span style="font-family:var(--han);font-size:16px;">{{ o.mark }}</span></button>
+              </sc-for>
+            </div>
+            <sc-if value="{{ quizAnswered }}" hint-placeholder-val="{{ true }}">
+              <button onClick="{{ nextListen }}" style="max-width:420px;width:100%;align-self:center;background:var(--ink);color:var(--bg);border:none;border-radius:13px;padding:14px;font-weight:700;font-size:15px;cursor:pointer;">{{ listenNextLabel }}</button>
+            </sc-if>
+          </div>
+        </sc-if>
+        <sc-if value="{{ listenFinished }}" hint-placeholder-val="{{ true }}">
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center;">
+            <div style="font-family:var(--mono);font-size:64px;font-weight:700;color:var(--seal);">{{ quizScore }}<span style="font-size:24px;color:var(--ink-3);">/{{ quizTotal }}</span></div>
+            <div style="font-size:22px;font-weight:800;color:var(--ink);margin-top:8px;">{{ quizVerdict }}</div>
+            <div style="display:flex;gap:10px;margin-top:22px;"><button onClick="{{ restartListen }}" style="background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:12px;padding:13px 22px;font-weight:700;font-size:14px;cursor:pointer;">Ulang</button><button onClick="{{ go_games }}" style="background:var(--ink);color:var(--bg);border:none;border-radius:12px;padding:13px 22px;font-weight:700;font-size:14px;cursor:pointer;">Selesai</button></div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- ===== OVERLAY: SPEED RECALL ===== -->
+    <sc-if value="{{ subSpeed }}" hint-placeholder-val="{{ true }}">
+      <div style="position:absolute;inset:0;z-index:42;background:var(--bg);display:flex;flex-direction:column;">
+        <div style="{{ overlayBar }}"><button onClick="{{ go_games }}" style="{{ backBtn }}">{{ icoBack }}</button><div style="flex:1;text-align:center;"><div style="font-weight:800;color:var(--ink);font-size:15px;">Speed Recall</div><div style="font-family:var(--mono);font-size:11px;color:var(--ink-3);">{{ speedScoreLabel }}</div></div><div style="width:38px;"></div></div>
+        <div style="height:5px;background:var(--line-2);"><div style="height:100%;background:{{ speedBarColor }};width:{{ speedBarPct }};transition:width 1s linear;"></div></div>
+        <sc-if value="{{ speedActive }}" hint-placeholder-val="{{ true }}">
+          <div style="flex:1;display:flex;flex-direction:column;padding:22px;gap:16px;justify-content:center;align-items:center;">
+            <div style="font-family:var(--mono);font-size:15px;font-weight:700;color:{{ speedBarColor }};">{{ speedLeft }} detik</div>
+            <div style="text-align:center;"><div style="font-family:var(--han);font-size:74px;color:var(--ink);line-height:1.05;">{{ speedHanzi }}</div><div style="font-family:var(--mono);font-size:13px;color:var(--ink-3);">{{ speedPinyin }}</div></div>
+            <div style="display:flex;flex-direction:column;gap:9px;max-width:420px;width:100%;">
+              <sc-for list="{{ speedOptions }}" as="o" hint-placeholder-count="4">
+                <button onClick="{{ o.onClick }}" style="{{ o.style }}">{{ o.text }}</button>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ speedFinished }}" hint-placeholder-val="{{ true }}">
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center;">
+            <div style="font-family:var(--mono);font-size:64px;font-weight:700;color:var(--seal);">{{ speedScore }}</div>
+            <div style="font-size:22px;font-weight:800;color:var(--ink);margin-top:8px;">{{ speedVerdict }}</div>
+            <div style="font-size:13px;color:var(--ink-2);margin-top:6px;">benar dalam 45 detik · menyumbang nilai Praktek</div>
+            <div style="display:flex;gap:10px;margin-top:22px;"><button onClick="{{ restartSpeed }}" style="background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:12px;padding:13px 22px;font-weight:700;font-size:14px;cursor:pointer;">Ulang</button><button onClick="{{ go_games }}" style="background:var(--ink);color:var(--bg);border:none;border-radius:12px;padding:13px 22px;font-weight:700;font-size:14px;cursor:pointer;">Selesai</button></div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- ===== OVERLAY: TULIS KARTU (STANDALONE) ===== -->
+    <sc-if value="{{ subWrite }}" hint-placeholder-val="{{ true }}">
+      <div style="position:absolute;inset:0;z-index:43;background:var(--bg);display:flex;flex-direction:column;">
+        <div style="{{ overlayBar }}"><button onClick="{{ closeWrite }}" style="{{ backBtn }}">{{ icoBack }}</button><div style="flex:1;text-align:center;"><div style="font-weight:800;color:var(--ink);font-size:15px;">Tulis kartu baru</div><div style="font-size:11px;color:var(--ink-3);">Buat kartu &amp; pilih deck</div></div><div style="width:38px;"></div></div>
+        <div style="flex:1;overflow-y:auto;padding:18px;"><div style="max-width:460px;margin:0 auto;display:flex;flex-direction:column;gap:16px;">
+          <div>
+            <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin-bottom:10px;">Simpan ke deck</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <sc-for list="{{ writeDecks }}" as="d" hint-placeholder-count="4">
+                <button onClick="{{ d.onSel }}" style="{{ d.style }}">{{ d.name }}</button>
+              </sc-for>
+            </div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px;">
+            <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--seal);font-weight:700;">Detail kartu</div>
+            <input ref="{{ wRefHan }}" placeholder="汉字 / 漢字" style="{{ nfInput }}">
+            <input ref="{{ wRefPy }}" placeholder="pinyin (cth. nǐ hǎo)" style="{{ nfInput }}">
+            <input ref="{{ wRefM }}" placeholder="arti (Bahasa Indonesia)" style="{{ nfInput }}">
+            <button onClick="{{ saveWrite }}" style="background:var(--seal);border:none;border-radius:12px;padding:14px;font-weight:700;font-size:14px;color:#fff;cursor:pointer;margin-top:2px;">Simpan kartu</button>
+          </div>
+          <sc-if value="{{ writeMsgShow }}" hint-placeholder-val="{{ true }}">
+            <div style="background:var(--seal-soft);border:1px solid var(--seal);color:var(--seal);border-radius:12px;padding:12px 16px;font-size:13px;font-weight:700;text-align:center;">{{ writeMsg }}</div>
+          </sc-if>
+        </div></div>
+      </div>
+    </sc-if>
+
+    <!-- ===== OVERLAY: ROOM ===== -->
+    <sc-if value="{{ roomOpen }}" hint-placeholder-val="{{ true }}">
+      <div style="position:absolute;inset:0;z-index:43;background:var(--bg);display:flex;flex-direction:column;">
+        <div style="{{ overlayBar }}"><button onClick="{{ closeRoom }}" style="{{ backBtn }}">{{ icoBack }}</button><div style="flex:1;"><div style="font-weight:800;color:var(--ink);font-size:15px;">Kelas Pagi · 早班</div><div style="font-size:11px;color:var(--ink-3);">8 anggota · HSK 2</div></div><span style="font-family:var(--mono);font-size:11px;color:var(--ink-3);">ZWS-7F3K</span></div>
+        <div style="background:var(--seal-soft);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;align-items:center;gap:10px;"><span style="color:var(--seal);flex-shrink:0;">{{ icoChat }}</span><div style="font-size:12px;color:var(--seal);"><b>Guru AI</b> menjadwalkan materi 量词 pukul 19:30 — berkesinambungan dari sesi kemarin.</div></div>
+        <div style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:11px;">
+          <sc-for list="{{ roomMessages }}" as="m" hint-placeholder-count="4">
+            <div style="{{ m.wrapStyle }}">
+              <sc-if value="{{ m.showName }}" hint-placeholder-val="{{ true }}"><div style="font-size:10px;color:var(--ink-3);margin:0 0 3px 4px;font-weight:600;">{{ m.name }}</div></sc-if>
+              <div style="{{ m.bubbleStyle }}">{{ m.text }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="border-top:1px solid var(--line);padding:12px 14px;display:flex;gap:9px;align-items:center;background:var(--surface);">
+          <input value="{{ roomInput }}" onChange="{{ onRoomInput }}" onKeyDown="{{ onRoomKey }}" placeholder="Tulis pesan ke kelas…" style="flex:1;background:var(--surface-2);border:1px solid var(--line);border-radius:13px;padding:12px 15px;font-size:14px;color:var(--ink);">
+          <button onClick="{{ sendRoom }}" style="background:var(--seal);color:#fff;border:none;border-radius:13px;width:46px;height:46px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">{{ icoSend }}</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ===== OVERLAY: LEADERBOARD ===== -->
+    <sc-if value="{{ leaderOpen }}" hint-placeholder-val="{{ true }}">
+      <div style="position:absolute;inset:0;z-index:43;background:var(--bg);display:flex;flex-direction:column;">
+        <div style="{{ overlayBar }}"><button onClick="{{ closeLeader }}" style="{{ backBtn }}">{{ icoBack }}</button><div style="flex:1;text-align:center;font-weight:800;color:var(--ink);font-size:15px;">Leaderboard global</div><div style="width:38px;"></div></div>
+        <div style="flex:1;overflow-y:auto;padding:16px;"><div style="max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:8px;">
+          <sc-for list="{{ leaderAll }}" as="row" hint-placeholder-count="6">
+            <div style="{{ row.fullStyle }}">
+              <span style="font-family:var(--mono);font-weight:700;font-size:15px;width:30px;color:{{ row.rankColor }};">{{ row.rank }}</span>
+              <div style="width:38px;height:38px;border-radius:10px;background:var(--seal-soft);color:var(--seal);display:flex;align-items:center;justify-content:center;font-family:var(--han);font-size:18px;flex-shrink:0;">{{ row.initial }}</div>
+              <div style="flex:1;min-width:0;"><div style="font-weight:700;color:var(--ink);font-size:14px;">{{ row.name }}</div><div style="font-family:var(--mono);font-size:11px;color:var(--ink-3);">{{ row.id }}</div></div>
+              <div style="text-align:right;"><div style="font-family:var(--mono);font-weight:700;color:var(--ink);font-size:16px;">{{ row.score }}</div><div style="font-size:10px;color:var(--ink-3);">{{ row.tier }}</div></div>
+            </div>
+          </sc-for>
+        </div></div>
+      </div>
+    </sc-if>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:390,&quot;height&quot;:844},&quot;layout&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;mobile&quot;,&quot;desktop&quot;],&quot;default&quot;:&quot;mobile&quot;},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;}}">
+class Component extends DCLogic {
+  state = {
+    booted: true,
+    tab: 'beranda',
+    sub: null,
+    theme: 'light', userSetTheme: false,
+    track: 'both', primary: 'simplified', zhuyin: true,
+    sessionCards: [0,1,5,7,9,3], baseCards: [0,1,5,7,9,3], openDeck: null, deckCtx: null,
+    qCount: 20, customCards: {}, adding: false,
+    quizMode: 'mc',
+    matchMatched: [], matchSel: null, matchWrong: [], matchMoves: 0,
+    speedLeft: 45, speedIdx: 0, speedScore: 0,
+    writeDeck: 0, writeMsg: '',
+    recording: false,
+    reviewMode: 'srs', reviewIdx: 0, flipped: false, reviewScore: 0,
+    quizIdx: 0, quizScore: 0, quizPicked: null,
+    spellIdx: 0, spellInput: '', spellChecked: false, spellCorrect: false, spellScore: 0,
+    toneIdx: 0, tonePicked: null, toneScore: 0,
+    guruTab: 'chat', chatInput: '',
+    messages: [],
+    roomInput: '', roomMessages: [],
+    tunerTone: 2,
+    roomOpen: false, leaderOpen: false,
+  };
+
+  VOCAB = [
+    {s:'你好',t:'你好',py:'nǐ hǎo',zy:'ㄋㄧˇ ㄏㄠˇ',m:'halo / apa kabar',exs:'你好，老师！',ext:'你好，老師！',exi:'Halo, Bu/Pak Guru!',tone:3,lv:3},
+    {s:'老师',t:'老師',py:'lǎoshī',zy:'ㄌㄠˇ ㄕ',m:'guru',exs:'她是我的老师。',ext:'她是我的老師。',exi:'Dia guru saya.',tone:3,lv:2},
+    {s:'学生',t:'學生',py:'xuésheng',zy:'ㄒㄩㄝˊ ㄕㄥ',m:'murid / pelajar',exs:'我是学生。',ext:'我是學生。',exi:'Saya seorang murid.',tone:2,lv:1},
+    {s:'谢谢',t:'謝謝',py:'xièxie',zy:'ㄒㄧㄝˋ ㄒㄧㄝ˙',m:'terima kasih',exs:'谢谢你！',ext:'謝謝你！',exi:'Terima kasih!',tone:4,lv:3},
+    {s:'中文',t:'中文',py:'zhōngwén',zy:'ㄓㄨㄥ ㄨㄣˊ',m:'bahasa Mandarin',exs:'我学中文。',ext:'我學中文。',exi:'Saya belajar bahasa Mandarin.',tone:1,lv:2},
+    {s:'书',t:'書',py:'shū',zy:'ㄕㄨ',m:'buku',exs:'这本书很好。',ext:'這本書很好。',exi:'Buku ini bagus.',tone:1,lv:3},
+    {s:'朋友',t:'朋友',py:'péngyou',zy:'ㄆㄥˊ ㄧㄡ˙',m:'teman',exs:'他是我的朋友。',ext:'他是我的朋友。',exi:'Dia teman saya.',tone:2,lv:1},
+    {s:'喜欢',t:'喜歡',py:'xǐhuan',zy:'ㄒㄧˇ ㄏㄨㄢ˙',m:'suka',exs:'我喜欢中文。',ext:'我喜歡中文。',exi:'Saya suka bahasa Mandarin.',tone:3,lv:0},
+    {s:'苹果',t:'蘋果',py:'píngguǒ',zy:'ㄆㄧㄥˊ ㄍㄨㄛˇ',m:'apel',exs:'我吃苹果。',ext:'我吃蘋果。',exi:'Saya makan apel.',tone:2,lv:2},
+    {s:'水',t:'水',py:'shuǐ',zy:'ㄕㄨㄟˇ',m:'air',exs:'我喝水。',ext:'我喝水。',exi:'Saya minum air.',tone:3,lv:3},
+    {s:'学习',t:'學習',py:'xuéxí',zy:'ㄒㄩㄝˊ ㄒㄧˊ',m:'belajar',exs:'我学习中文。',ext:'我學習中文。',exi:'Saya belajar bahasa Mandarin.',tone:2,lv:1},
+    {s:'看',t:'看',py:'kàn',zy:'ㄎㄢˋ',m:'melihat / membaca',exs:'我看书。',ext:'我看書。',exi:'Saya membaca buku.',tone:4,lv:2},
+    {s:'吃',t:'吃',py:'chī',zy:'ㄔ',m:'makan',exs:'我吃苹果。',ext:'我吃蘋果。',exi:'Saya makan apel.',tone:1,lv:0},
+    {s:'喝',t:'喝',py:'hē',zy:'ㄏㄜ',m:'minum',exs:'我喝水。',ext:'我喝水。',exi:'Saya minum air.',tone:1,lv:1},
+  ];
+  TONES = [
+    {h:'妈',py:'mā',tone:1},{h:'国',py:'guó',tone:2},{h:'好',py:'hǎo',tone:3},{h:'是',py:'shì',tone:4},{h:'书',py:'shū',tone:1},
+  ];
+  DECKS = [
+    {idx:'01',name:'Sapaan & Sopan Santun',cnt:24,due:6,m:42,cards:[0,3,6]},
+    {idx:'02',name:'Ruang Kelas',cnt:30,due:0,m:18,cards:[1,2,5,4,10]},
+    {idx:'03',name:'Makanan & Buah',cnt:40,due:12,m:66,cards:[8,9,12,13]},
+    {idx:'04',name:'Kata Kerja Harian',cnt:50,due:3,m:30,cards:[7,11,12,13]},
+  ];
+  MLEVEL = [
+    {label:'Baru',color:'#9a948a'},
+    {label:'Perlu latihan',color:'#b23b2e'},
+    {label:'Cukup',color:'#b8862f'},
+    {label:'Mahir',color:'#3a9e6a'},
+  ];
+
+  refHan = React.createRef();
+  refPy = React.createRef();
+  refM = React.createRef();
+  wRefHan = React.createRef();
+  wRefPy = React.createRef();
+  wRefM = React.createRef();
+  tunerCanvas = React.createRef();
+
+  componentWillUnmount(){ this.stopMic(); if(this._speedTimer) clearInterval(this._speedTimer); }
+
+  componentDidMount(){
+    this.setState({
+      messages:[{who:'t', text:'你好，Andi！Hari ini kita lanjut HSK 2. Fokusnya 喜欢 (xǐhuan) — "suka". Coba buat satu kalimat pakai 喜欢 ya.'}],
+      roomMessages:[
+        {who:'o', name:'Mei Lin', text:'早上好 semuanya! Siap sesi pagi ini?'},
+        {who:'o', name:'Budiman', text:'PR kemarin 量词 sudah aku kerjakan.'},
+        {who:'me', name:'Andi', text:'Hadir! 我准备好了。'},
+      ],
+    });
+    this._quiz = this.buildQuiz(this.state.sessionCards);
+  }
+
+  makeOpts(i){
+    const c=this.VOCAB[i];
+    const others=this.VOCAB.filter((_,j)=>j!==i).map(v=>v.m);
+    const distract=[];
+    let guard=0;
+    while(distract.length<3 && guard++<50){ const pick=others[Math.floor(Math.random()*others.length)]; if(!distract.includes(pick)&&pick!==c.m) distract.push(pick); }
+    const opts=[c.m,...distract];
+    for(let k=opts.length-1;k>0;k--){ const j=Math.floor(Math.random()*(k+1)); [opts[k],opts[j]]=[opts[j],opts[k]]; }
+    return opts;
+  }
+  buildQuiz(idxs){
+    return idxs.map(i=>{ const c=this.VOCAB[i]; return {idx:i, hanzi:c.s, py:c.py, correct:c.m, opts:this.makeOpts(i)}; });
+  }
+
+  themeName(){ return this.state.userSetTheme ? this.state.theme : (this.props.theme || 'light'); }
+  isDesktop(){ return this.props.layout === 'desktop'; }
+  primaryHanzi(c){
+    if(this.state.track==='traditional') return c.t;
+    if(this.state.track==='simplified') return c.s;
+    return this.state.primary==='traditional' ? c.t : c.s;
+  }
+  speak(txt){
+    try{
+      if(!window.speechSynthesis) return;
+      const u=new SpeechSynthesisUtterance(txt);
+      u.lang=this.state.track==='traditional'?'zh-TW':'zh-CN';
+      u.rate=0.8;
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(u);
+    }catch(e){}
+  }
+  norm(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ü/g,'u').replace(/[^a-z]/g,''); }
+
+  ico(paths, sz){
+    sz = sz || 22;
+    return React.createElement('svg',{width:sz,height:sz,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.7,strokeLinecap:'round',strokeLinejoin:'round'},
+      paths.map((d,i)=>React.createElement('path',{key:i,d})));
+  }
+
+  renderVals(){
+    const S=this.state, T=this.themeName(), desk=this.isDesktop();
+    const dark = T==='dark';
+    const tok = dark ? {
+      bg:'#15130f', surface:'#1f1c17', s2:'#26221b', ink:'#f1ece1', ink2:'#b3ab9c', ink3:'#7d766a',
+      line:'#322d24', line2:'#2a261e', seal:'#cf5042', sealSoft:'#3a221d', gold:'#d6a443', green:'#5cba85'
+    } : {
+      bg:'#f4f1ea', surface:'#ffffff', s2:'#faf7f1', ink:'#1f1d1a', ink2:'#6b665c', ink3:'#9a948a',
+      line:'#e7e1d5', line2:'#efeae0', seal:'#b23b2e', sealSoft:'#f3ddd8', gold:'#b8862f', green:'#3a9e6a'
+    };
+
+    const rootStyle = {
+      height:'100%', width:'100%', display:'flex', flexDirection: desk?'row':'column',
+      position:'relative', overflow:'hidden',
+      fontFamily:"'Hanken Grotesk', system-ui, sans-serif",
+      background:tok.bg, color:tok.ink,
+      '--bg':tok.bg,'--surface':tok.surface,'--surface-2':tok.s2,'--ink':tok.ink,'--ink-2':tok.ink2,'--ink-3':tok.ink3,
+      '--line':tok.line,'--line-2':tok.line2,'--seal':tok.seal,'--seal-soft':tok.sealSoft,'--gold':tok.gold,
+      '--han':"'Kaiti','STKaiti','KaiTi','Noto Serif SC','Noto Serif TC',serif",
+      '--mono':"'Space Mono', monospace",
+    };
+
+    const icoHome=this.ico(['M3 10.6 12 3l9 7.6','M5 9.4V21h14V9.4','M9.5 21v-6h5v6']);
+    const icoCards=this.ico(['M8 4h9a2 2 0 0 1 2 2v9','M5 8h9a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2Z']);
+    const icoUsers=React.createElement('svg',{width:22,height:22,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.7,strokeLinecap:'round',strokeLinejoin:'round'},
+      React.createElement('circle',{cx:9,cy:8,r:3.2,key:1}),React.createElement('path',{d:'M3.5 19.5a5.6 5.6 0 0 1 11 0',key:2}),React.createElement('path',{d:'M16 5.2a3 3 0 0 1 0 5.6',key:3}),React.createElement('path',{d:'M17 14.4a5.6 5.6 0 0 1 3.5 5.1',key:4}));
+    const icoChat=this.ico(['M5 5h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H10l-4 3v-3H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z']);
+    const icoUser=React.createElement('svg',{width:22,height:22,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.7,strokeLinecap:'round',strokeLinejoin:'round'},
+      React.createElement('circle',{cx:12,cy:8,r:3.6,key:1}),React.createElement('path',{d:'M5 20a7 7 0 0 1 14 0',key:2}));
+    const icoBack=this.ico(['M15 5l-7 7 7 7']);
+    const icoChevron=this.ico(['M9 6l6 6-6 6'],18);
+    const icoSend=this.ico(['M5 12h13','M13 6l6 6-6 6']);
+    const icoMic=React.createElement('svg',{width:18,height:18,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.7,strokeLinecap:'round',strokeLinejoin:'round'},
+      React.createElement('rect',{x:9,y:3,width:6,height:11,rx:3,key:1}),React.createElement('path',{d:'M5 11a7 7 0 0 0 14 0',key:2}),React.createElement('path',{d:'M12 18v3',key:3}));
+    const icoSound=React.createElement('svg',{width:18,height:18,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.7,strokeLinecap:'round',strokeLinejoin:'round'},
+      React.createElement('path',{d:'M4 9v6h3l5 4V5L7 9H4Z',key:1}),React.createElement('path',{d:'M16 9a4 4 0 0 1 0 6',key:2}),React.createElement('path',{d:'M18.5 7a7 7 0 0 1 0 10',key:3}));
+    const icoQuiz=this.ico(['M7 4h10a2 2 0 0 1 2 2v14l-3-2-3 2-3-2-3 2V6a2 2 0 0 1 2-2Z','M9 9h6','M9 13h4'],20);
+    const icoSpell=this.ico(['M4 7h16','M4 12h10','M4 17h7','M16 15l2 2 4-4'],20);
+    const icoGame=React.createElement('svg',{width:20,height:20,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.7,strokeLinecap:'round',strokeLinejoin:'round'},
+      React.createElement('path',{d:'M7 8h10a4 4 0 0 1 4 4v.5a3.5 3.5 0 0 1-6.3 2.1l-.7-.9H9l-.7.9A3.5 3.5 0 0 1 2 12.5V12a4 4 0 0 1 4-4Z',key:1}),React.createElement('path',{d:'M7 11v3M5.5 12.5h3',key:2}));
+    const icoCheck=this.ico(['M5 12.5 10 17 19 7'],19);
+    const icoCross=this.ico(['M6 6l12 12M18 6 6 18'],18);
+
+    const railStyle={}, tabStyle={}, names=['beranda','belajar','grup','guru','profil'];
+    names.forEach(n=>{
+      const on = S.tab===n;
+      railStyle[n]={display:'flex',alignItems:'center',gap:'12px',width:'100%',padding:'11px 13px',marginBottom:'3px',borderRadius:'11px',border:'none',cursor:'pointer',fontSize:'14px',fontWeight: on?700:600,textAlign:'left',
+        background: on?tok.sealSoft:'transparent', color: on?tok.seal:tok.ink2};
+      tabStyle[n]={flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'4px',background:'none',border:'none',cursor:'pointer',fontSize:'10px',fontWeight: on?700:500,
+        color: on?tok.seal:tok.ink3, padding:'2px 0'};
+    });
+
+    const hr=new Date().getHours();
+    let greetHan='午安', greetId='Selamat siang, Andi';
+    if(hr>=5&&hr<11){greetHan='早安';greetId='Selamat pagi, Andi';}
+    else if(hr>=11&&hr<15){greetHan='午安';greetId='Selamat siang, Andi';}
+    else if(hr>=15&&hr<18){greetHan='下午好';greetId='Selamat sore, Andi';}
+    else {greetHan='晚上好';greetId='Selamat malam, Andi';}
+    const titles={beranda:[greetHan,greetId],belajar:['Belajar','Flashcard · tes · games'],grup:['Grup belajar','Belajar bareng'],guru:['Guru','Bimbingan AI'],profil:['Profil','Akun & rapor']};
+    const tt=titles[S.tab]||titles.beranda;
+    const appTitleStyle={fontSize: S.tab==='beranda'?'24px':'16px',fontWeight:800,color:tok.ink,letterSpacing:'-.01em',lineHeight:1.15,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',fontFamily: S.tab==='beranda'?"'Kaiti','STKaiti','KaiTi','Noto Serif SC','Noto Serif TC',serif":"'Hanken Grotesk',sans-serif"};
+    const appbarStyle={display:'flex',alignItems:'center',justifyContent:'space-between',gap:'10px',padding: desk?'18px 26px':'14px 16px',borderBottom:'1px solid '+tok.line,background:tok.surface,flexShrink:0};
+    const contentWrapStyle={padding: desk?'22px 26px':'16px', maxWidth: desk?'860px':'none', margin: desk?'0 auto':'0', width:'100%'};
+    const gridTwoStyle={display:'grid',gridTemplateColumns: desk?'1.3fr 1fr':'1fr',gap:'12px'};
+    const deckGridStyle={display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px'};
+    const quickBtn={display:'flex',flexDirection:'column',alignItems:'center',gap:'7px',background:tok.surface,border:'1px solid '+tok.line,borderRadius:'14px',padding:'15px 8px',cursor:'pointer',color:tok.ink2,fontSize:'12px',fontWeight:600};
+    const modeBtn={display:'flex',flexDirection:'column',gap:'8px',background:tok.surface,border:'1px solid '+tok.line,borderRadius:'15px',padding:'16px',cursor:'pointer',textAlign:'left'};
+    const gameCard={display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',textAlign:'center',background:tok.surface,border:'1px solid '+tok.line,borderRadius:'16px',padding:'22px 12px',cursor:'pointer',minHeight:'120px'};
+    const pickCard={display:'flex',alignItems:'center',justifyContent:'space-between',gap:'12px',background:tok.surface,border:'1px solid '+tok.line,borderRadius:'16px',padding:'16px 18px',cursor:'pointer',textAlign:'left'};
+    const pickIcon={width:'42px',height:'42px',borderRadius:'11px',background:tok.sealSoft,color:tok.seal,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0};
+
+    const decks=this.DECKS.map((d,i)=>({idx:d.idx,name:d.name,cnt:d.cnt,masteredPct:d.m+'%',
+      onOpen:()=>this.openDeck(i),
+      dueLabel: d.due>0 ? d.due+' due' : 'Selesai',
+      dueStyle: d.due>0
+        ? {fontSize:'11px',fontWeight:700,color:'#fff',background:tok.seal,padding:'3px 9px',borderRadius:'20px'}
+        : {fontSize:'11px',fontWeight:600,color:tok.ink3,background:tok.s2,border:'1px solid '+tok.line,padding:'3px 9px',borderRadius:'20px'}}));
+
+    const packDefs=[['Paket HSK 1','150 kata · 简体 · pinyin',true],['Paket HSK 2','300 kata · 简体 · pinyin',false],['Paket TOCFL Band A','480 kata · 繁體 · zhuyin',false]];
+    const packs=packDefs.map((p,i)=>({name:p[0],meta:p[1],
+      rowStyle:{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom: i<packDefs.length-1?'1px solid '+tok.line:'none',gap:'12px'},
+      btnLabel: p[2]?'Terunduh':'Unduh',
+      btnStyle: p[2]
+        ? {background:tok.s2,color:tok.ink3,border:'1px solid '+tok.line,borderRadius:'9px',padding:'8px 14px',fontWeight:700,fontSize:'12px',cursor:'default',flexShrink:0}
+        : {background:tok.ink,color:tok.bg,border:'none',borderRadius:'9px',padding:'8px 16px',fontWeight:700,fontSize:'12px',cursor:'pointer',flexShrink:0},
+      onClick:()=>{}}));
+
+    const lb=[
+      {rank:1,name:'Mei Lin',id:'#4821',score:94,you:false,initial:'美',tier:'S'},
+      {rank:2,name:'Budiman',id:'#1093',score:91,you:false,initial:'布',tier:'S'},
+      {rank:3,name:'Andi (kamu)',id:'#2207',score:86,you:true,initial:'安',tier:'A'},
+      {rank:4,name:'Sora T.',id:'#7765',score:84,you:false,initial:'空',tier:'A'},
+      {rank:5,name:'Kevin',id:'#3340',score:79,you:false,initial:'凯',tier:'B'},
+      {rank:6,name:'Putri',id:'#5512',score:75,you:false,initial:'普',tier:'B'},
+    ];
+    const rankColor=(r,you)=> you?tok.seal : (r<=3?tok.gold:tok.ink3);
+    const leaderTop=lb.slice(0,3).map(r=>({rank:r.rank,name:r.you?'Andi':r.name,id:r.id,score:r.score,rankColor:rankColor(r.rank,r.you),
+      style:{display:'flex',alignItems:'center',gap:'10px',padding:'9px 11px',borderRadius:'11px',background: r.you?tok.sealSoft:'transparent'}}));
+    const leaderAll=lb.map(r=>({rank:r.rank,name:r.name,id:r.id,score:r.score,initial:r.initial,tier:'Tier '+r.tier,rankColor:rankColor(r.rank,r.you),
+      fullStyle:{display:'flex',alignItems:'center',gap:'12px',padding:'12px 14px',borderRadius:'14px',border:'1px solid '+(r.you?tok.seal:tok.line),background: r.you?tok.sealSoft:tok.surface}}));
+
+    const rapor=[
+      {name:'Kehadiran',weight:'10%',score:92,color:tok.green},
+      {name:'PR (materi guru)',weight:'20%',score:80,color:tok.gold},
+      {name:'Ujian Harian',weight:'20%',score:84,color:tok.green},
+      {name:'Praktek',weight:'25%',score:90,color:tok.green},
+      {name:'Ujian Akhir',weight:'25%',score:88,color:tok.green},
+    ];
+    const raporRing='conic-gradient('+tok.seal+' 0% 86%, '+tok.line2+' 86% 100%)';
+
+    const trackStyle={};
+    ['simplified','traditional','both'].forEach(k=>{
+      const on=S.track===k;
+      trackStyle[k]={display:'flex',flexDirection:'column',alignItems:'center',gap:'5px',padding:'13px 6px',borderRadius:'13px',cursor:'pointer',
+        border:'1px solid '+(on?tok.seal:tok.line), background:on?tok.sealSoft:tok.surface, color:on?tok.seal:tok.ink2};
+    });
+    const obTrackStyle={};
+    ['simplified','traditional','both'].forEach(k=>{
+      const on=S.track===k;
+      obTrackStyle[k]={display:'flex',alignItems:'center',padding:'14px 16px',borderRadius:'13px',cursor:'pointer',width:'100%',
+        border:'1px solid '+(on?tok.seal:tok.line), background:on?tok.sealSoft:tok.surface, color:on?tok.seal:tok.ink};
+    });
+    const setRow={display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'1px solid '+tok.line,gap:'12px'};
+    const themeLabel = dark ? 'Gelap' : 'Terang';
+    const themeSeg={};
+    ['light','dark'].forEach(k=>{
+      const on=(k==='dark')===dark;
+      themeSeg[k]={padding:'7px 13px',borderRadius:'8px',border:'none',cursor:'pointer',fontSize:'12px',fontWeight:700,background:on?tok.surface:'transparent',color:on?tok.ink:tok.ink3};
+    });
+    const zhOn=S.zhuyin;
+    const zhuyinSwitch={width:'46px',height:'27px',borderRadius:'14px',border:'none',cursor:'pointer',position:'relative',transition:'background .2s',background: zhOn?tok.seal:tok.line,padding:0,flexShrink:0};
+    const zhuyinKnob={position:'absolute',top:'3px',left: zhOn?'22px':'3px',width:'21px',height:'21px',borderRadius:'50%',background:'#fff',transition:'left .2s',boxShadow:'0 1px 3px rgba(0,0,0,.2)'};
+
+    const guruTabStyle={};
+    ['chat','voice'].forEach(k=>{
+      const on=S.guruTab===k;
+      guruTabStyle[k]={padding:'9px 16px',borderRadius:'9px',border:'none',cursor:'pointer',fontSize:'13px',fontWeight:700,
+        background:on?tok.surface:'transparent', color:on?tok.ink:tok.ink3, boxShadow:on?'0 1px 3px rgba(0,0,0,.06)':'none'};
+    });
+    const messages=(S.messages||[]).map(m=>({text:m.text,
+      wrapStyle:{display:'flex',justifyContent: m.who==='t'?'flex-start':'flex-end'},
+      bubbleStyle: m.who==='t'
+        ? {maxWidth:'82%',background:tok.surface,border:'1px solid '+tok.line,borderRadius:'14px 14px 14px 4px',padding:'12px 14px',fontSize:'14px',color:tok.ink,lineHeight:1.5}
+        : {maxWidth:'82%',background:tok.ink,color:tok.bg,borderRadius:'14px 14px 4px 14px',padding:'12px 14px',fontSize:'14px',lineHeight:1.5}}));
+    const roomMessages=(S.roomMessages||[]).map(m=>({text:m.text,name:m.name,showName:m.who==='o',
+      wrapStyle:{display:'flex',flexDirection:'column',alignItems: m.who==='me'?'flex-end':'flex-start'},
+      bubbleStyle: m.who==='me'
+        ? {maxWidth:'80%',background:tok.seal,color:'#fff',borderRadius:'14px 14px 4px 14px',padding:'10px 13px',fontSize:'14px',lineHeight:1.45}
+        : {maxWidth:'80%',background:tok.surface,border:'1px solid '+tok.line,borderRadius:'14px 14px 14px 4px',padding:'10px 13px',fontSize:'14px',color:tok.ink,lineHeight:1.45}}));
+
+    const toneSelStyle={}, contourPts={1:'10,30 90,30',2:'10,72 90,28',3:'10,40 38,82 64,74 90,34',4:'10,22 90,82'};
+    [1,2,3,4].forEach(n=>{
+      const on=S.tunerTone===n;
+      toneSelStyle[n]={flex:1,padding:'9px 4px',borderRadius:'9px',cursor:'pointer',fontSize:'12px',fontWeight:700,fontFamily:"'Hanken Grotesk',sans-serif",
+        border:'1px solid '+(on?tok.seal:tok.line), background:on?tok.sealSoft:tok.surface, color:on?tok.seal:tok.ink2};
+    });
+    const toneNames={1:'阴平',2:'阳平',3:'上声',4:'去声'}, toneHz={1:'210 Hz',2:'196 Hz',3:'168 Hz',4:'220 Hz'};
+    const tunerReadout='T'+S.tunerTone+' · '+toneHz[S.tunerTone]+' · '+toneNames[S.tunerTone];
+    const tunerContour=React.createElement('svg',{viewBox:'0 0 100 100',preserveAspectRatio:'none',style:{position:'absolute',inset:0,width:'100%',height:'100%'}},
+      React.createElement('polyline',{points:contourPts[S.tunerTone],fill:'none',stroke:tok.ink3,strokeWidth:2.4,strokeDasharray:'4 4',strokeLinecap:'round',vectorEffect:'non-scaling-stroke',key:'t'}),
+      React.createElement('polyline',{points:contourPts[S.tunerTone],fill:'none',stroke:tok.seal,strokeWidth:3,strokeLinecap:'round',strokeLinejoin:'round',vectorEffect:'non-scaling-stroke',opacity:0.92,key:'u'}));
+
+    // ----- REVIEW / SELF-CHECK -----
+    const total=S.sessionCards.length;
+    const rIdx=S.sessionCards[Math.min(S.reviewIdx,total-1)];
+    const rCard=this.VOCAB[rIdx]||this.VOCAB[0];
+    const reviewActive = S.reviewIdx < total;
+    const isSelf=S.reviewMode==='self';
+    const faceStyle={position:'absolute',inset:0,background:tok.surface,border:'1px solid '+tok.line,borderRadius:'22px',padding:'28px 24px',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',textAlign:'center',boxShadow:'0 12px 30px rgba(0,0,0,.05)'};
+    const faceKeyFront='f'+S.reviewIdx;
+    const faceKeyBack='b'+S.reviewIdx;
+    const rateWrong={display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',padding:'15px',borderRadius:'13px',border:'1px solid '+tok.seal,background:tok.sealSoft,color:tok.seal,fontWeight:700,fontSize:'15px',cursor:'pointer'};
+    const rateCorrect={display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',padding:'15px',borderRadius:'13px',border:'1px solid '+tok.green,background: dark?'#16271d':'#eaf5ee',color:tok.green,fontWeight:700,fontSize:'15px',cursor:'pointer'};
+
+    // ----- DECK DETAIL -----
+    const dObj = S.openDeck!=null ? this.DECKS[S.openDeck] : null;
+    const masteryLegend=this.MLEVEL.map(l=>({label:l.label,color:l.color}));
+    const deckIdxs = dObj ? [...dObj.cards, ...((S.customCards[S.openDeck]||[]))] : [];
+    const deckCards = deckIdxs.map(i=>{
+      const c=this.VOCAB[i], lvl=this.MLEVEL[c.lv||0];
+      return {han:this.primaryHanzi(c), py:c.py, meaning:c.m, color:lvl.color, label:lvl.label,
+        onSpeak:()=>this.speak(this.primaryHanzi(c)),
+        rowStyle:{display:'flex',alignItems:'center',justifyContent:'space-between',gap:'12px',width:'100%',padding:'13px 15px',borderBottom:'1px solid '+tok.line,borderLeft:'3px solid '+lvl.color,background:tok.surface,cursor:'pointer'}};
+    });
+    const nfInput={width:'100%',background:tok.s2,border:'1px solid '+tok.line,borderRadius:'11px',padding:'12px 14px',fontSize:'14px',color:tok.ink};
+    const stepBtn={width:'38px',height:'38px',borderRadius:'10px',border:'1px solid '+tok.line,background:tok.s2,color:tok.ink,fontSize:'20px',fontWeight:700,cursor:'pointer',lineHeight:1,display:'flex',alignItems:'center',justifyContent:'center'};
+
+    // ----- MC QUIZ -----
+    const quiz=this._quiz||[];
+    const q=quiz[S.quizIdx];
+    const quizTotal=quiz.length||1;
+    const quizActive=!!q && S.quizIdx<quizTotal;
+    const qCard=q?this.VOCAB[q.idx]:null;
+    const quizOptions=q?q.opts.map(opt=>{
+      const picked=S.quizPicked!=null, isCorrect=opt===q.correct, isPicked=opt===S.quizPicked;
+      let style={display:'flex',alignItems:'center',justifyContent:'space-between',gap:'10px',padding:'15px 17px',borderRadius:'13px',cursor:picked?'default':'pointer',fontSize:'15px',fontWeight:600,textAlign:'left',border:'1px solid '+tok.line,background:tok.surface,color:tok.ink};
+      let mark='';
+      if(picked){ if(isCorrect){style.border='1px solid '+tok.green;style.background=dark?'#16271d':'#eaf5ee';style.color=tok.green;mark='✓';} else if(isPicked){style.border='1px solid '+tok.seal;style.background=tok.sealSoft;style.color=tok.seal;mark='✕';} else {style.opacity=0.55;} }
+      return {text:opt,mark,style,onClick: picked?(()=>{}):(()=>this.pickQuiz(opt))};
+    }):[];
+
+    // ----- SPELLING -----
+    const spIdx=S.sessionCards[Math.min(S.spellIdx, total-1)];
+    const spCard=this.VOCAB[spIdx]||this.VOCAB[0];
+    const spellActive=S.spellIdx<total;
+    const spellResultStyle={fontSize:'14px',fontWeight:700,padding:'10px 16px',borderRadius:'11px',textAlign:'center',maxWidth:'380px',width:'100%',
+      background: S.spellCorrect?(dark?'#16271d':'#eaf5ee'):tok.sealSoft, color: S.spellCorrect?tok.green:tok.seal,border:'1px solid '+(S.spellCorrect?tok.green:tok.seal)};
+    const spellInputStyle={width:'100%',maxWidth:'380px',textAlign:'center',background:tok.surface,border:'2px solid '+(S.spellChecked?(S.spellCorrect?tok.green:tok.seal):tok.line),borderRadius:'13px',padding:'15px',fontSize:'17px',color:tok.ink,fontFamily:"'Space Mono',monospace",letterSpacing:'.04em'};
+
+    // ----- TONE GAME -----
+    const tg=this.TONES[S.toneIdx % this.TONES.length];
+    const toneTotal=S.qCount;
+    const toneActive=S.toneIdx<toneTotal;
+    const toneOpt={};
+    [1,2,3,4].forEach(n=>{
+      const picked=S.tonePicked!=null;
+      let st={display:'flex',flexDirection:'column',alignItems:'center',gap:'3px',padding:'16px 4px',borderRadius:'13px',cursor:picked?'default':'pointer',fontFamily:"'Hanken Grotesk',sans-serif",border:'1px solid '+tok.line,background:tok.surface,color:tok.ink2};
+      if(picked){ if(n===tg.tone){st.border='1px solid '+tok.green;st.background=dark?'#16271d':'#eaf5ee';st.color=tok.green;} else if(n===S.tonePicked){st.border='1px solid '+tok.seal;st.background=tok.sealSoft;st.color=tok.seal;} else st.opacity=0.5; }
+      toneOpt[n]=st;
+    });
+
+    // ---- MATCH vm ----
+    const mPairs=this._matchPairs||[];
+    const matchTiles=(this._matchTiles||[]).map((t,id)=>{
+      const matched=S.matchMatched.includes(t.pid), sel=S.matchSel===id, wrong=S.matchWrong.includes(id);
+      let st={display:'flex',alignItems:'center',justifyContent:'center',textAlign:'center',minHeight:'66px',padding:'10px 8px',borderRadius:'14px',cursor:matched?'default':'pointer',fontWeight:700,border:'1px solid '+tok.line,background:tok.surface,color:tok.ink,fontSize: t.kind==='han'?'26px':'14px',fontFamily: t.kind==='han'?"'Kaiti','STKaiti','Noto Serif SC','Noto Serif TC',serif":"'Hanken Grotesk',sans-serif",transition:'all .15s',lineHeight:1.2};
+      if(matched){ st.background=dark?'#16271d':'#eaf5ee'; st.borderColor=tok.green; st.color=tok.green; st.opacity=0.5; }
+      else if(sel||wrong){ st.borderColor=tok.seal; st.background=tok.sealSoft; st.color=tok.seal; }
+      return {label:t.label, style:st, onTap:matched?(()=>{}):(()=>this.matchTap(id))};
+    });
+    const matchDone=S.matchMatched.length;
+
+    // ---- SPEED vm ----
+    const spCur=this._speed?this._speed[S.speedIdx]:null;
+    const spTotal=S.sessionCards.length;
+    const speedActive=S.sub==='speed' && S.speedLeft>0 && S.speedIdx<spTotal;
+    const spCard2=spCur?this.VOCAB[spCur.idx]:null;
+    const speedOptions=spCur?spCur.opts.map(opt=>({text:opt, onClick:()=>this.speedPick(opt), style:{padding:'14px 16px',borderRadius:'12px',border:'1px solid '+tok.line,background:tok.surface,color:tok.ink,fontSize:'15px',fontWeight:600,textAlign:'center',cursor:'pointer'}})):[];
+
+    // ---- LISTEN vm ----
+    const listenActive=S.sub==='listen' && q && S.quizIdx<quizTotal;
+
+    // ---- WRITE vm ----
+    const writeDecks=this.DECKS.map((d,i)=>{ const on=S.writeDeck===i; return {name:d.name, onSel:()=>this.setState({writeDeck:i}), style:{padding:'12px 11px',borderRadius:'12px',cursor:'pointer',fontSize:'13px',fontWeight:700,textAlign:'left',border:'1px solid '+(on?tok.seal:tok.line),background:on?tok.sealSoft:tok.surface,color:on?tok.seal:tok.ink2,lineHeight:1.2}}; });
+
+    // ---- MIC ----
+    const micBtnStyle={marginTop:'14px',width:'100%',display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',borderRadius:'12px',padding:'13px',fontWeight:700,fontSize:'14px',cursor:'pointer',border:'none',background:S.recording?tok.seal:tok.sealSoft,color:S.recording?'#fff':tok.seal};
+
+    const overlayBar={display:'flex',alignItems:'center',gap:'10px',padding: desk?'16px 22px':'13px 14px',borderBottom:'1px solid '+tok.line,background:tok.surface,flexShrink:0};
+    const backBtn={width:38,height:38,borderRadius:'10px',border:'1px solid '+tok.line,background:tok.surface,color:tok.ink2,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0};
+
+    return {
+      rootStyle, showOnboarding: !S.booted, isDesktop: desk, isMobile: !desk,
+      isBeranda:S.tab==='beranda', isBelajar:S.tab==='belajar', isGrup:S.tab==='grup', isGuru:S.tab==='guru', isProfil:S.tab==='profil',
+      screenTitle:tt[0], screenSub:tt[1], appTitleStyle,
+      appbarStyle, contentWrapStyle, gridTwoStyle, deckGridStyle, quickBtn, modeBtn, gameCard, pickCard, pickIcon, setRow, overlayBar, backBtn,
+      icoHome, icoCards, icoUsers, icoChat, icoUser, icoBack, icoChevron, icoSend, icoMic, icoSound, icoQuiz, icoSpell, icoGame, icoCheck, icoCross,
+      railStyle, tabStyle,
+      nav_beranda:()=>this.go('beranda'), nav_belajar:()=>this.go('belajar'), nav_grup:()=>this.go('grup'), nav_guru:()=>this.go('guru'), nav_profil:()=>this.go('profil'),
+      ob_simplified:()=>this.setState({track:'simplified',primary:'simplified'}), ob_traditional:()=>this.setState({track:'traditional',primary:'traditional'}), ob_both:()=>this.setState({track:'both'}),
+      obTrackStyle, finishOnboard:()=>this.setState({booted:true}), resetOnboard:()=>this.setState({booted:false,sub:null}),
+      raporRing, materiHanzi:this.primaryHanzi(this.VOCAB[7]), leaderTop,
+      go_review:()=>{ const base=[0,1,5,7,9,3]; this.setState({deckCtx:null,baseCards:base}); this.startReview(this.makeSession(base,this.state.qCount),'srs'); },
+      go_testpick:()=>{ this.setState({baseCards:[0,4,7,8,12],openDeck:null,deckCtx:null,sub:'testpick'}); },
+      go_games:()=>{ if(this._speedTimer)clearInterval(this._speedTimer); this.stopMic(); this.setState({deckCtx:null,sub:'games'}); },
+      qCount:S.qCount, stepBtn, decCount:()=>this.setState(s=>({qCount:Math.max(10,s.qCount-10)})), incCount:()=>this.setState(s=>({qCount:Math.min(200,s.qCount+10)})),
+      go_voice:()=>this.setState({tab:'guru',sub:null,guruTab:'voice'}),
+      openLeader:()=>this.setState({leaderOpen:true}), closeLeader:()=>this.setState({leaderOpen:false}), leaderOpen:S.leaderOpen, leaderAll,
+      decks, packs, noop:()=>{},
+      openRoom:()=>this.setState({roomOpen:true}), closeRoom:()=>this.setState({roomOpen:false}), roomOpen:S.roomOpen, roomMessages,
+      roomInput:S.roomInput, onRoomInput:(e)=>this.setState({roomInput:e.target.value}), onRoomKey:(e)=>{ if(e.key==='Enter'){e.preventDefault();this.sendRoom();} }, sendRoom:()=>this.sendRoom(),
+      guruTabStyle, guru_chat:()=>this.setState({guruTab:'chat'}), guru_voice:()=>this.setState({guruTab:'voice'}),
+      isGuruChat:S.guruTab==='chat', isGuruVoice:S.guruTab==='voice',
+      messages, chatInput:S.chatInput, onChatInput:(e)=>this.setState({chatInput:e.target.value}), onChatKey:(e)=>{ if(e.key==='Enter'){e.preventDefault();this.sendChat();} }, sendChat:()=>this.sendChat(),
+      voiceHanzi:this.primaryHanzi(this.VOCAB[0]), voiceSyl1:this.state.track==='traditional'?'你':'你', voiceSyl2:'好', sylRow:{display:'flex',alignItems:'center',gap:'10px'},
+      toneSelStyle, tuner_1:()=>this.setState({tunerTone:1}), tuner_2:()=>this.setState({tunerTone:2}), tuner_3:()=>this.setState({tunerTone:3}), tuner_4:()=>this.setState({tunerTone:4}), tunerReadout, tunerContour,
+      trackStyle, track_s:()=>this.setState({track:'simplified',primary:'simplified'}), track_t:()=>this.setState({track:'traditional',primary:'traditional'}), track_b:()=>this.setState({track:'both'}),
+      rapor, themeLabel, themeSeg, setLight:()=>this.setState({userSetTheme:true,theme:'light'}), setDark:()=>this.setState({userSetTheme:true,theme:'dark'}),
+      toggleZhuyin:()=>this.setState({zhuyin:!S.zhuyin}), zhuyinSwitch, zhuyinKnob,
+      // deck detail
+      subDeck:S.sub==='deck', deckName:dObj?dObj.name:'', deckSub:dObj?(deckIdxs.length+' kartu di daftar'):'', masteryLegend, deckCards,
+      deck_review:()=>this.startReview(this.makeSession(deckIdxs.length?deckIdxs:[0],this.state.qCount),'srs'),
+      deck_test:()=>this.setState({baseCards:(deckIdxs.length?deckIdxs:[0]),sub:'testpick'}),
+      notAdding:!S.adding, adding:S.adding, nfInput,
+      openAdd:()=>this.setState({adding:true}), cancelAdd:()=>this.setState({adding:false}),
+      nfRefHan:this.refHan, nfRefPy:this.refPy, nfRefM:this.refM,
+      saveCard:()=>this.saveCard(),
+      // testpick
+      subTestpick:S.sub==='testpick', testpickSub: dObj?dObj.name:(S.baseCards.length+' kata'),
+      start_mc:()=>{ const sc=this.makeSession(S.baseCards,S.qCount); this._quiz=this.buildQuiz(sc); this.setState({sessionCards:sc,quizMode:'mc',sub:'quiz',quizIdx:0,quizScore:0,quizPicked:null}); },
+      start_self:()=>this.startReview(this.makeSession(S.baseCards,S.qCount),'self'),
+      start_spell:()=>{ const sc=this.makeSession(S.baseCards,S.qCount); this.setState({sessionCards:sc,sub:'spell',spellIdx:0,spellInput:'',spellChecked:false,spellCorrect:false,spellScore:0}); },
+      // review
+      subReview:S.sub==='review', closeSub:()=>this.closeSub(),
+      reviewActive, reviewFinished:S.sub==='review'&&!reviewActive,
+      reviewTitle: isSelf?'Tes · Self-check':'Review', reviewProgress:(Math.min(S.reviewIdx,total)+' / '+total),
+      reviewBar:(Math.min(S.reviewIdx,total)/total*100)+'%',
+      faceStyle, faceKeyFront, faceKeyBack,
+      cardHanzi:this.primaryHanzi(rCard), showSecondary:S.track==='both', cardSecondary:rCard.t,
+      cardPinyin:rCard.py, cardZhuyin:rCard.zy, showZhuyin: S.zhuyin && (S.track==='traditional'||S.track==='both'),
+      cardMeaning:rCard.m, cardExample:S.track==='traditional'?rCard.ext:rCard.exs, cardExampleId:rCard.exi,
+      cardFlipped:S.flipped, cardNotFlipped:!S.flipped, flipCard:()=>this.setState({flipped:!this.state.flipped}),
+      speakReview:(e)=>{ if(e&&e.stopPropagation)e.stopPropagation(); this.speak(this.primaryHanzi(rCard)); },
+      rate_wrong:()=>this.rate(false), rate_correct:()=>this.rate(true), rateWrong, rateCorrect,
+      reviewDoneTitle: isSelf?'Tes selesai':'Sesi selesai!',
+      reviewDoneText: isSelf? (S.reviewScore+' dari '+total+' benar. Masuk ke nilai Ujian Harian.') : (total+' kartu selesai diulang. Dijadwalkan ulang otomatis. Nilai Praktek +3.'),
+      // mc
+      subQuiz:S.sub==='quiz', quizActive, quizFinished:S.sub==='quiz'&&S.quizIdx>=quizTotal,
+      quizProgress:(Math.min(S.quizIdx+1,quizTotal)+' / '+quizTotal), quizBar:(S.quizIdx/quizTotal*100)+'%',
+      quizHanzi:qCard?this.primaryHanzi(qCard):'', quizPinyin:q?q.py:'', quizOptions, quizScore:S.quizScore, quizTotal,
+      quizAnswered:S.quizPicked!=null, quizNextLabel:S.quizIdx>=quizTotal-1?'Lihat hasil':'Lanjut', nextQuiz:()=>this.nextQuiz(),
+      quizVerdict:S.quizScore>=quizTotal-1?'Luar biasa!':(S.quizScore>=Math.ceil(quizTotal/2)?'Bagus, terus berlatih':'Ayo coba lagi'),
+      restartQuiz:()=>{ this._quiz=this.buildQuiz(S.sessionCards); this.setState({quizIdx:0,quizScore:0,quizPicked:null}); },
+      // spelling
+      subSpell:S.sub==='spell', spellActive, spellFinished:S.sub==='spell'&&S.spellIdx>=total, spellTotal:total,
+      spellProgress:(Math.min(S.spellIdx+1,total)+' / '+total), spellBar:(S.spellIdx/total*100)+'%',
+      spellHanzi:this.primaryHanzi(spCard), spellMeaning:spCard.m, spellInputVal:S.spellInput, spellInputStyle,
+      onSpellInput:(e)=>this.setState({spellInput:e.target.value}), onSpellKey:(e)=>{ if(e.key==='Enter'){e.preventDefault(); S.spellChecked?this.nextSpell():this.checkSpell();} },
+      speakSpell:()=>this.speak(this.primaryHanzi(spCard)),
+      checkSpell:()=>this.checkSpell(), spellChecked:S.spellChecked, spellNotChecked:!S.spellChecked,
+      spellResultStyle, spellResultText: S.spellCorrect?'Benar! '+spCard.py : ('Jawaban: '+spCard.py),
+      nextSpell:()=>this.nextSpell(), spellNextLabel:S.spellIdx>=total-1?'Lihat hasil':'Lanjut', spellScore:S.spellScore,
+      spellVerdict:S.spellScore>=total-1?'Hebat!':'Terus berlatih',
+      restartSpell:()=>this.setState({spellIdx:0,spellInput:'',spellChecked:false,spellCorrect:false,spellScore:0}),
+      // games / tone
+      subGames:S.sub==='games', subTone:S.sub==='tone',
+      go_tone:()=>{ this.setState({sub:'tone',toneIdx:0,toneScore:0,tonePicked:null}); setTimeout(()=>this.speak(this.TONES[0].h),250); },
+      toneActive, toneFinished:S.sub==='tone'&&S.toneIdx>=toneTotal, toneTotal,
+      toneProgress:(Math.min(S.toneIdx+1,toneTotal)+' / '+toneTotal), toneHanzi:tg.h, toneOpt, toneScore:S.toneScore, toneAnswered:S.tonePicked!=null,
+      toneNextLabel:S.toneIdx>=toneTotal-1?'Lihat hasil':'Lanjut',
+      toneReplay:()=>this.speak(tg.h),
+      tone_p1:()=>this.pickTone(1), tone_p2:()=>this.pickTone(2), tone_p3:()=>this.pickTone(3), tone_p4:()=>this.pickTone(4),
+      nextTone:()=>this.nextTone(), restartTone:()=>{ this.setState({sub:'tone',toneIdx:0,toneScore:0,tonePicked:null}); setTimeout(()=>this.speak(this.TONES[0].h),250); },
+      // games hub launchers
+      go_match:()=>this.startMatch(), go_speed:()=>this.startSpeed(), go_listen:()=>this.go_listen(),
+      // match
+      subMatch:S.sub==='match', matchActive:S.sub==='match'&&matchDone<mPairs.length, matchFinished:S.sub==='match'&&mPairs.length>0&&matchDone>=mPairs.length,
+      matchTiles, matchProgress:(matchDone+' / '+mPairs.length+' pasangan'), matchMoves:S.matchMoves, matchPairsN:mPairs.length, restartMatch:()=>this.startMatch(),
+      // listen
+      subListen:S.sub==='listen', listenActive, listenFinished:S.sub==='listen'&&S.quizIdx>=quizTotal,
+      listenNextLabel:S.quizIdx>=quizTotal-1?'Lihat hasil':'Lanjut', playListen:()=>this.playListenCur(), nextListen:()=>this.nextListen(), restartListen:()=>this.go_listen(),
+      // speed
+      subSpeed:S.sub==='speed', speedActive, speedFinished:S.sub==='speed'&&(S.speedLeft<=0||S.speedIdx>=spTotal),
+      speedLeft:S.speedLeft, speedScore:S.speedScore, speedScoreLabel:(S.speedScore+' benar · '+S.speedLeft+'s'),
+      speedBarPct:(S.speedLeft/45*100)+'%', speedBarColor: S.speedLeft<=10?tok.seal:tok.green,
+      speedHanzi:spCard2?this.primaryHanzi(spCard2):'', speedPinyin:spCard2?spCard2.py:'', speedOptions,
+      speedVerdict:(S.speedScore>=8?'Cepat & tepat!':'Lumayan!'), restartSpeed:()=>this.startSpeed(),
+      // write
+      subWrite:S.sub==='write', openWrite:()=>this.openWrite(), closeWrite:()=>this.closeWrite(), saveWrite:()=>this.saveWrite(),
+      writeDecks, wRefHan:this.wRefHan, wRefPy:this.wRefPy, wRefM:this.wRefM, writeMsg:S.writeMsg, writeMsgShow:!!S.writeMsg,
+      // mic
+      toggleMic:()=>this.toggleMic(), micBtnStyle, micBtnLabel:S.recording?'Stop merekam':'Mulai rekam', recording:S.recording,
+      tunerCanvasRef:this.tunerCanvas, tunerHint: S.recording?'Mendengarkan… ucapkan suku kata mengikuti kontur target.':'Tekan rekam, lalu ucapkan suku kata sesuai bentuk nada target.',
+    };
+  }
+
+  go(tab){ if(this._speedTimer)clearInterval(this._speedTimer); this.stopMic(); this.setState({tab, sub:null, deckCtx:null, roomOpen:false, leaderOpen:false, adding:false}); }
+  makeSession(base, n){ const b=(base&&base.length)?base:[0]; const out=[]; for(let i=0;i<n;i++) out.push(b[i%b.length]); return out; }
+  openDeck(i){ this.setState({openDeck:i, deckCtx:i, baseCards:this.DECKS[i].cards.slice(), sub:'deck', adding:false}); }
+  startReview(cards, mode){ this.setState({sessionCards:cards.slice(), reviewMode:mode, sub:'review', reviewIdx:0, flipped:false, reviewScore:0}); }
+  closeSub(){ const s=this.state; if(s.deckCtx!=null && s.sub!=='deck'){ this.setState({sub:'deck', flipped:false, adding:false}); } else { this.setState({sub:null, flipped:false, deckCtx:null, adding:false}); } }
+  saveCard(){
+    const han=(this.refHan.current?this.refHan.current.value:'').trim();
+    const py=(this.refPy.current?this.refPy.current.value:'').trim();
+    const m=(this.refM.current?this.refM.current.value:'').trim();
+    const openDeck=this.state.openDeck;
+    if(!han||openDeck==null) return;
+    const card={s:han,t:han,py:(py||'—'),zy:'',m:(m||'(arti)'),exs:'',ext:'',exi:'',tone:1,lv:0};
+    const ni=this.VOCAB.length; this.VOCAB.push(card);
+    if(this.refHan.current)this.refHan.current.value='';
+    if(this.refPy.current)this.refPy.current.value='';
+    if(this.refM.current)this.refM.current.value='';
+    this.setState(st=>{ const cc=Object.assign({},st.customCards); cc[openDeck]=[...(cc[openDeck]||[]),ni]; return {customCards:cc, adding:false}; });
+  }
+  rate(correct){ this.setState(s=>({reviewIdx:s.reviewIdx+1, flipped:false, reviewScore:s.reviewScore+(correct?1:0)})); }
+  pickQuiz(opt){ if(this.state.quizPicked!=null) return; const q=this._quiz[this.state.quizIdx]; const ok=opt===q.correct; this.setState(s=>({quizPicked:opt, quizScore:s.quizScore+(ok?1:0)})); }
+  nextQuiz(){ this.setState(s=>({quizIdx:s.quizIdx+1, quizPicked:null})); }
+  checkSpell(){ const c=this.VOCAB[this.state.sessionCards[this.state.spellIdx]]; const ok=this.norm(this.state.spellInput)===this.norm(c.py); this.setState(s=>({spellChecked:true, spellCorrect:ok, spellScore:s.spellScore+(ok?1:0)})); }
+  nextSpell(){ this.setState(s=>({spellIdx:s.spellIdx+1, spellInput:'', spellChecked:false, spellCorrect:false})); }
+  pickTone(n){ if(this.state.tonePicked!=null) return; const tg=this.TONES[this.state.toneIdx%this.TONES.length]; this.setState(s=>({tonePicked:n, toneScore:s.toneScore+(n===tg.tone?1:0)})); }
+  nextTone(){ const ni=this.state.toneIdx+1; this.setState({toneIdx:ni, tonePicked:null}); if(ni<this.state.qCount){ setTimeout(()=>this.speak(this.TONES[ni%this.TONES.length].h),250); } }
+
+  // ---- MATCH ----
+  startMatch(){
+    let base=[...new Set((this.state.baseCards&&this.state.baseCards.length)?this.state.baseCards:[0,4,7,8,9,3])];
+    if(base.length<4) base=[0,4,7,8,9,3];
+    const pairs=base.slice(0,6);
+    this._matchPairs=pairs;
+    const tiles=[];
+    pairs.forEach(idx=>{ tiles.push({pid:idx,kind:'han',label:this.primaryHanzi(this.VOCAB[idx])}); tiles.push({pid:idx,kind:'m',label:this.VOCAB[idx].m}); });
+    for(let k=tiles.length-1;k>0;k--){ const j=Math.floor(Math.random()*(k+1)); [tiles[k],tiles[j]]=[tiles[j],tiles[k]]; }
+    this._matchTiles=tiles;
+    this.setState({sub:'match', matchMatched:[], matchSel:null, matchWrong:[], matchMoves:0});
+  }
+  matchTap(id){
+    const s=this.state, tiles=this._matchTiles, tile=tiles[id];
+    if(s.matchMatched.includes(tile.pid) || s.matchWrong.length) return;
+    if(s.matchSel==null){ this.setState({matchSel:id}); return; }
+    if(s.matchSel===id){ this.setState({matchSel:null}); return; }
+    const sel=tiles[s.matchSel], moves=s.matchMoves+1;
+    if(sel.pid===tile.pid && sel.kind!==tile.kind){ this.setState({matchMatched:[...s.matchMatched,tile.pid], matchSel:null, matchMoves:moves}); }
+    else { this.setState({matchWrong:[s.matchSel,id], matchSel:null, matchMoves:moves}); setTimeout(()=>this.setState({matchWrong:[]}),700); }
+  }
+
+  // ---- LISTENING ----
+  go_listen(){ const sc=this.makeSession(this.state.baseCards,this.state.qCount); this._quiz=this.buildQuiz(sc); this.setState({sessionCards:sc, quizMode:'listen', sub:'listen', quizIdx:0,quizScore:0,quizPicked:null}); setTimeout(()=>this.playListenCur(),350); }
+  playListenCur(){ const q=this._quiz&&this._quiz[this.state.quizIdx]; if(q) this.speak(this.primaryHanzi(this.VOCAB[q.idx])); }
+  nextListen(){ this.setState(s=>({quizIdx:s.quizIdx+1, quizPicked:null})); setTimeout(()=>this.playListenCur(),350); }
+
+  // ---- SPEED RECALL ----
+  startSpeed(){
+    const sc=this.makeSession(this.state.baseCards,this.state.qCount);
+    this._speed=sc.map(i=>({idx:i, opts:this.makeOpts(i), correct:this.VOCAB[i].m}));
+    if(this._speedTimer) clearInterval(this._speedTimer);
+    this.setState({sessionCards:sc, sub:'speed', speedIdx:0, speedScore:0, speedLeft:45});
+    this._speedTimer=setInterval(()=>{ this.setState(s=>{ if(s.speedLeft<=1){ clearInterval(this._speedTimer); return {speedLeft:0}; } return {speedLeft:s.speedLeft-1}; }); },1000);
+  }
+  speedPick(opt){
+    const cur=this._speed&&this._speed[this.state.speedIdx]; if(!cur) return;
+    const ok=opt===cur.correct;
+    const ni=this.state.speedIdx+1;
+    if(ni>=this._speed.length && this._speedTimer) clearInterval(this._speedTimer);
+    this.setState(s=>({speedScore:s.speedScore+(ok?1:0), speedIdx:ni}));
+  }
+
+  // ---- WRITE (standalone) ----
+  openWrite(){ this.setState({sub:'write', writeDeck:0, writeMsg:''}); }
+  closeWrite(){ this.setState({sub:null, writeMsg:''}); }
+  saveWrite(){
+    const han=(this.wRefHan.current?this.wRefHan.current.value:'').trim();
+    const py=(this.wRefPy.current?this.wRefPy.current.value:'').trim();
+    const m=(this.wRefM.current?this.wRefM.current.value:'').trim();
+    if(!han) return;
+    const deck=this.state.writeDeck;
+    const card={s:han,t:han,py:(py||'—'),zy:'',m:(m||'(arti)'),exs:'',ext:'',exi:'',tone:1,lv:0};
+    const ni=this.VOCAB.length; this.VOCAB.push(card);
+    if(this.wRefHan.current)this.wRefHan.current.value='';
+    if(this.wRefPy.current)this.wRefPy.current.value='';
+    if(this.wRefM.current)this.wRefM.current.value='';
+    this.setState(st=>{ const cc=Object.assign({},st.customCards); cc[deck]=[...(cc[deck]||[]),ni]; return {customCards:cc, writeMsg:'Tersimpan ke '+this.DECKS[deck].name+' ✓'}; });
+    setTimeout(()=>this.setState({writeMsg:''}),2600);
+  }
+
+  // ---- MIC TUNER ----
+  toggleMic(){ if(this.state.recording) this.stopMic(); else this.startMic(); }
+  startMic(){
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia) return;
+    navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
+      this._micStream=stream;
+      const Ctx=window.AudioContext||window.webkitAudioContext;
+      const ctx=new Ctx(); this._audioCtx=ctx;
+      const src=ctx.createMediaStreamSource(stream);
+      const an=ctx.createAnalyser(); an.fftSize=2048; src.connect(an);
+      this._analyser=an; this._buf=new Float32Array(an.fftSize); this._pitchPts=[];
+      this.setState({recording:true});
+      this._drawMic();
+    }).catch(()=>{ this.setState({recording:false}); });
+  }
+  stopMic(){
+    if(this._rafId) cancelAnimationFrame(this._rafId); this._rafId=null;
+    if(this._micStream){ this._micStream.getTracks().forEach(t=>t.stop()); this._micStream=null; }
+    if(this._audioCtx){ try{this._audioCtx.close();}catch(e){} this._audioCtx=null; }
+    this._analyser=null;
+    const c=this.tunerCanvas.current; if(c){ const g=c.getContext('2d'); g.clearRect(0,0,c.width,c.height); }
+    if(this.state.recording) this.setState({recording:false});
+  }
+  autoCorrelate(buf,sr){
+    let rms=0; for(let i=0;i<buf.length;i++) rms+=buf[i]*buf[i];
+    rms=Math.sqrt(rms/buf.length); if(rms<0.01) return -1;
+    let r1=0, r2=buf.length-1, th=0.2;
+    for(let i=0;i<buf.length/2;i++){ if(Math.abs(buf[i])<th){ r1=i; break; } }
+    for(let i=1;i<buf.length/2;i++){ if(Math.abs(buf[buf.length-i])<th){ r2=buf.length-i; break; } }
+    const b=buf.slice(r1,r2); const c=new Array(b.length).fill(0);
+    for(let i=0;i<b.length;i++) for(let j=0;j<b.length-i;j++) c[i]+=b[j]*b[j+i];
+    let d=0; while(d<c.length-1 && c[d]>c[d+1]) d++;
+    let maxv=-1, maxp=-1;
+    for(let i=d;i<c.length;i++){ if(c[i]>maxv){ maxv=c[i]; maxp=i; } }
+    if(maxp<=0) return -1;
+    return sr/maxp;
+  }
+  _drawMic(){
+    const an=this._analyser, ctx=this._audioCtx, c=this.tunerCanvas.current;
+    if(!an||!ctx||!c){ return; }
+    an.getFloatTimeDomainData(this._buf);
+    const f=this.autoCorrelate(this._buf, ctx.sampleRate);
+    if(c.width!==c.clientWidth){ c.width=c.clientWidth; c.height=c.clientHeight; }
+    const fmin=110, fmax=330;
+    let y=null; if(f>0){ const cl=Math.max(fmin,Math.min(fmax,f)); y=c.height-((cl-fmin)/(fmax-fmin))*c.height; }
+    this._pitchPts.push(y); if(this._pitchPts.length>c.width) this._pitchPts.shift();
+    const g=c.getContext('2d'); g.clearRect(0,0,c.width,c.height);
+    const seal=this.themeName()==='dark'?'#cf5042':'#b23b2e';
+    g.lineWidth=3; g.lineCap='round'; g.lineJoin='round'; g.strokeStyle=seal;
+    const n=this._pitchPts.length; let started=false; g.beginPath();
+    for(let k=0;k<n;k++){ const yy=this._pitchPts[k]; if(yy==null){ started=false; continue; } const xx=c.width-(n-1-k); if(!started){ g.moveTo(xx,yy); started=true; } else g.lineTo(xx,yy); }
+    g.stroke();
+    this._rafId=requestAnimationFrame(()=>this._drawMic());
+  }
+  sendChat(){
+    const txt=this.state.chatInput.trim(); if(!txt) return;
+    const replies=['很好！Kalimatmu sudah benar. Coba ganti objeknya: 我喜欢看书 (saya suka membaca buku).','Bagus. 喜欢 bisa diikuti kata benda atau kata kerja. PR-mu kucatat ke rapor ya.','对！Sekarang coba bentuk negatifnya: 我不喜欢… Apa yang tidak kamu sukai?'];
+    const r=replies[(this.state.messages.filter(m=>m.who==='me').length)%replies.length];
+    this.setState(s=>({messages:[...s.messages,{who:'me',text:txt}], chatInput:''}));
+    setTimeout(()=>this.setState(s=>({messages:[...s.messages,{who:'t',text:r}]})),650);
+  }
+  sendRoom(){
+    const txt=this.state.roomInput.trim(); if(!txt) return;
+    this.setState(s=>({roomMessages:[...s.roomMessages,{who:'me',name:'Andi',text:txt}], roomInput:''}));
+    setTimeout(()=>this.setState(s=>({roomMessages:[...s.roomMessages,{who:'o',name:'Mei Lin',text:'不错！Mari lanjut ke contoh berikutnya.'}]})),800);
+  }
+}
+</script>
+</body>
+</html>

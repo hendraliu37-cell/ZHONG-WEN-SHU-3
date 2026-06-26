@@ -1,0 +1,100 @@
+gw mau bikin apps buat belajar bahasa mandarin (tradisional dan simplified). 
+
+NAMA APLIKASI : ZHONGWEN SHU
+
+
+
+FItur : 
+
+
+FLASHCARD - bisa review card, menyesuaikan level kemampuan terhadap card, test (opsi multiple choice, self check (swap kartu sendiri), spelling test) (di testing ini yang mengukur seberapa hafal/ menguasainya user terhadap card), tulis card sendiri, import card, bikin grup/ deck card (seperti deck kata kerja, kata sifat, sayur sayuran, nama tempat dll)(di bagian test bisa pilih test berdasarkan beberapa deck atau random), dibagian add new card ada pilihan front side dan back side serta bisa input record suara dan gambar. 
+
+
+
+ROOM GROUP BELAJAR BARENG - bisa bikin grup bareng temen, jadi konsepnya seperti les di 1 ruangan. dan guru (LLM) bisa review kemampuan murid. guru selalu kasih materi setiap hari ke private chat (tempat murid ngobrol sama guru kaya bimbingan konseling/ belajar private). guru juga selalu ada materi (berkesinambungan, berdasarkan level yang ada seperti HSK 123, TOCFL dll) di grup belajar di jam tertentu. room ini menggunakan kode tertentu yang dibuat oleh host/ admin (seperti grup whatsapp, bisa menggunakan invite code atau id)
+
+
+
+ROOM CHAT PRIVATE DENGAN GURU (LLM) - private chat seperti chat ai pada umumnya.
+
+
+
+LOGIN ACCOUNT - bikin fitur login account biar setiap user bisa terdeteksi otlaudeccc
+
+
+
+USERNAME DAN ID - ada fitur username dan id (tidak boleh sama antara 1 user dengan yang lainnya). username bebas, id berbentuk angka saja. 
+
+
+
+GAMES - game untuk mengasah hasil belajar mandarin berdasarkan yang sudah dipelajari. bikin beberapa games.
+
+
+
+VOICE - bisa pake suara untuk pelafalan dan cek nada.
+
+
+
+TES NGOBROL - bisa tes ngobrol dengan guru
+
+
+
+LEADERBOARD - leaderboard antar pengguna secara global (list tier "[USERNAME] - [ID]"
+
+
+
+Tujuan :
+
+tujuan apps ini adalah untuk belajar bahasa mandarin, sehingga diharapkan apps bisa ngajarin mandarin ke user sehingga user bisa mahir dalam berkomunikasi dengan bahasa mandarin.
+
+
+
+design : 
+
+design modern dan tidak bernuansa "AI" ataupun cyberpunk dll. buat design secocok mungkin dengan tema aplikasi belajar. bikin togle untuk dark mode, light mode dan by system. semua design ditentukan oleh agent, termasuk logo, icon, warna, gambar dll. font hanzi pakai kaiti.	
+
+
+
+layout :
+
+memiliki tab masing masing fitur (tab di posisi bawah). tab profile dipaling kanan. 
+
+
+
+kemampuan :
+
+AI harus memiliki kemampuan untuk ngajar, terutama ngajar bahasa. AI harus bisa memiliki kemampuan untuk menyesuaikan metode belajar ke setiap murid.
+
+
+
+model LLM :
+
+opencode zen - deepseek v4 flash free
+
+
+
+harness : 
+
+Hermes ai
+
+
+
+memory/ second brain :
+
+obsidian
+
+
+
+os support :
+
+ios, android, windows
+
+
+
+file type :
+
+installer
+
+
+
+tugas lu sekarang bangun aplikasi ini. cari/ buat/ gunakan skill yang dibutuhkan. dan buatkan susunan kerangka design/ blue print jadi file html

@@ -1,0 +1,38 @@
+# --- Secrets (JANGAN pernah di-commit / dikirim ke LLM) ---
+acc.env
+tokens
+*.env
+.env*
+
+# --- Local agent/session state ---
+.agents/
+
+# --- Flutter / Dart ---
+**/build/
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+*.iml
+.idea/
+.vscode/
+*.apk
+*.aab
+*.keystore
+*.jks
+
+# --- Node ---
+node_modules/
+
+# --- Supabase ---
+supabase/.branches/
+supabase/.temp/
+
+# --- Release artifacts (uploaded via GitHub Releases) ---
+release/
+
+# --- Local run logs ---
+app/run_*.txt
+
+# --- OS ---
+Thumbs.db
+.DS_Store

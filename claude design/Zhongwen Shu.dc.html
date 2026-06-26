@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&family=Noto+Serif+SC:wght@500;700&family=Noto+Serif+TC:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0;}
+</style>
+</helmet>
+<div style="min-height:100vh;width:100%;background:{{ studioBg }};font-family:'Hanken Grotesk',system-ui,sans-serif;padding:30px 34px 60px;color:#2a2722;">
+
+  <!-- studio header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;max-width:1640px;margin:0 auto 26px;">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div style="width:42px;height:42px;border-radius:11px;background:#b23b2e;display:flex;align-items:center;justify-content:center;transform:rotate(-5deg);box-shadow:0 6px 16px rgba(178,59,46,.26);"><span style="font-family:'Kaiti','STKaiti','Noto Serif SC',serif;color:#fff;font-size:26px;line-height:1;margin-top:1px;">书</span></div>
+      <div>
+        <div style="font-size:20px;font-weight:800;letter-spacing:-.01em;color:#2a2722;">中文书 · ZHONGWEN SHU</div>
+        <div style="font-size:12px;color:#8a8478;">Prototype UI — fase Desain · Android &amp; Windows · interaktif</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;">
+      <span style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#8a8478;font-weight:600;">Tema</span>
+      <div style="display:inline-flex;background:#fff;border:1px solid #ddd8cf;border-radius:11px;padding:4px;">
+        <button onClick="{{ mode_light }}" style="{{ modeStyle.light }}">Terang</button>
+        <button onClick="{{ mode_dark }}" style="{{ modeStyle.dark }}">Gelap</button>
+        <button onClick="{{ mode_split }}" style="{{ modeStyle.split }}">Split</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- frames -->
+  <div style="display:flex;gap:46px;align-items:flex-start;justify-content:center;flex-wrap:wrap;max-width:1640px;margin:0 auto;">
+
+    <!-- PHONE -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:14px;">
+      <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:12px;font-weight:700;color:#54504a;letter-spacing:.02em;">Android</span><span style="font-family:'Space Mono',monospace;font-size:11px;color:#9a948a;">390 × 844</span></div>
+      <div style="width:414px;height:868px;background:#16140f;border-radius:46px;padding:12px;box-shadow:0 30px 70px -20px rgba(40,36,30,.5), 0 0 0 1px rgba(0,0,0,.15);">
+        <div style="position:relative;width:100%;height:100%;border-radius:36px;overflow:hidden;background:#f4f1ea;">
+          <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:130px;height:26px;background:#16140f;border-radius:0 0 16px 16px;z-index:20;"></div>
+          <dc-import name="ZWSApp" layout="mobile" theme="{{ phoneTheme }}" hint-size="100%,100%" style="width:100%;height:100%;"></dc-import>
+        </div>
+      </div>
+    </div>
+
+    <!-- DESKTOP -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:14px;">
+      <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:12px;font-weight:700;color:#54504a;letter-spacing:.02em;">Windows</span><span style="font-family:'Space Mono',monospace;font-size:11px;color:#9a948a;">1120 × 720</span></div>
+      <div style="width:1120px;height:744px;background:#15130f;border-radius:14px;box-shadow:0 30px 70px -20px rgba(40,36,30,.5), 0 0 0 1px rgba(0,0,0,.12);overflow:hidden;">
+        <div style="height:38px;background:{{ winbarBg }};display:flex;align-items:center;justify-content:space-between;padding:0 6px 0 16px;border-bottom:1px solid {{ winbarLine }};">
+          <div style="display:flex;align-items:center;gap:9px;"><div style="width:16px;height:16px;border-radius:5px;background:#b23b2e;display:flex;align-items:center;justify-content:center;"><span style="font-family:'Kaiti','Noto Serif SC',serif;color:#fff;font-size:11px;line-height:1;">书</span></div><span style="font-size:12px;font-weight:600;color:{{ winbarText }};">中文书 — Zhongwen Shu</span></div>
+          <div style="display:flex;align-items:center;">
+            <div style="width:44px;height:30px;display:flex;align-items:center;justify-content:center;"><div style="width:11px;height:1.5px;background:{{ winbarText }};"></div></div>
+            <div style="width:44px;height:30px;display:flex;align-items:center;justify-content:center;"><div style="width:11px;height:11px;border:1.5px solid {{ winbarText }};border-radius:2px;"></div></div>
+            <div style="width:44px;height:30px;display:flex;align-items:center;justify-content:center;color:{{ winbarText }};font-size:15px;">✕</div>
+          </div>
+        </div>
+        <div style="width:100%;height:706px;background:#15130f;">
+          <dc-import name="ZWSApp" layout="desktop" theme="{{ deskTheme }}" hint-size="100%,100%" style="width:100%;height:100%;"></dc-import>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="text-align:center;margin-top:40px;font-size:12px;color:#9a948a;max-width:560px;margin-left:auto;margin-right:auto;line-height:1.6;">
+    Keduanya interaktif &amp; independen. Coba: pilih jalur belajar → Beranda → <b style="color:#6b665c;">Mulai review SRS</b> (balik kartu, nilai FSRS) · <b style="color:#6b665c;">Guru</b> (chat &amp; tuner nada) · <b style="color:#6b665c;">Grup</b> (chat ruang) · <b style="color:#6b665c;">Profil</b> (ganti 简/繁, toggle 注音 &amp; tema).
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  state = { mode: 'split' };
+  renderVals(){
+    const m=this.state.mode;
+    const dark = m==='dark';
+    const seg=(k)=>{
+      const on=m===k;
+      return {padding:'7px 15px',borderRadius:'8px',border:'none',cursor:'pointer',fontSize:'13px',fontWeight:700,
+        background:on?'#2a2722':'transparent', color:on?'#f4f1ea':'#8a8478'};
+    };
+    return {
+      studioBg:'#e9e7e1',
+      modeStyle:{light:seg('light'),dark:seg('dark'),split:seg('split')},
+      mode_light:()=>this.setState({mode:'light'}),
+      mode_dark:()=>this.setState({mode:'dark'}),
+      mode_split:()=>this.setState({mode:'split'}),
+      phoneTheme: m==='dark' ? 'dark' : 'light',
+      deskTheme: m==='light' ? 'light' : 'dark',
+      winbarBg: dark?'#1f1c17':'#ffffff',
+      winbarLine: dark?'#322d24':'#e7e1d5',
+      winbarText: dark?'#b3ab9c':'#6b665c',
+    };
+  }
+}
+</script>
+</body>
+</html>
