@@ -11,22 +11,27 @@ class Han extends StatelessWidget {
   final Color? color;
   final double? height;
   final double? letterSpacing;
-  const Han(this.text,
-      {super.key,
-      this.size = 28,
-      this.weight = FontWeight.w500,
-      this.color,
-      this.height,
-      this.letterSpacing});
+  const Han(
+    this.text, {
+    super.key,
+    this.size = 28,
+    this.weight = FontWeight.w500,
+    this.color,
+    this.height,
+    this.letterSpacing,
+  });
 
   @override
-  Widget build(BuildContext context) => Text(text,
-      style: ZwsFonts.han(
-          size: size,
-          weight: weight,
-          color: color ?? ZwsTheme.of(context).ink,
-          height: height,
-          letterSpacing: letterSpacing));
+  Widget build(BuildContext context) => Text(
+    text,
+    style: ZwsFonts.han(
+      size: size,
+      weight: weight,
+      color: color ?? ZwsTheme.of(context).ink,
+      height: height,
+      letterSpacing: letterSpacing,
+    ),
+  );
 }
 
 /// Mono numerals / codes.
@@ -36,20 +41,25 @@ class Mono extends StatelessWidget {
   final FontWeight weight;
   final Color? color;
   final double? letterSpacing;
-  const Mono(this.text,
-      {super.key,
-      this.size = 12,
-      this.weight = FontWeight.w400,
-      this.color,
-      this.letterSpacing});
+  const Mono(
+    this.text, {
+    super.key,
+    this.size = 12,
+    this.weight = FontWeight.w400,
+    this.color,
+    this.letterSpacing,
+  });
 
   @override
-  Widget build(BuildContext context) => Text(text,
-      style: ZwsFonts.mono(
-          size: size,
-          weight: weight,
-          color: color ?? ZwsTheme.of(context).ink3,
-          letterSpacing: letterSpacing));
+  Widget build(BuildContext context) => Text(
+    text,
+    style: ZwsFonts.mono(
+      size: size,
+      weight: weight,
+      color: color ?? ZwsTheme.of(context).ink3,
+      letterSpacing: letterSpacing,
+    ),
+  );
 }
 
 /// Uppercase, letter-spaced section label (ink3).
@@ -59,12 +69,15 @@ class SectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = ZwsTheme.of(context);
-    return Text(text.toUpperCase(),
-        style: ZwsFonts.sans(
-            size: 11,
-            weight: FontWeight.w600,
-            color: t.ink3,
-            letterSpacing: 1.7));
+    return Text(
+      text.toUpperCase(),
+      style: ZwsFonts.sans(
+        size: 11,
+        weight: FontWeight.w600,
+        color: t.ink3,
+        letterSpacing: 1.7,
+      ),
+    );
   }
 }
 
@@ -119,9 +132,14 @@ class Pill extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: borderColor != null ? Border.all(color: borderColor!) : null,
       ),
-      child: Text(text,
-          style: ZwsFonts.sans(
-              size: 11, weight: FontWeight.w700, color: fg ?? t.seal)),
+      child: Text(
+        text,
+        style: ZwsFonts.sans(
+          size: 11,
+          weight: FontWeight.w700,
+          color: fg ?? t.seal,
+        ),
+      ),
     );
   }
 }
@@ -145,7 +163,9 @@ class OverlayBar extends StatelessWidget {
     final t = ZwsTheme.of(context);
     return Container(
       padding: EdgeInsets.symmetric(
-          horizontal: desktop ? 22 : 14, vertical: desktop ? 16 : 13),
+        horizontal: desktop ? 22 : 14,
+        vertical: desktop ? 16 : 13,
+      ),
       decoration: BoxDecoration(
         color: t.surface,
         border: Border(bottom: BorderSide(color: t.line)),
@@ -192,8 +212,12 @@ class SealMark extends StatelessWidget {
   final double size;
   final double fontSize;
   final double radius;
-  const SealMark(
-      {super.key, this.size = 36, this.fontSize = 23, this.radius = 10});
+  const SealMark({
+    super.key,
+    this.size = 36,
+    this.fontSize = 23,
+    this.radius = 10,
+  });
   @override
   Widget build(BuildContext context) {
     final t = ZwsTheme.of(context);
@@ -207,9 +231,14 @@ class SealMark extends StatelessWidget {
           color: t.seal,
           borderRadius: BorderRadius.circular(radius),
         ),
-        child: Text('书',
-            style: ZwsFonts.han(
-                size: fontSize, weight: FontWeight.w500, color: Colors.white)),
+        child: Text(
+          '书',
+          style: ZwsFonts.han(
+            size: fontSize,
+            weight: FontWeight.w500,
+            color: Colors.white,
+          ),
+        ),
       ),
     );
   }
@@ -220,7 +249,12 @@ class InkButton extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
   final IconData? icon;
-  const InkButton({super.key, required this.label, required this.onTap, this.icon});
+  const InkButton({
+    super.key,
+    required this.label,
+    required this.onTap,
+    this.icon,
+  });
   @override
   Widget build(BuildContext context) {
     final t = ZwsTheme.of(context);
@@ -239,9 +273,14 @@ class InkButton extends StatelessWidget {
                 Icon(icon, size: 18, color: t.bg),
                 const SizedBox(width: 8),
               ],
-              Text(label,
-                  style: ZwsFonts.sans(
-                      size: 15, weight: FontWeight.w700, color: t.bg)),
+              Text(
+                label,
+                style: ZwsFonts.sans(
+                  size: 15,
+                  weight: FontWeight.w700,
+                  color: t.bg,
+                ),
+              ),
             ],
           ),
         ),
@@ -250,38 +289,42 @@ class InkButton extends StatelessWidget {
   }
 }
 
-/// Question-count stepper card (10–200, ×10). Shared by the test picker and
+/// Question-count stepper card. The maximum follows the active deck/session.
 /// games hub.
 class CountStepper extends StatelessWidget {
   final int count;
+  final String limitLabel;
   final VoidCallback onInc;
   final VoidCallback onDec;
-  const CountStepper(
-      {super.key,
-      required this.count,
-      required this.onInc,
-      required this.onDec});
+  const CountStepper({
+    super.key,
+    required this.count,
+    required this.limitLabel,
+    required this.onInc,
+    required this.onDec,
+  });
 
   @override
   Widget build(BuildContext context) {
     final t = ZwsTheme.of(context);
     Widget step(String label, VoidCallback onTap) => InkWell(
-          onTap: onTap,
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: 38,
+        height: 38,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: t.surface2,
           borderRadius: BorderRadius.circular(10),
-          child: Container(
-            width: 38,
-            height: 38,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: t.surface2,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: t.line),
-            ),
-            child: Text(label,
-                style: ZwsFonts.sans(
-                    size: 20, weight: FontWeight.w700, color: t.ink)),
-          ),
-        );
+          border: Border.all(color: t.line),
+        ),
+        child: Text(
+          label,
+          style: ZwsFonts.sans(size: 20, weight: FontWeight.w700, color: t.ink),
+        ),
+      ),
+    );
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -295,11 +338,15 @@ class CountStepper extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Jumlah soal',
-                    style: ZwsFonts.sans(
-                        size: 14, weight: FontWeight.w700, color: t.ink)),
-                Text('Kelipatan 10 · maksimal 200',
-                    style: ZwsFonts.sans(size: 11, color: t.ink3)),
+                Text(
+                  'Jumlah soal',
+                  style: ZwsFonts.sans(
+                    size: 14,
+                    weight: FontWeight.w700,
+                    color: t.ink,
+                  ),
+                ),
+                Text(limitLabel, style: ZwsFonts.sans(size: 11, color: t.ink3)),
               ],
             ),
           ),
@@ -307,8 +354,12 @@ class CountStepper extends StatelessWidget {
           SizedBox(
             width: 40,
             child: Center(
-              child: Mono('$count',
-                  size: 18, weight: FontWeight.w700, color: t.ink),
+              child: Mono(
+                '$count',
+                size: 18,
+                weight: FontWeight.w700,
+                color: t.ink,
+              ),
             ),
           ),
           step('+', onInc),
@@ -333,7 +384,9 @@ class ThinProgress extends StatelessWidget {
         child: FractionallySizedBox(
           widthFactor: pct.clamp(0, 1),
           child: AnimatedContainer(
-              duration: const Duration(milliseconds: 300), color: t.seal),
+            duration: const Duration(milliseconds: 300),
+            color: t.seal,
+          ),
         ),
       ),
     );

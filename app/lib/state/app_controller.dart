@@ -179,6 +179,8 @@ class AppController extends ChangeNotifier {
   String? authError;
   bool get authEnabled => auth.enabled;
   bool get signedIn => auth.signedIn;
+  bool databaseSyncBusy = false;
+  String databaseSyncMsg = '';
 
   /// The auth user id (uuid) — matches `sender_id`/`owner` in the rooms tables.
   /// Distinct from [profileId], which is the public "#1234" display id.
@@ -616,6 +618,7 @@ class AppController extends ChangeNotifier {
     xp = j['xp'] as int? ?? 0;
     streak = j['streak'] as int? ?? 0;
     lastTestPct = j['lastTestPct'] as int? ?? 0;
+    lastUjianAkhirPct = j['lastUjianAkhirPct'] as int? ?? 0;
     lastActiveDate = j['lastActiveDate'] as String?;
     _nextId = j['nextId'] as int? ?? 0;
     installedPacks
@@ -666,6 +669,7 @@ class AppController extends ChangeNotifier {
       'xp': xp,
       'streak': streak,
       'lastTestPct': lastTestPct,
+      'lastUjianAkhirPct': lastUjianAkhirPct,
       'lastActiveDate': lastActiveDate,
       'nextId': _nextId,
       'installedPacks': installedPacks.toList(),
@@ -773,11 +777,33 @@ class AppController extends ChangeNotifier {
 
   int get dueCount => reviewQueue().length;
 
+  int get currentQuestionMax {
+    final ids = (baseCards.isEmpty ? cards.keys : baseCards)
+        .where((id) => cards.containsKey(id))
+        .toSet();
+    return ids.isEmpty ? 1 : ids.length;
+  }
+
+  String get questionLimitLabel {
+    final max = currentQuestionMax;
+    return 'Kelipatan 10 · maksimal $max sesuai deck';
+  }
+
+  int get _questionFloor => math.min(10, currentQuestionMax);
+
+  void _clampQCount() {
+    final max = currentQuestionMax;
+    qCount = qCount.clamp(_questionFloor, max);
+  }
+
   List<int> makeSession(List<int> base, int n) {
-    final b = base.isEmpty ? cards.keys.take(1).toList() : List.of(base);
+    final b = (base.isEmpty ? cards.keys.toList() : List.of(base))
+        .where((id) => cards.containsKey(id))
+        .toSet()
+        .toList();
     if (b.isEmpty) return [];
     b.shuffle(rng);
-    return List.generate(n, (i) => b[i % b.length]);
+    return b.take(math.min(n, b.length)).toList();
   }
 
   List<String> _makeOptions(int cardId) {
@@ -1068,12 +1094,23 @@ class AppController extends ChangeNotifier {
   // ===========================================================================
 
   void incCount() {
-    qCount += 10;
+    final max = currentQuestionMax;
+    if (qCount >= max) {
+      qCount = max;
+    } else {
+      qCount = math.min(max, qCount + 10);
+    }
     notifyListeners();
   }
 
   void decCount() {
-    qCount = math.max(10, qCount - 10);
+    final max = currentQuestionMax;
+    final floor = _questionFloor;
+    if (qCount == max && max > floor && max % 10 != 0) {
+      qCount = math.max(floor, (max ~/ 10) * 10);
+    } else {
+      qCount = math.max(floor, qCount - 10);
+    }
     notifyListeners();
   }
 
@@ -1089,6 +1126,7 @@ class AppController extends ChangeNotifier {
     _deckCtx = id;
     final d = decks.firstWhere((x) => x.id == id);
     baseCards = List.of(d.cardIds);
+    _clampQCount();
     sub = 'deck';
     adding = false;
     notifyListeners();
@@ -1163,6 +1201,7 @@ class AppController extends ChangeNotifier {
     baseCards = d.cardIds.isEmpty
         ? cards.keys.take(1).toList()
         : List.of(d.cardIds);
+    _clampQCount();
     sub = 'testpick';
     notifyListeners();
   }
@@ -1195,6 +1234,18 @@ class AppController extends ChangeNotifier {
   // REVIEW / SELF-CHECK (FSRS)
   // ===========================================================================
 
+  void _recordPractice(
+    int id,
+    bool correct, {
+    int xpCorrect = 2,
+    int xpWrong = 1,
+  }) {
+    if (!cards.containsKey(id)) return;
+    final prev = srs[id] ?? SrsState();
+    srs[id] = _fsrs.review(prev, correct ? Grade.good : Grade.again);
+    xp += correct ? xpCorrect : xpWrong;
+  }
+
   void startReview(List<int> ids, String mode) {
     sessionCards = ids.isEmpty ? makeSession(baseCards, qCount) : List.of(ids);
     reviewMode = mode;
@@ -1224,11 +1275,8 @@ class AppController extends ChangeNotifier {
 
   void rate(bool correct) {
     final id = sessionCards[math.min(reviewIdx, sessionCards.length - 1)];
-    if (reviewMode == 'srs') {
-      final prev = srs[id] ?? SrsState();
-      srs[id] = _fsrs.review(prev, correct ? Grade.good : Grade.again);
-      xp += correct ? 2 : 1;
-    } else {
+    _recordPractice(id, correct);
+    if (reviewMode == 'self') {
       if (correct) reviewScore++;
     }
     reviewIdx++;
@@ -1250,6 +1298,7 @@ class AppController extends ChangeNotifier {
     if (base != null) baseCards = base;
     openDeckId = null;
     _deckCtx = null;
+    _clampQCount();
     sub = 'testpick';
     notifyListeners();
   }
@@ -1290,7 +1339,9 @@ class AppController extends ChangeNotifier {
   void pickQuiz(String opt) {
     if (quizPicked != null) return;
     final q = _quiz[quizIdx];
-    if (opt == q.correct) quizScore++;
+    final correct = opt == q.correct;
+    if (correct) quizScore++;
+    _recordPractice(q.cardId, correct, xpCorrect: 0, xpWrong: 0);
     quizPicked = opt;
     notifyListeners();
   }
@@ -1323,6 +1374,7 @@ class AppController extends ChangeNotifier {
   }
 
   void checkSpell() {
+    if (spellChecked) return;
     final c = card(spellCardId);
     final input = spellInput.trim();
     spellCorrect =
@@ -1331,6 +1383,7 @@ class AppController extends ChangeNotifier {
         c.matchesMeaning(input);
     spellChecked = true;
     if (spellCorrect) spellScore++;
+    _recordPractice(spellCardId, spellCorrect, xpCorrect: 0, xpWrong: 0);
     notifyListeners();
   }
 
@@ -1449,6 +1502,7 @@ class AppController extends ChangeNotifier {
     matchMoves++;
     if (sel.pid == tile.pid && sel.kind != tile.kind) {
       matchMatched = [...matchMatched, tile.pid];
+      _recordPractice(tile.pid, true, xpCorrect: 0, xpWrong: 0);
       matchSel = null;
       if (matchMatched.length >= _matchPairs.length) {
         xp += 5;
@@ -1523,7 +1577,9 @@ class AppController extends ChangeNotifier {
   void speedPick(String opt) {
     final cur = speedCur;
     if (cur == null) return;
-    if (opt == cur.correct) speedScore++;
+    final correct = opt == cur.correct;
+    if (correct) speedScore++;
+    _recordPractice(cur.cardId, correct, xpCorrect: 0, xpWrong: 0);
     speedIdx++;
     if (speedIdx >= _speed.length) {
       _speedTimer?.cancel();
@@ -1609,6 +1665,108 @@ class AppController extends ChangeNotifier {
     } catch (e) {
       if (kDebugMode) debugPrint('[packs] install ${pack.id} failed: $e');
     }
+  }
+
+  String _cardSignature(VocabEntry v) {
+    final s = v.simplified.trim();
+    final t = v.traditional.trim();
+    final py = normalize(v.pinyin);
+    return '$s|$t|$py';
+  }
+
+  SrsState _copySrs(SrsState s) => SrsState.fromJson(s.toJson());
+
+  Map<String, List<SrsState>> _srsByCardSignature(Iterable<int> ids) {
+    final out = <String, List<SrsState>>{};
+    for (final id in ids) {
+      final v = cards[id];
+      final state = srs[id];
+      if (v == null || state == null) continue;
+      out
+          .putIfAbsent(_cardSignature(v), () => <SrsState>[])
+          .add(_copySrs(state));
+    }
+    return out;
+  }
+
+  int _addCardWithSrs(VocabEntry v, SrsState state) {
+    final id = _nextId++;
+    cards[id] = v;
+    srs[id] = state;
+    return id;
+  }
+
+  void _removeCardsIfUnreferenced(
+    Iterable<int> ids, {
+    required String exceptDeckId,
+  }) {
+    final referenced = <int>{};
+    for (final d in decks) {
+      if (d.id == exceptDeckId) continue;
+      referenced.addAll(d.cardIds);
+    }
+    for (final id in ids) {
+      if (referenced.contains(id)) continue;
+      cards.remove(id);
+      srs.remove(id);
+    }
+  }
+
+  Future<void> syncDatabaseUpdate() async {
+    if (databaseSyncBusy) return;
+    databaseSyncBusy = true;
+    databaseSyncMsg = 'Memeriksa database deck terbaru...';
+    notifyListeners();
+    try {
+      await _loadPackCatalog();
+      var updatedDecks = 0;
+      var updatedCards = 0;
+      for (var i = 0; i < decks.length; i++) {
+        final deck = decks[i];
+        if (!deck.isPack || !deck.id.startsWith('pack_')) continue;
+        final packId = deck.id.substring(5);
+        final matches = packCatalog.where((p) => p.id == packId).toList();
+        if (matches.isEmpty) continue;
+        final pack = matches.first;
+        final raw = await rootBundle.loadString(pack.asset);
+        final data = jsonDecode(raw) as Map<String, dynamic>;
+        final list = (data['cards'] as List).cast<Map<String, dynamic>>();
+        final oldIds = List<int>.of(deck.cardIds);
+        final oldSrs = _srsByCardSignature(oldIds);
+        final newIds = <int>[];
+        for (final cj in list) {
+          final vocab = VocabEntry.fromJson(cj);
+          final sig = _cardSignature(vocab);
+          final preserved = oldSrs[sig];
+          final state = preserved != null && preserved.isNotEmpty
+              ? preserved.removeAt(0)
+              : SrsState();
+          newIds.add(_addCardWithSrs(vocab, state));
+        }
+        _removeCardsIfUnreferenced(oldIds, exceptDeckId: deck.id);
+        decks[i] = Deck(
+          id: deck.id,
+          displayIdx: deck.displayIdx,
+          name: pack.name,
+          standard: pack.standard,
+          levelTag: pack.levelTag,
+          isPack: true,
+          cardIds: newIds,
+        );
+        updatedDecks++;
+        updatedCards += newIds.length;
+      }
+      await _loadTranslationDict();
+      _clampQCount();
+      databaseSyncMsg = updatedDecks == 0
+          ? 'Belum ada pack terpasang yang perlu diupdate.'
+          : 'Database diperbarui: $updatedDecks deck, $updatedCards kartu. Penguasaan lama dipertahankan.';
+      await _save();
+    } catch (e) {
+      databaseSyncMsg = 'Update database gagal: $e';
+    }
+    databaseSyncBusy = false;
+    notifyListeners();
   }
 
   // ===========================================================================

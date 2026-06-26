@@ -8,8 +8,11 @@ import '../widgets/common.dart';
 class GamesHubOverlay extends StatelessWidget {
   final AppController controller;
   final bool desktop;
-  const GamesHubOverlay(
-      {super.key, required this.controller, required this.desktop});
+  const GamesHubOverlay({
+    super.key,
+    required this.controller,
+    required this.desktop,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -23,9 +26,14 @@ class GamesHubOverlay extends StatelessWidget {
             desktop: desktop,
             onBack: c.closeSub,
             title: Center(
-              child: Text('Games',
-                  style: ZwsFonts.sans(
-                      size: 15, weight: FontWeight.w800, color: t.ink)),
+              child: Text(
+                'Games',
+                style: ZwsFonts.sans(
+                  size: 15,
+                  weight: FontWeight.w800,
+                  color: t.ink,
+                ),
+              ),
             ),
           ),
           Expanded(
@@ -38,9 +46,11 @@ class GamesHubOverlay extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       CountStepper(
-                          count: c.qCount,
-                          onInc: c.incCount,
-                          onDec: c.decCount),
+                        count: c.qCount,
+                        limitLabel: c.questionLimitLabel,
+                        onInc: c.incCount,
+                        onDec: c.decCount,
+                      ),
                       const SizedBox(height: 12),
                       GridView.count(
                         crossAxisCount: 2,
@@ -93,11 +103,12 @@ class _GameCard extends StatelessWidget {
   final String title;
   final String sub;
   final VoidCallback onTap;
-  const _GameCard(
-      {required this.han,
-      required this.title,
-      required this.sub,
-      required this.onTap});
+  const _GameCard({
+    required this.han,
+    required this.title,
+    required this.sub,
+    required this.onTap,
+  });
   @override
   Widget build(BuildContext context) {
     final t = ZwsTheme.of(context);
@@ -116,13 +127,20 @@ class _GameCard extends StatelessWidget {
           children: [
             Han(han, size: 30, color: t.seal),
             const SizedBox(height: 8),
-            Text(title,
-                style: ZwsFonts.sans(
-                    size: 14, weight: FontWeight.w700, color: t.ink)),
+            Text(
+              title,
+              style: ZwsFonts.sans(
+                size: 14,
+                weight: FontWeight.w700,
+                color: t.ink,
+              ),
+            ),
             const SizedBox(height: 2),
-            Text(sub,
-                textAlign: TextAlign.center,
-                style: ZwsFonts.sans(size: 11, color: t.ink3)),
+            Text(
+              sub,
+              textAlign: TextAlign.center,
+              style: ZwsFonts.sans(size: 11, color: t.ink3),
+            ),
           ],
         ),
       ),

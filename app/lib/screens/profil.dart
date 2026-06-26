@@ -9,7 +9,11 @@ import '../widgets/common.dart';
 class ProfilScreen extends StatelessWidget {
   final AppController controller;
   final bool desktop;
-  const ProfilScreen({super.key, required this.controller, required this.desktop});
+  const ProfilScreen({
+    super.key,
+    required this.controller,
+    required this.desktop,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -31,11 +35,26 @@ class ProfilScreen extends StatelessWidget {
               const SizedBox(height: 12),
               Row(
                 children: [
-                  _TrackBtn(controller: c, value: 'simplified', han: '简', label: 'Simplified'),
+                  _TrackBtn(
+                    controller: c,
+                    value: 'simplified',
+                    han: '简',
+                    label: 'Simplified',
+                  ),
                   const SizedBox(width: 8),
-                  _TrackBtn(controller: c, value: 'traditional', han: '繁', label: 'Traditional'),
+                  _TrackBtn(
+                    controller: c,
+                    value: 'traditional',
+                    han: '繁',
+                    label: 'Traditional',
+                  ),
                   const SizedBox(width: 8),
-                  _TrackBtn(controller: c, value: 'both', han: '简繁', label: 'Keduanya'),
+                  _TrackBtn(
+                    controller: c,
+                    value: 'both',
+                    han: '简繁',
+                    label: 'Keduanya',
+                  ),
                 ],
               ),
             ],
@@ -51,8 +70,12 @@ class ProfilScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const SectionLabel('Rapor berbobot'),
-                  Mono('${c.raporTotal} / ${c.raporLetter}',
-                      size: 13, weight: FontWeight.w800, color: t.seal),
+                  Mono(
+                    '${c.raporTotal} / ${c.raporLetter}',
+                    size: 13,
+                    weight: FontWeight.w800,
+                    color: t.seal,
+                  ),
                 ],
               ),
               const SizedBox(height: 14),
@@ -72,7 +95,10 @@ class ProfilScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
                 decoration: BoxDecoration(
                   border: Border(bottom: BorderSide(color: t.line)),
                 ),
@@ -92,6 +118,42 @@ class ProfilScreen extends StatelessWidget {
                 title: 'Sumber suara',
                 sub: 'Suara daratan & Taiwan',
                 trailing: Mono('Otomatis', size: 12, color: t.ink3),
+              ),
+              _SettingRow(
+                title: 'Update database deck',
+                sub: c.databaseSyncMsg.isEmpty
+                    ? 'Sinkronkan HSK/TOCFL terpasang dengan data terbaru'
+                    : c.databaseSyncMsg,
+                trailing: Material(
+                  color: c.databaseSyncBusy ? t.surface2 : t.ink,
+                  borderRadius: BorderRadius.circular(10),
+                  child: InkWell(
+                    onTap: c.databaseSyncBusy ? null : c.syncDatabaseUpdate,
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      width: 78,
+                      padding: const EdgeInsets.symmetric(vertical: 9),
+                      alignment: Alignment.center,
+                      child: c.databaseSyncBusy
+                          ? SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: t.ink3,
+                              ),
+                            )
+                          : Text(
+                              'Update',
+                              style: ZwsFonts.sans(
+                                size: 13,
+                                weight: FontWeight.w700,
+                                color: t.bg,
+                              ),
+                            ),
+                    ),
+                  ),
+                ),
               ),
               _SettingRow(
                 title: 'Bahasa antarmuka',
@@ -115,12 +177,17 @@ class ProfilScreen extends StatelessWidget {
                           border: Border.all(color: t.line),
                         ),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 9),
-                        child: Text('Buka',
-                            style: ZwsFonts.sans(
-                                size: 13,
-                                weight: FontWeight.w600,
-                                color: t.seal)),
+                          horizontal: 14,
+                          vertical: 9,
+                        ),
+                        child: Text(
+                          'Buka',
+                          style: ZwsFonts.sans(
+                            size: 13,
+                            weight: FontWeight.w600,
+                            color: t.seal,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -140,12 +207,17 @@ class ProfilScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 9),
-                        child: Text('Logout',
-                            style: ZwsFonts.sans(
-                                size: 13,
-                                weight: FontWeight.w700,
-                                color: t.seal)),
+                          horizontal: 14,
+                          vertical: 9,
+                        ),
+                        child: Text(
+                          'Logout',
+                          style: ZwsFonts.sans(
+                            size: 13,
+                            weight: FontWeight.w700,
+                            color: t.seal,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -158,10 +230,10 @@ class ProfilScreen extends StatelessWidget {
   }
 
   static String _themeLabel(String mode) => switch (mode) {
-        'light' => 'Terang',
-        'dark' => 'Gelap',
-        _ => 'Ikut sistem',
-      };
+    'light' => 'Terang',
+    'dark' => 'Gelap',
+    _ => 'Ikut sistem',
+  };
 }
 
 class _ProfileHeader extends StatelessWidget {
@@ -170,7 +242,9 @@ class _ProfileHeader extends StatelessWidget {
 
   Future<void> _pickAvatar() async {
     const group = XTypeGroup(
-        label: 'Gambar', extensions: ['png', 'jpg', 'jpeg', 'webp']);
+      label: 'Gambar',
+      extensions: ['png', 'jpg', 'jpeg', 'webp'],
+    );
     final file = await openFile(acceptedTypeGroups: [group]);
     if (file == null) return;
     final bytes = await file.readAsBytes();
@@ -191,9 +265,14 @@ class _ProfileHeader extends StatelessWidget {
         return StatefulBuilder(
           builder: (ctx, setLocal) => AlertDialog(
             backgroundColor: t.surface,
-            title: Text('Ubah username',
-                style: ZwsFonts.sans(
-                    size: 16, weight: FontWeight.w800, color: t.ink)),
+            title: Text(
+              'Ubah username',
+              style: ZwsFonts.sans(
+                size: 16,
+                weight: FontWeight.w800,
+                color: t.ink,
+              ),
+            ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -211,7 +290,9 @@ class _ProfileHeader extends StatelessWidget {
                     decoration: InputDecoration(
                       isDense: true,
                       contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 13, vertical: 13),
+                        horizontal: 13,
+                        vertical: 13,
+                      ),
                       border: InputBorder.none,
                       hintText: 'username baru',
                       hintStyle: ZwsFonts.sans(size: 14, color: t.ink3),
@@ -220,17 +301,24 @@ class _ProfileHeader extends StatelessWidget {
                 ),
                 if (err != null) ...[
                   const SizedBox(height: 8),
-                  Text(err!,
-                      style: ZwsFonts.sans(
-                          size: 12, color: t.seal, weight: FontWeight.w600)),
+                  Text(
+                    err!,
+                    style: ZwsFonts.sans(
+                      size: 12,
+                      color: t.seal,
+                      weight: FontWeight.w600,
+                    ),
+                  ),
                 ],
               ],
             ),
             actions: [
               TextButton(
                 onPressed: busy ? null : () => Navigator.pop(ctx),
-                child: Text('Batal',
-                    style: ZwsFonts.sans(size: 13, color: t.ink2)),
+                child: Text(
+                  'Batal',
+                  style: ZwsFonts.sans(size: 13, color: t.ink2),
+                ),
               ),
               TextButton(
                 onPressed: busy
@@ -247,9 +335,14 @@ class _ProfileHeader extends StatelessWidget {
                           });
                         }
                       },
-                child: Text('Simpan',
-                    style: ZwsFonts.sans(
-                        size: 13, weight: FontWeight.w700, color: t.seal)),
+                child: Text(
+                  'Simpan',
+                  style: ZwsFonts.sans(
+                    size: 13,
+                    weight: FontWeight.w700,
+                    color: t.seal,
+                  ),
+                ),
               ),
             ],
           ),
@@ -266,7 +359,10 @@ class _ProfileHeader extends StatelessWidget {
         child: SizedBox(
           width: 22,
           height: 22,
-          child: CircularProgressIndicator(strokeWidth: 2.2, color: Colors.white),
+          child: CircularProgressIndicator(
+            strokeWidth: 2.2,
+            color: Colors.white,
+          ),
         ),
       );
     } else if (c.avatarUrl != null && c.avatarUrl!.isNotEmpty) {
@@ -277,8 +373,7 @@ class _ProfileHeader extends StatelessWidget {
           width: 64,
           height: 64,
           fit: BoxFit.cover,
-          errorBuilder: (_, _, _) =>
-              Han('书', size: 34, color: Colors.white),
+          errorBuilder: (_, _, _) => Han('书', size: 34, color: Colors.white),
         ),
       );
     } else {
@@ -322,8 +417,11 @@ class _ProfileHeader extends StatelessWidget {
                         shape: BoxShape.circle,
                         border: Border.all(color: t.line),
                       ),
-                      child: Icon(Icons.photo_camera_outlined,
-                          size: 13, color: t.ink2),
+                      child: Icon(
+                        Icons.photo_camera_outlined,
+                        size: 13,
+                        color: t.ink2,
+                      ),
                     ),
                   ),
               ],
@@ -334,9 +432,14 @@ class _ProfileHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(c.profileName.isEmpty ? 'Murid' : c.profileName,
-                    style: ZwsFonts.sans(
-                        size: 22, weight: FontWeight.w800, color: t.ink)),
+                Text(
+                  c.profileName.isEmpty ? 'Murid' : c.profileName,
+                  style: ZwsFonts.sans(
+                    size: 22,
+                    weight: FontWeight.w800,
+                    color: t.ink,
+                  ),
+                ),
                 Row(
                   children: [
                     Flexible(
@@ -355,8 +458,11 @@ class _ProfileHeader extends StatelessWidget {
                         borderRadius: BorderRadius.circular(6),
                         child: Padding(
                           padding: const EdgeInsets.all(2),
-                          child: Icon(Icons.edit_outlined,
-                              size: 15, color: t.seal),
+                          child: Icon(
+                            Icons.edit_outlined,
+                            size: 15,
+                            color: t.seal,
+                          ),
                         ),
                       ),
                     ],
@@ -383,11 +489,12 @@ class _TrackBtn extends StatelessWidget {
   final String value;
   final String han;
   final String label;
-  const _TrackBtn(
-      {required this.controller,
-      required this.value,
-      required this.han,
-      required this.label});
+  const _TrackBtn({
+    required this.controller,
+    required this.value,
+    required this.han,
+    required this.label,
+  });
   @override
   Widget build(BuildContext context) {
     final t = ZwsTheme.of(context);
@@ -407,11 +514,14 @@ class _TrackBtn extends StatelessWidget {
             children: [
               Han(han, size: 22, color: on ? t.seal : t.ink2),
               const SizedBox(height: 5),
-              Text(label,
-                  style: ZwsFonts.sans(
-                      size: 11,
-                      weight: FontWeight.w600,
-                      color: on ? t.seal : t.ink2)),
+              Text(
+                label,
+                style: ZwsFonts.sans(
+                  size: 11,
+                  weight: FontWeight.w600,
+                  color: on ? t.seal : t.ink2,
+                ),
+              ),
             ],
           ),
         ),
@@ -424,8 +534,11 @@ class _RaporRow extends StatelessWidget {
   final String name;
   final String weight;
   final int score;
-  const _RaporRow(
-      {required this.name, required this.weight, required this.score});
+  const _RaporRow({
+    required this.name,
+    required this.weight,
+    required this.score,
+  });
   @override
   Widget build(BuildContext context) {
     final t = ZwsTheme.of(context);
@@ -438,12 +551,19 @@ class _RaporRow extends StatelessWidget {
           children: [
             Row(
               children: [
-                Text(name,
-                    style: ZwsFonts.sans(
-                        size: 13, weight: FontWeight.w600, color: t.ink)),
+                Text(
+                  name,
+                  style: ZwsFonts.sans(
+                    size: 13,
+                    weight: FontWeight.w600,
+                    color: t.ink,
+                  ),
+                ),
                 const SizedBox(width: 6),
-                Text('· bobot $weight',
-                    style: ZwsFonts.sans(size: 11, color: t.ink3)),
+                Text(
+                  '· bobot $weight',
+                  style: ZwsFonts.sans(size: 11, color: t.ink3),
+                ),
               ],
             ),
             Mono('$score', size: 13, weight: FontWeight.w700, color: t.ink),
@@ -481,9 +601,7 @@ class _SettingRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        border: bottomBorder
-            ? Border(bottom: BorderSide(color: t.line))
-            : null,
+        border: bottomBorder ? Border(bottom: BorderSide(color: t.line)) : null,
       ),
       child: Row(
         children: [
@@ -491,9 +609,14 @@ class _SettingRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: ZwsFonts.sans(
-                        size: 14, weight: FontWeight.w600, color: t.ink)),
+                Text(
+                  title,
+                  style: ZwsFonts.sans(
+                    size: 14,
+                    weight: FontWeight.w600,
+                    color: t.ink,
+                  ),
+                ),
                 Text(sub, style: ZwsFonts.sans(size: 11, color: t.ink3)),
               ],
             ),
@@ -523,11 +646,14 @@ class _ThemeSeg extends StatelessWidget {
             color: on ? t.surface : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Text(label,
-              style: ZwsFonts.sans(
-                  size: 12,
-                  weight: FontWeight.w700,
-                  color: on ? t.ink : t.ink3)),
+          child: Text(
+            label,
+            style: ZwsFonts.sans(
+              size: 12,
+              weight: FontWeight.w700,
+              color: on ? t.ink : t.ink3,
+            ),
+          ),
         ),
       );
     }
@@ -580,7 +706,10 @@ class _ZhuyinSwitch extends StatelessWidget {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                    color: Color(0x33000000), blurRadius: 3, offset: Offset(0, 1))
+                  color: Color(0x33000000),
+                  blurRadius: 3,
+                  offset: Offset(0, 1),
+                ),
               ],
             ),
           ),

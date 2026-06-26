@@ -9,8 +9,11 @@ import '../widgets/ico.dart';
 class TestPickerOverlay extends StatelessWidget {
   final AppController controller;
   final bool desktop;
-  const TestPickerOverlay(
-      {super.key, required this.controller, required this.desktop});
+  const TestPickerOverlay({
+    super.key,
+    required this.controller,
+    required this.desktop,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -27,9 +30,14 @@ class TestPickerOverlay extends StatelessWidget {
             title: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Pilih mode tes',
-                    style: ZwsFonts.sans(
-                        size: 15, weight: FontWeight.w800, color: t.ink)),
+                Text(
+                  'Pilih mode tes',
+                  style: ZwsFonts.sans(
+                    size: 15,
+                    weight: FontWeight.w800,
+                    color: t.ink,
+                  ),
+                ),
                 Text(sub, style: ZwsFonts.sans(size: 11, color: t.ink3)),
               ],
             ),
@@ -56,14 +64,18 @@ class TestPickerOverlay extends StatelessWidget {
                               child: _DirSeg(
                                 label: '中文 → Indo',
                                 active: c.testDirection == 'zh2id',
-                                onTap: () => c.testDirection != 'zh2id' ? c.toggleTestDirection() : null,
+                                onTap: () => c.testDirection != 'zh2id'
+                                    ? c.toggleTestDirection()
+                                    : null,
                               ),
                             ),
                             Expanded(
                               child: _DirSeg(
                                 label: 'Indo → 中文',
                                 active: c.testDirection == 'id2zh',
-                                onTap: () => c.testDirection != 'id2zh' ? c.toggleTestDirection() : null,
+                                onTap: () => c.testDirection != 'id2zh'
+                                    ? c.toggleTestDirection()
+                                    : null,
                               ),
                             ),
                           ],
@@ -71,9 +83,11 @@ class TestPickerOverlay extends StatelessWidget {
                       ),
                       const SizedBox(height: 14),
                       CountStepper(
-                          count: c.qCount,
-                          onInc: c.incCount,
-                          onDec: c.decCount),
+                        count: c.qCount,
+                        limitLabel: c.questionLimitLabel,
+                        onInc: c.incCount,
+                        onDec: c.decCount,
+                      ),
                       const SizedBox(height: 12),
                       _PickCard(
                         icon: ZwsIcons.quiz,
@@ -112,11 +126,12 @@ class _PickCard extends StatelessWidget {
   final String title;
   final String sub;
   final VoidCallback onTap;
-  const _PickCard(
-      {required this.icon,
-      required this.title,
-      required this.sub,
-      required this.onTap});
+  const _PickCard({
+    required this.icon,
+    required this.title,
+    required this.sub,
+    required this.onTap,
+  });
   @override
   Widget build(BuildContext context) {
     final t = ZwsTheme.of(context);
@@ -147,9 +162,14 @@ class _PickCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,
-                      style: ZwsFonts.sans(
-                          size: 15, weight: FontWeight.w700, color: t.ink)),
+                  Text(
+                    title,
+                    style: ZwsFonts.sans(
+                      size: 15,
+                      weight: FontWeight.w700,
+                      color: t.ink,
+                    ),
+                  ),
                   const SizedBox(height: 1),
                   Text(sub, style: ZwsFonts.sans(size: 12, color: t.ink3)),
                 ],
@@ -181,11 +201,14 @@ class _DirSeg extends StatelessWidget {
           color: active ? t.surface : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Text(label,
-            style: ZwsFonts.sans(
-                size: 12,
-                weight: FontWeight.w700,
-                color: active ? t.ink : t.ink3)),
+        child: Text(
+          label,
+          style: ZwsFonts.sans(
+            size: 12,
+            weight: FontWeight.w700,
+            color: active ? t.ink : t.ink3,
+          ),
+        ),
       ),
     );
   }
