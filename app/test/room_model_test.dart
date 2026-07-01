@@ -73,4 +73,17 @@ void main() {
       expect(g.isMine('u-1'), isFalse);
     });
   });
+
+  group('room failure copy', () {
+    test('explains send and Guru failures in Indonesian', () {
+      expect(roomSendFailureMessage(), contains('Pesan belum terkirim'));
+      expect(roomGuruFailureMessage('offline'), contains('offline'));
+      expect(roomGuruFailureMessage('not_member'), contains('ruang'));
+      expect(roomGuruFailureMessage('llm_failed'), contains('Coba ulang'));
+      expect(
+        roomGuruFailureMessage('unknown'),
+        contains('Guru belum tersedia'),
+      );
+    });
+  });
 }

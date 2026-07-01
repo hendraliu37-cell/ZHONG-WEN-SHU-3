@@ -106,3 +106,31 @@ String normalizeRoomCode(String input) {
 /// chars from the unambiguous alphabet used by `gen_room_code()`.
 bool isValidRoomCode(String code) =>
     RegExp(r'^ZWS-[2-9A-HJ-NP-Z]{5}$').hasMatch(code);
+
+/// User-facing copy for local-only room failures. Kept in the model layer so
+/// the room UX can be regression-tested without a Supabase connection.
+String roomSendFailureMessage() =>
+    'Pesan belum terkirim. Cek koneksi, lalu coba kirim lagi.';
+
+/// User-facing copy when the group tutor Edge Function could not reply.
+String roomGuruFailureMessage(String? code) {
+  switch (code) {
+    case 'offline':
+      return 'Guru belum bisa dipanggil karena kamu sedang offline atau belum masuk.';
+    case 'llm_not_configured':
+    case 'not_configured':
+      return 'Guru belum siap di server. Coba lagi nanti setelah konfigurasi AI aktif.';
+    case 'unauthorized':
+    case 'no_auth':
+      return 'Guru butuh sesi login yang aktif. Masuk ulang, lalu coba lagi.';
+    case 'not_member':
+      return 'Guru hanya bisa menjawab di ruang yang masih kamu ikuti.';
+    case 'llm_failed':
+    case 'failed':
+      return 'Guru belum berhasil menjawab. Coba ulang sebentar lagi.';
+    case 'insert_failed':
+      return 'Jawaban Guru sudah dibuat, tapi belum bisa disimpan ke ruang.';
+    default:
+      return 'Guru belum tersedia. Coba ulang sebentar lagi.';
+  }
+}

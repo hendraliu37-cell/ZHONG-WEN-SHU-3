@@ -3119,23 +3119,44 @@ class AppController extends ChangeNotifier {
       authorName: me,
       authorHandle: profileHandle,
     );
+    if (currentRoom?.id != r.id) return;
     if (!sent) {
       roomMsgs = roomMsgs
           .where((m) => !(m.id == 0 && m.isMine(authUid) && m.body == txt))
           .toList();
+      roomMsgs = [
+        ...roomMsgs,
+        _localRoomStatusMessage(roomSendFailureMessage()),
+      ];
+      roomInput = txt;
       if (callGuru) roomGuruBusy = false;
       notifyListeners();
       return;
     }
     if (callGuru) {
       final err = await rooms.callGuru(r.id, track: _zhTrack);
+      if (currentRoom?.id != r.id) return;
       if (err != null) {
+        roomMsgs = [
+          ...roomMsgs,
+          _localRoomStatusMessage(roomGuruFailureMessage(err), isGuru: true),
+        ];
         roomGuruBusy = false;
         notifyListeners();
       }
     }
     if (learned) unawaited(_save());
   }
+
+  RoomMessage _localRoomStatusMessage(String body, {bool isGuru = false}) =>
+      RoomMessage(
+        id: 0,
+        senderId: null,
+        authorName: isGuru ? 'Guru' : 'Sistem',
+        isGuru: isGuru,
+        body: body,
+        createdAt: DateTime.now(),
+      );
 
   // ===========================================================================
   // RAPOR (weighted report card — PRD §11)
