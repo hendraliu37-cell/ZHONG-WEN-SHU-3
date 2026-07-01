@@ -1,5 +1,4 @@
-import 'dart:typed_data';
-
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../config.dart';
@@ -46,9 +45,14 @@ class AuthService {
     final msg = raw.toLowerCase();
     if (msg.contains('email rate limit') ||
         msg.contains('rate limit') ||
+        msg.contains('rate_limit') ||
         msg.contains('too many') ||
         msg.contains('over email send rate limit') ||
-        msg.contains('email address rate limit')) {
+        msg.contains('over_email_send_rate_limit') ||
+        msg.contains('email address rate limit') ||
+        msg.contains('email address rate limit exceeded') ||
+        msg.contains('security purposes') ||
+        msg.contains('request this after')) {
       return 'Batas kirim email tercapai. Tunggu beberapa menit dulu, lalu coba lagi. Kalau akun sudah dibuat, langsung coba masuk tanpa daftar ulang.';
     }
     if (msg.contains('email not confirmed')) {
@@ -64,6 +68,9 @@ class AuthService {
     }
     return raw;
   }
+
+  @visibleForTesting
+  String friendlyAuthErrorForTest(Object error) => _friendlyAuthError(error);
 
   /// True if [handle] is not yet taken. Falls back to `true` on any error so a
   /// transient check failure never blocks registration (the unique constraint
