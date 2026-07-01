@@ -30,6 +30,22 @@ void main() {
     expect(cards.single.pinyin, 'xièxie');
   });
 
+  test('imports common Chinese Pinyin English headers', () {
+    final service = DeckIoService();
+    final rows = service.readDelimitedForTest(
+      'Chinese,Pinyin,English\n吃,chī,eat\n学习,xué xí,study',
+    );
+    final cards = service.rowsToCardsForTest(rows);
+
+    expect(cards, hasLength(2));
+    expect(cards.first.simplified, '吃');
+    expect(cards.first.pinyin, 'chī');
+    expect(cards.first.meaning, 'eat');
+    expect(cards.last.simplified, '学习');
+    expect(cards.last.pinyin, 'xué xí');
+    expect(cards.last.meaning, 'study');
+  });
+
   test(
     'imports Indonesian-front headerless cards by swapping Chinese back',
     () {
@@ -53,5 +69,21 @@ void main() {
     expect(result.cards.single.simplified, '吃');
     expect(result.cards.single.meaning, 'makan');
     expect(result.cards.single.pinyin, 'chī');
+  });
+
+  test('imports headerless hanzi pinyin meaning order', () {
+    final service = DeckIoService();
+    final rows = service.readDelimitedForTest(
+      '吃\tchī\tmakan\n你好\tnǐ hǎo\thalo',
+    );
+    final cards = service.rowsToCardsForTest(rows);
+
+    expect(cards, hasLength(2));
+    expect(cards.first.simplified, '吃');
+    expect(cards.first.pinyin, 'chī');
+    expect(cards.first.meaning, 'makan');
+    expect(cards.last.simplified, '你好');
+    expect(cards.last.pinyin, 'nǐ hǎo');
+    expect(cards.last.meaning, 'halo');
   });
 }

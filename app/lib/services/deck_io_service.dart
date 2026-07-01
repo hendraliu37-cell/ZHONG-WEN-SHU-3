@@ -246,6 +246,10 @@ class DeckIoService {
       's',
       'front',
       'hanzi',
+      'chinese',
+      'mandarin',
+      'zh',
+      'zhongwen',
       'word',
       'term',
       'question',
@@ -261,6 +265,11 @@ class DeckIoService {
       'translation',
       'translations',
       'definitions',
+      'english',
+      'indonesian',
+      'indonesia',
+      'arti',
+      'bahasa_indonesia',
     ]);
     if (simplified.isEmpty || meaning.isEmpty) return null;
 
@@ -285,6 +294,16 @@ class DeckIoService {
     if (cells.length < 2 || cells[0].isEmpty || cells[1].isEmpty) return null;
     var front = cells[0];
     var back = cells[1];
+    var pinyin = cells.length > 2 ? cells[2] : '';
+    var traditional = cells.length > 3 && cells[3].isNotEmpty ? cells[3] : '';
+    if (_hasCjk(front) &&
+        cells.length > 2 &&
+        _looksLikePinyin(cells[1]) &&
+        cells[2].isNotEmpty) {
+      pinyin = cells[1];
+      back = cells[2];
+      traditional = cells.length > 3 && cells[3].isNotEmpty ? cells[3] : '';
+    }
     if (!_hasCjk(front) && _hasCjk(back)) {
       final tmp = front;
       front = back;
@@ -292,8 +311,8 @@ class DeckIoService {
     }
     return VocabEntry.fromJson({
       's': front,
-      't': cells.length > 3 && cells[3].isNotEmpty ? cells[3] : front,
-      'py': cells.length > 2 ? cells[2] : '',
+      't': traditional.isNotEmpty ? traditional : front,
+      'py': pinyin,
       'm': VocabEntry.splitMeanings(back).join(' / '),
     });
   }
@@ -310,17 +329,91 @@ class DeckIoService {
     'front',
     'back',
     'hanzi',
+    'chinese',
+    'mandarin',
+    'zh',
+    'zhongwen',
     'word',
     'term',
     'definition',
     'translation',
+    'translations',
+    'definitions',
+    'english',
+    'indonesian',
+    'indonesia',
+    'arti',
+    'bahasa_indonesia',
     'pinyin',
+    'py',
+    'reading',
     'meaning',
     'question',
     'answer',
   }.contains(value);
 
   bool _hasCjk(String value) => RegExp(r'[一-鿿㐀-䶿]').hasMatch(value);
+
+  bool _looksLikePinyin(String value) {
+    final v = value.trim().toLowerCase();
+    if (v.isEmpty || _hasCjk(v)) return false;
+    final normalized = _stripPinyinToneMarks(
+      v,
+    ).replaceAll('ü', 'v').replaceAll(RegExp(r"[^a-z0-9\s:;,./-]+"), ' ');
+    final words = normalized
+        .split(RegExp(r'[\s:;,./-]+'))
+        .where((w) => w.isNotEmpty)
+        .toList();
+    if (words.isEmpty || words.length > 8) return false;
+    return words.every(_isPinyinSyllable);
+  }
+
+  String _stripPinyinToneMarks(String value) {
+    const tones = {
+      'ā': 'a',
+      'á': 'a',
+      'ǎ': 'a',
+      'à': 'a',
+      'ē': 'e',
+      'é': 'e',
+      'ě': 'e',
+      'è': 'e',
+      'ī': 'i',
+      'í': 'i',
+      'ǐ': 'i',
+      'ì': 'i',
+      'ō': 'o',
+      'ó': 'o',
+      'ǒ': 'o',
+      'ò': 'o',
+      'ū': 'u',
+      'ú': 'u',
+      'ǔ': 'u',
+      'ù': 'u',
+      'ǖ': 'v',
+      'ǘ': 'v',
+      'ǚ': 'v',
+      'ǜ': 'v',
+      'ń': 'n',
+      'ň': 'n',
+      'ǹ': 'n',
+      'ḿ': 'm',
+    };
+    final out = StringBuffer();
+    for (final ch in value.split('')) {
+      out.write(tones[ch] ?? ch);
+    }
+    return out.toString();
+  }
+
+  bool _isPinyinSyllable(String raw) {
+    final syllable = raw.replaceFirst(RegExp(r'[1-5]$'), '');
+    return RegExp(
+      r'^(?:zh|ch|sh|[bpmfdtnlgkhjqxzcsryw])?'
+      r'(?:a|ai|an|ang|ao|e|ei|en|eng|er|i|ia|ian|iang|iao|ie|in|ing|iong|iu|'
+      r'o|ong|ou|u|ua|uai|uan|uang|ui|un|uo|v|ve|van|vn|ue)$',
+    ).hasMatch(syllable);
+  }
 
   String _csvCell(String value) => '"${value.replaceAll('"', '""')}"';
 
