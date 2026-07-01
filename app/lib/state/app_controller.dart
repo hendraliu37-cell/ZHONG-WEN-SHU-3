@@ -2619,6 +2619,7 @@ class AppController extends ChangeNotifier {
     trError = null;
     _trDebounce?.cancel();
     if (text.trim().isEmpty) {
+      _trSeq++;
       trResult = null;
       trLoading = false;
       notifyListeners();
@@ -2684,6 +2685,7 @@ class AppController extends ChangeNotifier {
 
   void trUseHistory(TranslateHistoryItem item) {
     _trDebounce?.cancel();
+    _trSeq++;
     trFrom = item.from;
     trTo = item.to;
     trEngine = item.engine;
@@ -2724,6 +2726,7 @@ class AppController extends ChangeNotifier {
 
   void trClear() {
     _trDebounce?.cancel();
+    _trSeq++;
     trSource = '';
     trResult = null;
     trError = null;

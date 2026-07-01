@@ -37,7 +37,8 @@ void main() {
       expect(result, isNotNull);
       expect(result!.translation, '吃');
       expect(result.pinyin, 'chī');
-      expect(result.alternatives.map((t) => t.hanzi), contains('吃饭'));
+      expect(result.alternatives.map((t) => t.hanzi), contains('吃飯'));
+      expect(result.alternatives.map((t) => t.hanzi), isNot(contains('吃饭')));
       expect(result.alternatives.map((t) => t.hanzi), isNot(contains('喫')));
     },
   );

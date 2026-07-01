@@ -79,6 +79,50 @@ class TranslationService {
   final Map<String, _DictEntry> _dict = {};
   bool _loaded = false;
 
+  static const _fallbackSimpToTrad = {
+    '这': '這',
+    '个': '個',
+    '们': '們',
+    '为': '為',
+    '来': '來',
+    '说': '說',
+    '对': '對',
+    '会': '會',
+    '学': '學',
+    '习': '習',
+    '书': '書',
+    '语': '語',
+    '问': '問',
+    '听': '聽',
+    '读': '讀',
+    '写': '寫',
+    '话': '話',
+    '请': '請',
+    '谢': '謝',
+    '欢': '歡',
+    '觉': '覺',
+    '饭': '飯',
+    '饮': '飲',
+    '电': '電',
+    '脑': '腦',
+    '机': '機',
+    '后': '後',
+    '里': '裡',
+    '过': '過',
+    '还': '還',
+    '没': '沒',
+    '气': '氣',
+    '国': '國',
+    '爱': '愛',
+    '长': '長',
+    '吗': '嗎',
+    '点': '點',
+    '买': '買',
+    '卖': '賣',
+    '开': '開',
+    '关': '關',
+  };
+
   SupabaseClient? get _sb {
     try {
       return Supabase.instance.client;
@@ -611,7 +655,7 @@ class TranslationService {
     final out = StringBuffer();
     for (final ch in simplified.split('')) {
       final e = _dict[ch];
-      out.write(e?.traditional ?? ch);
+      out.write(e?.traditional ?? _fallbackSimpToTrad[ch] ?? ch);
     }
     return VocabEntry.normalizeModernTraditional(out.toString());
   }
