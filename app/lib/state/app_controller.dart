@@ -1209,14 +1209,24 @@ class AppController extends ChangeNotifier {
   int get dueCount => reviewQueue().length;
 
   int get currentQuestionMax {
-    final ids = (baseCards.isEmpty ? cards.keys : baseCards)
-        .where((id) => cards.containsKey(id))
-        .toSet();
-    return ids.isEmpty ? 1 : ids.length;
+    Deck? contextDeck = openDeck;
+    if (contextDeck == null && _deckCtx != null) {
+      for (final deck in decks) {
+        if (deck.id == _deckCtx) {
+          contextDeck = deck;
+          break;
+        }
+      }
+    }
+    final source =
+        contextDeck?.cardIds ?? (baseCards.isEmpty ? cards.keys : baseCards);
+    final ids = source.where((id) => cards.containsKey(id)).toSet();
+    return ids.length;
   }
 
   String get questionLimitLabel {
     final max = currentQuestionMax;
+    if (max == 0) return 'Belum ada kartu di deck ini';
     return 'Kelipatan 10 · maksimal $max sesuai deck';
   }
 
@@ -1228,10 +1238,11 @@ class AppController extends ChangeNotifier {
   }
 
   List<int> makeSession(List<int> base, int n) {
-    final b = (base.isEmpty ? cards.keys.toList() : List.of(base))
-        .where((id) => cards.containsKey(id))
-        .toSet()
-        .toList();
+    final inDeckContext = openDeck != null || _deckCtx != null;
+    final source = base.isEmpty && !inDeckContext ? cards.keys.toList() : base;
+    final b = List<int>.of(
+      source,
+    ).where((id) => cards.containsKey(id)).toSet().toList();
     if (b.isEmpty) return [];
     b.shuffle(rng);
     return b.take(math.min(n, b.length)).toList();
@@ -1664,9 +1675,7 @@ class AppController extends ChangeNotifier {
   void deckTest() {
     final d = openDeck;
     if (d == null) return;
-    baseCards = d.cardIds.isEmpty
-        ? cards.keys.take(1).toList()
-        : List.of(d.cardIds);
+    baseCards = List.of(d.cardIds);
     _clampQCount();
     sub = 'testpick';
     notifyListeners();
@@ -1851,6 +1860,13 @@ class AppController extends ChangeNotifier {
 
   void startReview(List<int> ids, String mode) {
     sessionCards = ids.isEmpty ? makeSession(baseCards, qCount) : List.of(ids);
+    if (sessionCards.isEmpty) {
+      reviewIdx = 0;
+      flipped = false;
+      reviewScore = 0;
+      notifyListeners();
+      return;
+    }
     reviewMode = mode;
     sub = 'review';
     reviewIdx = 0;
@@ -1919,6 +1935,14 @@ class AppController extends ChangeNotifier {
 
   void startMc() {
     sessionCards = makeSession(baseCards, qCount);
+    if (sessionCards.isEmpty) {
+      _quiz = [];
+      quizIdx = 0;
+      quizScore = 0;
+      quizPicked = null;
+      notifyListeners();
+      return;
+    }
     _quiz = _buildQuiz(sessionCards);
     sub = 'quiz';
     quizIdx = 0;
@@ -1932,6 +1956,15 @@ class AppController extends ChangeNotifier {
 
   void startSpell() {
     sessionCards = makeSession(baseCards, qCount);
+    if (sessionCards.isEmpty) {
+      spellIdx = 0;
+      spellInput = '';
+      spellChecked = false;
+      spellCorrect = false;
+      spellScore = 0;
+      notifyListeners();
+      return;
+    }
     sub = 'spell';
     spellIdx = 0;
     spellInput = '';

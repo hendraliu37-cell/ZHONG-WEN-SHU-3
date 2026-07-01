@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:zhongwen_shu/models/deck.dart';
 import 'package:zhongwen_shu/models/vocab.dart';
 import 'package:zhongwen_shu/state/app_controller.dart';
 
@@ -48,6 +49,32 @@ void main() {
     c.decCount();
     expect(c.qCount, 10);
     expect(c.makeSession(ids, 200).length, 15);
+  });
+
+  test('empty deck test picker does not borrow cards from other decks', () {
+    final c = AppController();
+    c.cards[7] = _vocab(7);
+    c.decks.add(Deck(id: 'empty', displayIdx: '01', name: 'Deck kosong'));
+
+    c.openDeckById('empty');
+    c.deckTest();
+
+    expect(c.currentQuestionMax, 0);
+    expect(c.qCount, 0);
+    expect(c.questionLimitLabel, contains('Belum ada kartu'));
+
+    c.startMc();
+    expect(c.sub, 'testpick');
+    expect(c.sessionCards, isEmpty);
+    expect(c.testHistory, isEmpty);
+
+    c.startSelf();
+    expect(c.sub, 'testpick');
+    expect(c.testHistory, isEmpty);
+
+    c.startSpell();
+    expect(c.sub, 'testpick');
+    expect(c.testHistory, isEmpty);
   });
 
   test('multiple-choice deck tests update SRS mastery', () {
