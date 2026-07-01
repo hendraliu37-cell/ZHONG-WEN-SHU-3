@@ -100,6 +100,27 @@ void main() {
     expect(state.mastery, greaterThan(0));
   });
 
+  test('multiple-choice finish rewards only once on repeated next taps', () {
+    final c = AppController();
+    for (var i = 0; i < 4; i++) {
+      c.cards[i] = _vocab(i);
+    }
+
+    c.goTestPick(base: [0, 1, 2, 3]);
+    c.qCount = 1;
+    c.startMc();
+    final q = c.currentQuiz!;
+    c.pickQuiz(q.correct);
+    c.nextQuiz();
+    final xpAfterFinish = c.xp;
+    final idxAfterFinish = c.quizIdx;
+
+    c.nextQuiz();
+
+    expect(c.xp, xpAfterFinish);
+    expect(c.quizIdx, idxAfterFinish);
+  });
+
   test('unfinished multiple-choice test can be saved and resumed', () {
     final c = AppController();
     final ids = <int>[];
@@ -201,6 +222,24 @@ void main() {
     expect(state.mastery, greaterThan(0));
   });
 
+  test('tone game finish rewards only once on repeated next taps', () {
+    final c = AppController();
+    c.cards[0] = _vocab(0);
+
+    c.qCount = 1;
+    c.startTone();
+    final id = c.sessionCards.first;
+    c.pickTone(c.card(id).tone);
+    c.nextTone();
+    final xpAfterFinish = c.xp;
+    final idxAfterFinish = c.toneIdx;
+
+    c.nextTone();
+
+    expect(c.xp, xpAfterFinish);
+    expect(c.toneIdx, idxAfterFinish);
+  });
+
   test('listening quiz always asks for meaning even after id to zh tests', () {
     final c = AppController();
     for (var i = 0; i < 4; i++) {
@@ -218,6 +257,24 @@ void main() {
     expect(q.options, contains(card.primaryMeaning));
     expect(q.options, isNot(contains(c.primaryHanzi(card))));
     expect(c.testDirection, 'id2zh');
+  });
+
+  test('listening quiz finish rewards only once on repeated next taps', () {
+    final c = AppController();
+    c.cards[0] = _vocab(0);
+
+    c.qCount = 1;
+    c.goListen();
+    final q = c.currentQuiz!;
+    c.pickQuiz(q.correct);
+    c.nextListen();
+    final xpAfterFinish = c.xp;
+    final idxAfterFinish = c.quizIdx;
+
+    c.nextListen();
+
+    expect(c.xp, xpAfterFinish);
+    expect(c.quizIdx, idxAfterFinish);
   });
 
   test('games stay on hub when no cards are available', () {
@@ -244,6 +301,20 @@ void main() {
     expect(c.sub, 'games');
     expect(c.speed, isEmpty);
     expect(c.speedIdx, 0);
+  });
+
+  test('empty quiz and tone actions are no-ops', () {
+    final c = AppController();
+
+    expect(() => c.pickQuiz('x'), returnsNormally);
+    expect(() => c.nextQuiz(), returnsNormally);
+    expect(() => c.nextListen(), returnsNormally);
+    expect(() => c.pickTone(1), returnsNormally);
+    expect(() => c.nextTone(), returnsNormally);
+
+    expect(c.xp, 0);
+    expect(c.quizIdx, 0);
+    expect(c.toneIdx, 0);
   });
 
   test('daily tests and games use AI-focused learning cards', () {

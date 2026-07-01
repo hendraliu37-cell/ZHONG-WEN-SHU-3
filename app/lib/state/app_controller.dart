@@ -2150,7 +2150,8 @@ class AppController extends ChangeNotifier {
 
   void pickQuiz(String opt) {
     if (quizPicked != null) return;
-    final q = _quiz[quizIdx];
+    final q = currentQuiz;
+    if (q == null) return;
     final correct = opt == q.correct;
     if (correct) quizScore++;
     _recordPractice(q.cardId, correct, xpCorrect: 0, xpWrong: 0);
@@ -2160,6 +2161,7 @@ class AppController extends ChangeNotifier {
   }
 
   void nextQuiz() {
+    if (_quiz.isEmpty || quizIdx >= _quiz.length) return;
     quizIdx++;
     quizPicked = null;
     if (quizIdx >= quizTotal) {
@@ -2174,6 +2176,14 @@ class AppController extends ChangeNotifier {
   }
 
   void restartQuiz() {
+    if (sessionCards.isEmpty) {
+      _quiz = [];
+      quizIdx = 0;
+      quizScore = 0;
+      quizPicked = null;
+      notifyListeners();
+      return;
+    }
     _quiz = _buildQuiz(sessionCards);
     quizIdx = 0;
     quizScore = 0;
@@ -2254,7 +2264,7 @@ class AppController extends ChangeNotifier {
     return toneBank[toneIdx % toneBank.length];
   }
 
-  int get toneTotal => qCount;
+  int get toneTotal => sessionCards.length;
 
   void startTone() {
     baseCards = smartPracticeBase();
@@ -2276,6 +2286,7 @@ class AppController extends ChangeNotifier {
   }
 
   void pickTone(int n) {
+    if (toneTotal == 0 || toneIdx >= toneTotal) return;
     if (tonePicked != null) return;
     final cur = toneCur;
     final correct = n == cur.tone;
@@ -2289,6 +2300,7 @@ class AppController extends ChangeNotifier {
   }
 
   void nextTone() {
+    if (toneTotal == 0 || toneIdx >= toneTotal) return;
     toneIdx++;
     tonePicked = null;
     if (toneIdx < toneTotal) {
@@ -2404,6 +2416,7 @@ class AppController extends ChangeNotifier {
   }
 
   void nextListen() {
+    if (_quiz.isEmpty || quizIdx >= _quiz.length) return;
     quizIdx++;
     quizPicked = null;
     if (quizIdx >= quizTotal) {
