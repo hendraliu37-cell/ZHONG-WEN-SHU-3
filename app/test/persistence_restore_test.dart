@@ -85,4 +85,24 @@ void main() {
     expect(c.testHistory.single.index, 1);
     expect(c.testHistory.single.score, 1);
   });
+
+  test('restore respects daily material snooze windows', () {
+    final hidden = AppController();
+    hidden.restoreForTest({
+      'dailyMaterialHiddenUntil': DateTime.now()
+          .add(const Duration(hours: 1))
+          .toIso8601String(),
+    });
+
+    expect(hidden.showDailyMaterialBanner, isFalse);
+
+    final visible = AppController();
+    visible.restoreForTest({
+      'dailyMaterialHiddenUntil': DateTime.now()
+          .subtract(const Duration(minutes: 1))
+          .toIso8601String(),
+    });
+
+    expect(visible.showDailyMaterialBanner, isTrue);
+  });
 }

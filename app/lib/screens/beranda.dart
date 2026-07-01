@@ -24,10 +24,7 @@ class BerandaScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          _todayLabel(),
-          style: ZwsFonts.sans(size: 13, color: t.ink2),
-        ),
+        Text(_todayLabel(), style: ZwsFonts.sans(size: 13, color: t.ink2)),
         const SizedBox(height: 14),
         // Rapor ring + due card
         _TwoCol(
@@ -36,8 +33,10 @@ class BerandaScreen extends StatelessWidget {
           right: _DueCard(controller: c, due: due),
         ),
         const SizedBox(height: 14),
-        _MateriCard(controller: c),
-        const SizedBox(height: 14),
+        if (c.showDailyMaterialBanner) ...[
+          _MateriCard(controller: c),
+          const SizedBox(height: 14),
+        ],
         Row(
           children: [
             Expanded(
@@ -90,15 +89,7 @@ class BerandaScreen extends StatelessWidget {
 
 String _todayLabel() {
   final now = DateTime.now();
-  const days = [
-    'Senin',
-    'Selasa',
-    'Rabu',
-    'Kamis',
-    'Jumat',
-    'Sabtu',
-    'Minggu',
-  ];
+  const days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
   const months = [
     'Januari',
     'Februari',
@@ -387,6 +378,8 @@ class _MateriCard extends StatelessWidget {
                     const SizedBox(width: 6),
                   ],
                   Pill(mat != null ? 'AI' : 'HSK 2'),
+                  const SizedBox(width: 8),
+                  _SnoozeButton(onTap: controller.snoozeDailyMaterial),
                 ],
               ),
             ],
@@ -459,6 +452,36 @@ class _MateriCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SnoozeButton extends StatelessWidget {
+  final VoidCallback onTap;
+  const _SnoozeButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = ZwsTheme.of(context);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          child: Text(
+            'Ingatkan nanti',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: ZwsFonts.sans(
+              size: 11,
+              weight: FontWeight.w700,
+              color: t.ink3,
+            ),
+          ),
+        ),
       ),
     );
   }
