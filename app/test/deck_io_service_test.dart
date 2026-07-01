@@ -42,4 +42,16 @@ void main() {
       expect(cards.single.meaning, 'makan');
     },
   );
+
+  test('parses a single headerless card row', () {
+    final service = DeckIoService();
+    final rows = service.readDelimitedForTest('吃\tmakan\tchī');
+    final result = service.importRowsForTest(rows, sourceName: 'single.tsv');
+
+    expect(result.sourceName, 'single.tsv');
+    expect(result.cards, hasLength(1));
+    expect(result.cards.single.simplified, '吃');
+    expect(result.cards.single.meaning, 'makan');
+    expect(result.cards.single.pinyin, 'chī');
+  });
 }

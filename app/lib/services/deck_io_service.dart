@@ -91,11 +91,7 @@ class DeckIoService {
     final rows = name.toLowerCase().endsWith('.xlsx')
         ? _readExcel(bytes)
         : _readDelimited(utf8.decode(bytes, allowMalformed: true));
-    if (rows.length < 2) {
-      return DeckImportResult(cards: const [], sourceName: name);
-    }
-    final cards = _rowsToCards(rows);
-    return DeckImportResult(cards: cards, sourceName: name);
+    return importRowsForTest(rows, sourceName: name);
   }
 
   String _buildCsv(Iterable<VocabEntry> cards) {
@@ -164,6 +160,17 @@ class DeckIoService {
   @visibleForTesting
   List<VocabEntry> rowsToCardsForTest(List<List<String>> rows) =>
       _rowsToCards(rows);
+
+  @visibleForTesting
+  DeckImportResult importRowsForTest(
+    List<List<String>> rows, {
+    String sourceName = 'test',
+  }) {
+    if (rows.isEmpty) {
+      return DeckImportResult(cards: const [], sourceName: sourceName);
+    }
+    return DeckImportResult(cards: _rowsToCards(rows), sourceName: sourceName);
+  }
 
   List<List<String>> _readDelimited(String csv) {
     final rows = <List<String>>[];
