@@ -1079,12 +1079,12 @@ class AppController extends ChangeNotifier {
       deck.cardIds.removeWhere((id) => !cards.containsKey(id));
       decks.add(deck);
     }
-    messages = (j['chatHistory'] as List? ?? [])
+    final restoredMessages = (j['chatHistory'] as List? ?? [])
         .whereType<Map>()
         .map((e) => ChatMsg.fromJson(Map<String, dynamic>.from(e)))
         .where((m) => m.text.trim().isNotEmpty)
-        .take(_maxChatHistory)
         .toList();
+    messages = _latestChatMessages(restoredMessages);
     trHistory = (j['translateHistory'] as List? ?? [])
         .whereType<Map>()
         .map((e) => TranslateHistoryItem.fromJson(Map<String, dynamic>.from(e)))
@@ -1098,8 +1098,8 @@ class AppController extends ChangeNotifier {
         .take(_maxTestHistory)
         .toList();
     aiFocusCardIds = (j['aiFocusCardIds'] as List? ?? [])
-        .whereType<num>()
-        .map((e) => e.toInt())
+        .map(_jsonInt)
+        .nonNulls
         .where((id) => cards.containsKey(id))
         .take(_maxAiFocusCards)
         .toList();
@@ -1113,6 +1113,11 @@ class AppController extends ChangeNotifier {
     if (key is int) return key;
     if (key is num) return key.toInt();
     return int.tryParse(key?.toString() ?? '');
+  }
+
+  List<ChatMsg> _latestChatMessages(List<ChatMsg> items) {
+    if (items.length <= _maxChatHistory) return items;
+    return items.sublist(items.length - _maxChatHistory);
   }
 
   @visibleForTesting
@@ -1136,10 +1141,9 @@ class AppController extends ChangeNotifier {
       'cards': cards.map((k, v) => MapEntry('$k', v.toJson())),
       'srs': srs.map((k, v) => MapEntry('$k', v.toJson())),
       'decks': decks.map((d) => d.toJson()).toList(),
-      'chatHistory': messages
-          .take(_maxChatHistory)
-          .map((m) => m.toJson())
-          .toList(),
+      'chatHistory': _latestChatMessages(
+        messages,
+      ).map((m) => m.toJson()).toList(),
       'translateHistory': trHistory
           .take(_maxTranslateHistory)
           .map((h) => h.toJson())

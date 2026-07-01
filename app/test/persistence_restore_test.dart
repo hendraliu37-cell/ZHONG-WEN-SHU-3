@@ -105,4 +105,34 @@ void main() {
 
     expect(visible.showDailyMaterialBanner, isTrue);
   });
+
+  test('restore keeps newest local chat history when payload is oversized', () {
+    final c = AppController();
+
+    c.restoreForTest({
+      'chatHistory': [
+        for (var i = 0; i < 125; i++)
+          {'who': i.isEven ? 'me' : 't', 'text': 'pesan $i'},
+      ],
+    });
+
+    expect(c.messages, hasLength(120));
+    expect(c.messages.first.text, 'pesan 5');
+    expect(c.messages.last.text, 'pesan 124');
+  });
+
+  test('restore accepts legacy string ids for AI-focused learning cards', () {
+    final c = AppController();
+
+    c.restoreForTest({
+      'cards': {
+        '1': {'s': '吃', 't': '吃', 'py': 'chi1', 'm': 'makan'},
+        '2': {'s': '喝', 't': '喝', 'py': 'he1', 'm': 'minum'},
+      },
+      'aiFocusCardIds': ['2', 1, 'bad-id', 99],
+    });
+
+    expect(c.aiFocusCardIds, [2, 1]);
+    expect(c.smartPracticeBase(limit: 2), [2, 1]);
+  });
 }
