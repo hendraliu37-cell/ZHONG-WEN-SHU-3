@@ -85,6 +85,28 @@ void main() {
     },
   );
 
+  test('Indonesian phrase fallback ignores surrounding punctuation', () async {
+    final service = TranslationService();
+
+    final greeting = await service.translate(
+      'apa kabar?',
+      from: 'id',
+      to: 'zh',
+      engine: 'dict',
+    );
+    final sentence = await service.translate(
+      'saya suka, makan.',
+      from: 'id',
+      to: 'zh',
+      engine: 'dict',
+    );
+
+    expect(greeting, isNotNull);
+    expect(greeting!.translation, '你好吗');
+    expect(sentence, isNotNull);
+    expect(sentence!.translation, '我喜欢吃');
+  });
+
   test('Indonesian sentence fallback respects traditional track', () async {
     final service = TranslationService();
 

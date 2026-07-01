@@ -497,7 +497,7 @@ class TranslationService {
   }
 
   TranslationResult _dictTranslateIdToZh(String text, String track) {
-    final lower = text.toLowerCase().trim();
+    final lower = _normalizeIdText(text);
 
     final common = _commonIdCandidates[lower];
     if (common != null && common.isNotEmpty) {
@@ -541,7 +541,11 @@ class TranslationService {
       }
     }
 
-    final words = text.split(RegExp(r'\s+'));
+    final words = text
+        .split(RegExp(r'\s+'))
+        .map(_cleanIdWord)
+        .where((word) => word.isNotEmpty)
+        .toList();
     final tokens = <TranslateToken>[];
     final results = <String>[];
     final alternatives = <TranslateToken>[];
@@ -572,10 +576,7 @@ class TranslationService {
       }
 
       final word = words[i];
-      final w = word.toLowerCase().replaceAll(
-        RegExp(r'^[.,!?;:]+|[.,!?;:]+$'),
-        '',
-      );
+      final w = word.toLowerCase();
       if (w.isEmpty) {
         i++;
         continue;
@@ -672,6 +673,15 @@ class TranslationService {
 
   Set<String> _meaningWords(String meaning) =>
       meaning.split(RegExp(r'[\s/(),]+')).where((w) => w.isNotEmpty).toSet();
+
+  String _normalizeIdText(String text) => text
+      .split(RegExp(r'\s+'))
+      .map(_cleanIdWord)
+      .where((word) => word.isNotEmpty)
+      .join(' ');
+
+  String _cleanIdWord(String word) =>
+      word.toLowerCase().replaceAll(RegExp(r'^[.,!?;:]+|[.,!?;:]+$'), '');
 
   bool _looksLiteral(String meaning) {
     final m = meaning.toLowerCase();
