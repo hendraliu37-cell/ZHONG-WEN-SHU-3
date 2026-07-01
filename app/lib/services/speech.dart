@@ -17,6 +17,15 @@ import '../config.dart';
 /// in tests, or if the network path fails). Every call is guarded — it stays a
 /// silent no-op rather than crashing when no engine/voice is available.
 class SpeechService {
+  @visibleForTesting
+  static const neuralPlaybackRate = 0.72;
+  @visibleForTesting
+  static const osSpeechRate = 0.28;
+  @visibleForTesting
+  static const speechVolume = 1.0;
+  @visibleForTesting
+  static const osPitch = 1.04;
+
   final FlutterTts _tts = FlutterTts();
   AudioPlayer? _player;
   bool _enabled = true;
@@ -59,8 +68,8 @@ class SpeechService {
       await p.stop();
       await p.setPlayerMode(PlayerMode.lowLatency);
       await p.setReleaseMode(ReleaseMode.stop);
-      await p.setVolume(1.0);
-      await p.setPlaybackRate(0.78);
+      await p.setVolume(speechVolume);
+      await p.setPlaybackRate(neuralPlaybackRate);
       await p.play(DeviceFileSource(path));
       return true;
     } catch (e) {
@@ -93,15 +102,15 @@ class SpeechService {
       if (!_configured) {
         _configured = true;
         // Slow + clear so learners can hear each tone distinctly.
-        await _tts.setSpeechRate(0.28);
-        await _tts.setVolume(1.0);
-        await _tts.setPitch(1.04);
+        await _tts.setSpeechRate(osSpeechRate);
+        await _tts.setVolume(speechVolume);
+        await _tts.setPitch(osPitch);
       }
       await _tts.stop();
       await _tts.setLanguage(traditional ? 'zh-TW' : 'zh-CN');
-      await _tts.setSpeechRate(0.28);
-      await _tts.setVolume(1.0);
-      await _tts.setPitch(1.04);
+      await _tts.setSpeechRate(osSpeechRate);
+      await _tts.setVolume(speechVolume);
+      await _tts.setPitch(osPitch);
       await _tts.speak(text);
     } catch (e) {
       if (kDebugMode) debugPrint('[TTS] OS engine unavailable: $e');
