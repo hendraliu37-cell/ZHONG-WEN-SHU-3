@@ -122,4 +122,30 @@ void main() {
     expect(result!.translation, '我喜歡食物');
     expect(result.pinyin, 'wǒ xǐhuān shíwù');
   });
+
+  test('Chinese fallback ignores punctuation and latin runs', () async {
+    final service = TranslationService();
+    service.loadFromCards([
+      {'s': '我', 't': '我', 'py': 'wǒ', 'm': 'saya', 'hsk': 1},
+      {'s': '喜欢', 't': '喜歡', 'py': 'xǐhuān', 'm': 'suka', 'hsk': 1},
+      {
+        's': '中文',
+        't': '中文',
+        'py': 'zhōngwén',
+        'm': 'bahasa Mandarin',
+        'hsk': 1,
+      },
+    ]);
+
+    final result = await service.translate(
+      '我, 喜欢 ok。中文!',
+      from: 'zh',
+      to: 'id',
+      engine: 'dict',
+    );
+
+    expect(result, isNotNull);
+    expect(result!.translation, 'saya suka bahasa Mandarin');
+    expect(result.tokens.map((t) => t.hanzi), ['我', '喜欢', '中文']);
+  });
 }

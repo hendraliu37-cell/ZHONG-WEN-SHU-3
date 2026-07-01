@@ -442,8 +442,6 @@ class TranslationService {
 
     while (i < text.length) {
       if (!cjk.hasMatch(text[i])) {
-        tokens.add(TranslateToken(hanzi: text[i], meaning: text[i]));
-        meanings.add(text[i]);
         i++;
         continue;
       }
