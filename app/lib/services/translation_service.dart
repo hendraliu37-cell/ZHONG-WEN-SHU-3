@@ -525,23 +525,10 @@ class TranslationService {
       );
     }
 
-    // 1. Phrase map first (longest match)
+    // 1. Greedy phrase + word segmentation. This keeps multi-word input intact:
+    // "saya suka makan" -> "我喜欢吃", not just "我喜欢".
     final phraseKeys = _idPhraseMap.keys.toList()
       ..sort((a, b) => b.length.compareTo(a.length));
-    for (final phrase in phraseKeys) {
-      if (lower.contains(phrase)) {
-        final (hanzi, pinyin) = _idPhraseMap[phrase]!;
-        return TranslationResult(
-          translation: track == 'traditional' ? _toTraditional(hanzi) : hanzi,
-          pinyin: pinyin,
-          tokens: [
-            TranslateToken(hanzi: hanzi, pinyin: pinyin, meaning: phrase),
-          ],
-        );
-      }
-    }
-
-    // 2. Word-by-word with exact meaning match preference
     final idIndex = <String, List<_DictEntry>>{};
     final seenEntries = <String>{};
     for (final e in _dict.values) {
@@ -558,10 +545,68 @@ class TranslationService {
     final tokens = <TranslateToken>[];
     final results = <String>[];
     final alternatives = <TranslateToken>[];
+    var i = 0;
 
-    for (final word in words) {
-      final w = word.toLowerCase().replaceAll(RegExp(r'[.,!?;:]$'), '');
-      if (w.isEmpty) continue;
+    while (i < words.length) {
+      final remaining = words.sublist(i).join(' ');
+      String? matchedPhrase;
+      for (final phrase in phraseKeys) {
+        if (remaining == phrase || remaining.startsWith('$phrase ')) {
+          matchedPhrase = phrase;
+          break;
+        }
+      }
+      if (matchedPhrase != null) {
+        final (hanzi, pinyin) = _idPhraseMap[matchedPhrase]!;
+        final display = track == 'traditional' ? _toTraditional(hanzi) : hanzi;
+        tokens.add(
+          TranslateToken(
+            hanzi: display,
+            pinyin: pinyin,
+            meaning: matchedPhrase,
+          ),
+        );
+        results.add(display);
+        i += matchedPhrase.split(RegExp(r'\s+')).length;
+        continue;
+      }
+
+      final word = words[i];
+      final w = word.toLowerCase().replaceAll(
+        RegExp(r'^[.,!?;:]+|[.,!?;:]+$'),
+        '',
+      );
+      if (w.isEmpty) {
+        i++;
+        continue;
+      }
+      final commonWord = _commonIdCandidates[w];
+      if (commonWord != null && commonWord.isNotEmpty) {
+        final primary = commonWord.first;
+        final hanzi = track == 'traditional'
+            ? _toTraditional(primary.hanzi)
+            : primary.hanzi;
+        tokens.add(
+          TranslateToken(hanzi: hanzi, pinyin: primary.pinyin, meaning: w),
+        );
+        results.add(hanzi);
+        if (words.length == 1) {
+          alternatives.addAll(
+            commonWord.skip(1).map((candidate) {
+              final altHanzi = track == 'traditional'
+                  ? _toTraditional(candidate.hanzi)
+                  : candidate.hanzi;
+              return TranslateToken(
+                hanzi: altHanzi,
+                pinyin: candidate.pinyin,
+                meaning: candidate.note,
+              );
+            }),
+          );
+        }
+        i++;
+        continue;
+      }
       final hits = idIndex[w];
       _DictEntry? best;
       if (hits != null && hits.isNotEmpty) {
@@ -581,6 +626,7 @@ class TranslationService {
         tokens.add(TranslateToken(hanzi: word, meaning: word));
         results.add(word);
       }
+      i++;
     }
     return TranslationResult(
       translation: results.join(),

@@ -65,4 +65,39 @@ void main() {
       expect(result.alternatives.map((t) => t.hanzi), contains('美味'));
     },
   );
+
+  test(
+    'Indonesian phrase fallback keeps following words in the translation',
+    () async {
+      final service = TranslationService();
+
+      final result = await service.translate(
+        'saya suka makan',
+        from: 'id',
+        to: 'zh',
+        engine: 'dict',
+      );
+
+      expect(result, isNotNull);
+      expect(result!.translation, '我喜欢吃');
+      expect(result.pinyin, 'wǒ xǐhuān chī');
+      expect(result.tokens.map((t) => t.meaning), ['saya suka', 'makan']);
+    },
+  );
+
+  test('Indonesian sentence fallback respects traditional track', () async {
+    final service = TranslationService();
+
+    final result = await service.translate(
+      'saya suka makanan',
+      from: 'id',
+      to: 'zh',
+      engine: 'dict',
+      track: 'traditional',
+    );
+
+    expect(result, isNotNull);
+    expect(result!.translation, '我喜歡食物');
+    expect(result.pinyin, 'wǒ xǐhuān shíwù');
+  });
 }
