@@ -677,14 +677,21 @@ class AppController extends ChangeNotifier {
     final requestedTrack = track;
     curriculumLoading = true;
     notifyListeners();
-    final mat = await curriculum.fetch(track: requestedTrack, level: 'HSK 1-2');
-    if (serial != _curriculumRequestSerial) return;
-    if (mat != null && requestedTrack == track) {
-      dailyMaterial = mat;
-      notifyListeners();
+    try {
+      final mat = await curriculum.fetch(
+        track: requestedTrack,
+        level: 'HSK 1-2',
+      );
+      if (serial != _curriculumRequestSerial) return;
+      if (mat != null && requestedTrack == track) {
+        dailyMaterial = mat;
+      }
+    } finally {
+      if (serial == _curriculumRequestSerial) {
+        curriculumLoading = false;
+        notifyListeners();
+      }
     }
-    curriculumLoading = false;
-    notifyListeners();
   }
 
   Future<void> _loadProfile() async {
@@ -2957,6 +2964,13 @@ class AppController extends ChangeNotifier {
   void startUjianAkhir() {
     sub = 'ujian_akhir';
     notifyListeners();
+  }
+
+  /// Feeds each final-exam answer back into the same mastery engine as deck
+  /// tests/games, without double-counting exam XP.
+  void recordUjianAkhirAnswer(int cardId, bool correct) {
+    _recordPractice(cardId, correct, xpCorrect: 0, xpWrong: 0);
+    unawaited(_save());
   }
 
   /// Called when the ujian akhir overlay finishes.

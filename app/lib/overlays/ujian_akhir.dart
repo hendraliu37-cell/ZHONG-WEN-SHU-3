@@ -76,6 +76,7 @@ class _UjianAkhirOverlayState extends State<UjianAkhirOverlay> {
 
   void _answer(bool correct) {
     if (_done) return;
+    widget.controller.recordUjianAkhirAnswer(_soal[_idx].cardId, correct);
     if (correct) _score++;
     if (_idx + 1 >= _soal.length) {
       setState(() {
@@ -228,6 +229,8 @@ class _UjianAkhirOverlayState extends State<UjianAkhirOverlay> {
 // ---- question types ----
 
 abstract class _UjianSoal {
+  int get cardId;
+
   Widget buildWidget(
     VoidCallback onSetState,
     void Function(bool correct) onAnswer,
@@ -237,10 +240,12 @@ abstract class _UjianSoal {
 
 class _McSoal extends _UjianSoal {
   final AppController c;
+  @override
+  final int cardId;
   final String hanzi;
   final String correct;
 
-  _McSoal(this.c, _, this.hanzi, this.correct);
+  _McSoal(this.c, this.cardId, this.hanzi, this.correct);
 
   @override
   Widget buildWidget(
@@ -308,6 +313,8 @@ class _McSoal extends _UjianSoal {
 }
 
 class _SpellSoal extends _UjianSoal {
+  @override
+  final int cardId;
   final String meaning;
   final String correct;
   final String pinyin;
@@ -315,7 +322,7 @@ class _SpellSoal extends _UjianSoal {
   bool _checked = false;
   bool _correct = false;
 
-  _SpellSoal(_, this.meaning, this.correct, this.pinyin);
+  _SpellSoal(this.cardId, this.meaning, this.correct, this.pinyin);
 
   @override
   Widget buildWidget(
@@ -419,11 +426,13 @@ class _SpellSoal extends _UjianSoal {
 }
 
 class _ToneSoal extends _UjianSoal {
+  @override
+  final int cardId;
   final String hanzi;
   final String pinyin;
   final int correct;
 
-  _ToneSoal(_, this.hanzi, this.pinyin, this.correct);
+  _ToneSoal(this.cardId, this.hanzi, this.pinyin, this.correct);
 
   static const _names = {
     1: 'Pertama (—)',

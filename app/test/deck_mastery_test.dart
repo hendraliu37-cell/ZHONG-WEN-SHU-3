@@ -99,4 +99,17 @@ void main() {
     expect(c.quizScore, 1);
     expect(c.sessionCards.length, 6);
   });
+
+  test('final exam answers update SRS mastery', () {
+    final c = AppController();
+    c.cards[0] = _vocab(0);
+
+    c.recordUjianAkhirAnswer(0, true);
+
+    final state = c.srs[0];
+    expect(state, isNotNull);
+    expect(state!.reps, 1);
+    expect(state.isNew, isFalse);
+    expect(state.mastery, greaterThan(0));
+  });
 }
