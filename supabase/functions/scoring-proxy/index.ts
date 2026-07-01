@@ -34,7 +34,10 @@ Deno.serve(async (req: Request) => {
   const key = Deno.env.get("AZURE_SPEECH_KEY");
   const region = Deno.env.get("AZURE_SPEECH_REGION") ?? "southeastasia";
   if (!key) {
-    return json({ error: "not_configured", detail: "Set AZURE_SPEECH_KEY as Edge Function secret." }, 503);
+    return json({
+      error: "not_configured",
+      detail: "Set AZURE_SPEECH_KEY as Edge Function secret.",
+    }, 503);
   }
 
   let payload: { audio?: string; reference_text?: string; lang?: string };
@@ -46,7 +49,9 @@ Deno.serve(async (req: Request) => {
   if (typeof payload.audio !== "string" || payload.audio === "") {
     return json({ error: "no_audio" }, 400);
   }
-  const refText = typeof payload.reference_text === "string" ? payload.reference_text : "";
+  const refText = typeof payload.reference_text === "string"
+    ? payload.reference_text
+    : "";
   if (refText === "") return json({ error: "no_reference_text" }, 400);
   const locale = payload.lang === "id" ? "id-ID" : "zh-CN";
 
@@ -57,6 +62,10 @@ Deno.serve(async (req: Request) => {
     return json({ error: "bad_audio" }, 400);
   }
   const rate = wavSampleRate(bytes);
+  const audioBody = bytes.buffer.slice(
+    bytes.byteOffset,
+    bytes.byteOffset + bytes.byteLength,
+  ) as ArrayBuffer;
 
   const endpoint =
     `https://${region}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=${locale}&format=detailed`;
@@ -69,11 +78,15 @@ Deno.serve(async (req: Request) => {
         "Content-Type": `audio/wav; codecs=audio/pcm; samplerate=${rate}`,
         "Accept": "application/json",
       },
-      body: bytes,
+      body: audioBody,
     });
     const text = await resp.text();
     if (!resp.ok) {
-      return json({ error: "upstream", status: resp.status, detail: text.slice(0, 500) }, 502);
+      return json({
+        error: "upstream",
+        status: resp.status,
+        detail: text.slice(0, 500),
+      }, 502);
     }
     let data: any;
     try {
@@ -84,14 +97,17 @@ Deno.serve(async (req: Request) => {
 
     const transcript = data?.DisplayText ??
       (Array.isArray(data?.NBest) && data.NBest[0]?.Display) ?? "";
-    const confidence = Array.isArray(data?.NBest) && data.NBest[0]?.Confidence != null
-      ? Math.round(data.NBest[0].Confidence * 100)
-      : null;
+    const confidence =
+      Array.isArray(data?.NBest) && data.NBest[0]?.Confidence != null
+        ? Math.round(data.NBest[0].Confidence * 100)
+        : null;
     const words = Array.isArray(data?.NBest?.[0]?.Words)
       ? data.NBest[0].Words.map((w: { Word: string; Confidence?: number }) => ({
-          word: w.Word,
-          confidence: w.Confidence != null ? Math.round(w.Confidence * 100) : null,
-        }))
+        word: w.Word,
+        confidence: w.Confidence != null
+          ? Math.round(w.Confidence * 100)
+          : null,
+      }))
       : [];
 
     const score = confidence != null ? confidence : 0;
@@ -102,6 +118,9 @@ Deno.serve(async (req: Request) => {
       words,
     });
   } catch (e) {
-    return json({ error: "fetch_failed", detail: String(e).slice(0, 500) }, 502);
+    return json(
+      { error: "fetch_failed", detail: String(e).slice(0, 500) },
+      502,
+    );
   }
 });

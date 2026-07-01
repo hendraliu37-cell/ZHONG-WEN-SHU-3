@@ -54,12 +54,16 @@ class VocabEntry {
 
   factory VocabEntry.fromJson(Map<String, dynamic> j) => VocabEntry(
     simplified: (j['s'] ?? j['simplified'] ?? '') as String,
-    traditional: (j['t'] ?? j['traditional'] ?? j['s'] ?? '') as String,
+    traditional: normalizeModernTraditional(
+      (j['t'] ?? j['traditional'] ?? j['s'] ?? '') as String,
+    ),
     pinyin: (j['py'] ?? j['pinyin'] ?? '') as String,
     zhuyin: (j['zy'] ?? j['zhuyin'] ?? '') as String,
     meaning: (j['m'] ?? j['meaning'] ?? '') as String,
     exampleS: (j['exs'] ?? j['example_s'] ?? '') as String,
-    exampleT: (j['ext'] ?? j['example_t'] ?? '') as String,
+    exampleT: normalizeModernTraditional(
+      (j['ext'] ?? j['example_t'] ?? '') as String,
+    ),
     exampleId: (j['exi'] ?? j['example_id'] ?? '') as String,
     tone: (j['tone'] ?? 1) as int,
     hskLevel: j['hsk'] as int?,
@@ -96,4 +100,21 @@ class VocabEntry {
       .trim()
       .replaceAll(RegExp(r'[^a-z0-9\s]'), ' ')
       .replaceAll(RegExp(r'\s+'), ' ');
+
+  static String normalizeModernTraditional(String value) {
+    const replacements = {
+      '喫': '吃',
+      '爲': '為',
+      '裏': '裡',
+      '牀': '床',
+      '麪': '麵',
+      '着': '著',
+      '祇': '只',
+    };
+    var out = value;
+    for (final entry in replacements.entries) {
+      out = out.replaceAll(entry.key, entry.value);
+    }
+    return out;
+  }
 }

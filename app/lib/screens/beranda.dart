@@ -25,7 +25,7 @@ class BerandaScreen extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'Rabu, 11 Juni 2026',
+          _todayLabel(),
           style: ZwsFonts.sans(size: 13, color: t.ink2),
         ),
         const SizedBox(height: 14),
@@ -86,6 +86,34 @@ class BerandaScreen extends StatelessWidget {
       ],
     );
   }
+}
+
+String _todayLabel() {
+  final now = DateTime.now();
+  const days = [
+    'Senin',
+    'Selasa',
+    'Rabu',
+    'Kamis',
+    'Jumat',
+    'Sabtu',
+    'Minggu',
+  ];
+  const months = [
+    'Januari',
+    'Februari',
+    'Maret',
+    'April',
+    'Mei',
+    'Juni',
+    'Juli',
+    'Agustus',
+    'September',
+    'Oktober',
+    'November',
+    'Desember',
+  ];
+  return '${days[now.weekday - 1]}, ${now.day} ${months[now.month - 1]} ${now.year}';
 }
 
 class _TwoCol extends StatelessWidget {

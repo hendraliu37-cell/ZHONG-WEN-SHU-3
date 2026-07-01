@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:excel/excel.dart';
 import 'package:file_selector/file_selector.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart' as share;
 
@@ -30,9 +31,9 @@ class DeckIoService {
   ];
 
   static const _csvType = XTypeGroup(
-    label: 'CSV flashcards',
-    extensions: ['csv'],
-    mimeTypes: ['text/csv'],
+    label: 'CSV / TSV flashcards',
+    extensions: ['csv', 'tsv', 'txt'],
+    mimeTypes: ['text/csv', 'text/tab-separated-values', 'text/plain'],
   );
   static const _excelType = XTypeGroup(
     label: 'Excel flashcards',
@@ -89,7 +90,7 @@ class DeckIoService {
     final bytes = await file.readAsBytes();
     final rows = name.toLowerCase().endsWith('.xlsx')
         ? _readExcel(bytes)
-        : _readCsv(utf8.decode(bytes, allowMalformed: true));
+        : _readDelimited(utf8.decode(bytes, allowMalformed: true));
     if (rows.length < 2) {
       return DeckImportResult(cards: const [], sourceName: name);
     }
@@ -157,11 +158,19 @@ class DeckIoService {
     ].where((row) => row.any((cell) => cell.isNotEmpty)).toList();
   }
 
-  List<List<String>> _readCsv(String csv) {
+  @visibleForTesting
+  List<List<String>> readDelimitedForTest(String text) => _readDelimited(text);
+
+  @visibleForTesting
+  List<VocabEntry> rowsToCardsForTest(List<List<String>> rows) =>
+      _rowsToCards(rows);
+
+  List<List<String>> _readDelimited(String csv) {
     final rows = <List<String>>[];
     var row = <String>[];
     final cell = StringBuffer();
     var inQuotes = false;
+    final delimiter = _detectDelimiter(csv);
 
     for (var i = 0; i < csv.length; i++) {
       final ch = csv[i];
@@ -171,7 +180,7 @@ class DeckIoService {
         i++;
       } else if (ch == '"') {
         inQuotes = !inQuotes;
-      } else if (ch == ',' && !inQuotes) {
+      } else if (ch == delimiter && !inQuotes) {
         row.add(cell.toString());
         cell.clear();
       } else if ((ch == '\n' || ch == '\r') && !inQuotes) {
@@ -190,10 +199,22 @@ class DeckIoService {
     return rows;
   }
 
+  String _detectDelimiter(String text) {
+    final firstLine = text.split(RegExp(r'\r?\n')).firstOrNull ?? '';
+    final tabs = '\t'.allMatches(firstLine).length;
+    final commas = ','.allMatches(firstLine).length;
+    return tabs > commas ? '\t' : ',';
+  }
+
   List<VocabEntry> _rowsToCards(List<List<String>> rows) {
-    final header = rows.first
-        .map((cell) => cell.toLowerCase().trim().replaceAll(' ', '_'))
-        .toList();
+    if (rows.isEmpty) return const [];
+    final first = rows.first.map(_normalizeHeader).toList();
+    final hasHeader = first.any(_isKnownHeader);
+    if (!hasHeader) {
+      return rows.map(_headerlessRowToCard).whereType<VocabEntry>().toList();
+    }
+
+    final header = first;
     String get(List<String> row, List<String> names) {
       for (final name in names) {
         final idx = header.indexOf(name);
@@ -213,34 +234,86 @@ class DeckIoService {
     List<String> row,
     String Function(List<String>, List<String>) get,
   ) {
-    final simplified = get(row, ['simplified', 's', 'front', 'hanzi', 'word']);
+    final simplified = get(row, [
+      'simplified',
+      's',
+      'front',
+      'hanzi',
+      'word',
+      'term',
+      'question',
+    ]);
     final traditional = get(row, ['traditional', 't', 'traditional_hanzi']);
     final meaning = get(row, [
       'meaning',
       'm',
       'back',
+      'definition',
+      'term_definition',
+      'answer',
       'translation',
       'translations',
-      'definition',
       'definitions',
     ]);
     if (simplified.isEmpty || meaning.isEmpty) return null;
 
     int? parseInt(String raw) => raw.isEmpty ? null : int.tryParse(raw);
-    return VocabEntry(
-      simplified: simplified,
-      traditional: traditional.isEmpty ? simplified : traditional,
-      pinyin: get(row, ['pinyin', 'py', 'reading']),
-      zhuyin: get(row, ['zhuyin', 'zy', 'bopomofo']),
-      meaning: VocabEntry.splitMeanings(meaning).join(' / '),
-      exampleS: get(row, ['example_s', 'examples', 'example']),
-      exampleT: get(row, ['example_t']),
-      exampleId: get(row, ['example_id', 'example_translation', 'notes']),
-      tone: parseInt(get(row, ['tone'])) ?? 1,
-      hskLevel: parseInt(get(row, ['hsk', 'hsk_level'])),
-      tocflLevel: parseInt(get(row, ['tocfl', 'tocfl_level'])),
-    );
+    return VocabEntry.fromJson({
+      's': simplified,
+      't': traditional.isEmpty ? simplified : traditional,
+      'py': get(row, ['pinyin', 'py', 'reading']),
+      'zy': get(row, ['zhuyin', 'zy', 'bopomofo']),
+      'm': VocabEntry.splitMeanings(meaning).join(' / '),
+      'exs': get(row, ['example_s', 'examples', 'example']),
+      'ext': get(row, ['example_t']),
+      'exi': get(row, ['example_id', 'example_translation', 'notes']),
+      'tone': parseInt(get(row, ['tone'])) ?? 1,
+      'hsk': parseInt(get(row, ['hsk', 'hsk_level'])),
+      'tocfl': parseInt(get(row, ['tocfl', 'tocfl_level'])),
+    });
   }
+
+  VocabEntry? _headerlessRowToCard(List<String> row) {
+    final cells = row.map((cell) => cell.trim()).toList();
+    if (cells.length < 2 || cells[0].isEmpty || cells[1].isEmpty) return null;
+    var front = cells[0];
+    var back = cells[1];
+    if (!_hasCjk(front) && _hasCjk(back)) {
+      final tmp = front;
+      front = back;
+      back = tmp;
+    }
+    return VocabEntry.fromJson({
+      's': front,
+      't': cells.length > 3 && cells[3].isNotEmpty ? cells[3] : front,
+      'py': cells.length > 2 ? cells[2] : '',
+      'm': VocabEntry.splitMeanings(back).join(' / '),
+    });
+  }
+
+  String _normalizeHeader(String value) => value
+      .toLowerCase()
+      .trim()
+      .replaceAll(RegExp(r'\s+'), '_')
+      .replaceAll(RegExp(r'[^a-z0-9_]+'), '');
+
+  bool _isKnownHeader(String value) => const {
+    'simplified',
+    'traditional',
+    'front',
+    'back',
+    'hanzi',
+    'word',
+    'term',
+    'definition',
+    'translation',
+    'pinyin',
+    'meaning',
+    'question',
+    'answer',
+  }.contains(value);
+
+  bool _hasCjk(String value) => RegExp(r'[一-鿿㐀-䶿]').hasMatch(value);
 
   String _csvCell(String value) => '"${value.replaceAll('"', '""')}"';
 

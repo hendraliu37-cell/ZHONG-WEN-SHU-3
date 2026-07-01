@@ -91,7 +91,7 @@ class TranslationService {
   void loadFromCards(Iterable<Map<String, dynamic>> cards) {
     for (final c in cards) {
       final s = (c['s'] ?? '') as String;
-      final t = _normalizeModernTraditional((c['t'] ?? s) as String);
+      final t = VocabEntry.normalizeModernTraditional((c['t'] ?? s) as String);
       if (s.isEmpty) continue;
       final entry = _DictEntry(
         simplified: s,
@@ -613,16 +613,7 @@ class TranslationService {
       final e = _dict[ch];
       out.write(e?.traditional ?? ch);
     }
-    return _normalizeModernTraditional(out.toString());
-  }
-
-  static String _normalizeModernTraditional(String value) {
-    const replacements = {'喫': '吃', '牀': '床', '麪': '麵', '爲': '為'};
-    var out = value;
-    for (final entry in replacements.entries) {
-      out = out.replaceAll(entry.key, entry.value);
-    }
-    return out;
+    return VocabEntry.normalizeModernTraditional(out.toString());
   }
 }
 

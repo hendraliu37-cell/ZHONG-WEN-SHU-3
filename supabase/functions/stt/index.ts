@@ -41,7 +41,8 @@ Deno.serve(async (req: Request) => {
   if (!key) {
     return json({
       error: "not_configured",
-      detail: "Set AZURE_SPEECH_KEY (and AZURE_SPEECH_REGION) as Edge Function secrets.",
+      detail:
+        "Set AZURE_SPEECH_KEY (and AZURE_SPEECH_REGION) as Edge Function secrets.",
     }, 503);
   }
 
@@ -63,6 +64,10 @@ Deno.serve(async (req: Request) => {
     return json({ error: "bad_audio" }, 400);
   }
   const rate = wavSampleRate(bytes);
+  const audioBody = bytes.buffer.slice(
+    bytes.byteOffset,
+    bytes.byteOffset + bytes.byteLength,
+  ) as ArrayBuffer;
 
   const endpoint =
     `https://${region}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=${locale}&format=detailed`;
@@ -74,11 +79,15 @@ Deno.serve(async (req: Request) => {
         "Content-Type": `audio/wav; codecs=audio/pcm; samplerate=${rate}`,
         "Accept": "application/json",
       },
-      body: bytes,
+      body: audioBody,
     });
     const text = await resp.text();
     if (!resp.ok) {
-      return json({ error: "upstream", status: resp.status, detail: text.slice(0, 500) }, 502);
+      return json({
+        error: "upstream",
+        status: resp.status,
+        detail: text.slice(0, 500),
+      }, 502);
     }
     let data: any;
     try {
@@ -88,8 +97,14 @@ Deno.serve(async (req: Request) => {
     }
     const out = data?.DisplayText ??
       (Array.isArray(data?.NBest) && data.NBest[0]?.Display) ?? "";
-    return json({ text: typeof out === "string" ? out.trim() : "", status: data?.RecognitionStatus });
+    return json({
+      text: typeof out === "string" ? out.trim() : "",
+      status: data?.RecognitionStatus,
+    });
   } catch (e) {
-    return json({ error: "fetch_failed", detail: String(e).slice(0, 500) }, 502);
+    return json(
+      { error: "fetch_failed", detail: String(e).slice(0, 500) },
+      502,
+    );
   }
 });
