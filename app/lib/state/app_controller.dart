@@ -1935,8 +1935,10 @@ class AppController extends ChangeNotifier {
   }
 
   void resumeTestHistory(TestHistoryItem item) {
+    if (item.completed) return;
     final ids = item.cardIds.where((id) => cards.containsKey(id)).toList();
     if (ids.isEmpty) return;
+    if (item.index >= ids.length) return;
     _activeTestHistoryId = item.id;
     sessionCards = ids;
     baseCards = ids;

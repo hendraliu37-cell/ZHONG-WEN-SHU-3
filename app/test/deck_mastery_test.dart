@@ -128,6 +128,46 @@ void main() {
     expect(c.sessionCards.length, 6);
   });
 
+  test('completed test history cannot be resumed into an invalid session', () {
+    final c = AppController();
+    for (var i = 0; i < 2; i++) {
+      c.cards[i] = _vocab(i);
+    }
+
+    final completed = TestHistoryItem(
+      id: 'done',
+      mode: 'mc',
+      title: 'Tes selesai',
+      direction: 'zh2id',
+      cardIds: const [0, 1],
+      index: 2,
+      score: 2,
+      completed: true,
+      startedAt: DateTime(2026),
+      updatedAt: DateTime(2026),
+    );
+    final exhausted = TestHistoryItem(
+      id: 'exhausted',
+      mode: 'mc',
+      title: 'Tes lama',
+      direction: 'zh2id',
+      cardIds: const [0, 1],
+      index: 2,
+      score: 1,
+      completed: false,
+      startedAt: DateTime(2026),
+      updatedAt: DateTime(2026),
+    );
+
+    c.resumeTestHistory(completed);
+    expect(c.sub, isNull);
+    expect(c.sessionCards, isEmpty);
+
+    c.resumeTestHistory(exhausted);
+    expect(c.sub, isNull);
+    expect(c.sessionCards, isEmpty);
+  });
+
   test('final exam answers update SRS mastery', () {
     final c = AppController();
     c.cards[0] = _vocab(0);
