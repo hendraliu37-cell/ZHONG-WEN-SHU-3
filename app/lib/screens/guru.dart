@@ -396,22 +396,30 @@ class _VoicePaneState extends State<_VoicePane> {
   Widget build(BuildContext context) {
     final t = ZwsTheme.of(context);
     final c = widget.controller;
-    final hanzi = c.track == 'traditional' ? '你好' : '你好';
+    final hanzi = c.pronTarget;
     const toneNames = {1: '阴平', 2: '阳平', 3: '上声', 4: '去声'};
     const toneHz = {1: '210 Hz', 2: '196 Hz', 3: '168 Hz', 4: '220 Hz'};
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // pronunciation score (Azure assessment — not yet enabled)
+        // pronunciation score
         SurfaceBox(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
-                  SectionLabel('Skor pelafalan'),
-                  Pill('Segera'),
+                children: [
+                  const SectionLabel('Skor pelafalan'),
+                  Pill(
+                    c.pronScore == null ? 'Azure' : '${c.pronScore}/100',
+                    bg: c.pronScore == null
+                        ? null
+                        : (c.pronScore! >= 75 ? t.correctTint : t.sealSoft),
+                    fg: c.pronScore == null
+                        ? null
+                        : (c.pronScore! >= 75 ? t.green : t.seal),
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
@@ -421,18 +429,103 @@ class _VoicePaneState extends State<_VoicePane> {
                   Han(hanzi, size: 40, color: t.ink2, height: 1.05),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: Text(
-                      'Penilaian pelafalan per suku kata (via Azure Speech) belum diaktifkan. '
-                      'Untuk sekarang, latih nada secara real-time dengan Tuner Nada di bawah.',
-                      style: ZwsFonts.sans(
-                        size: 12,
-                        color: t.ink2,
-                        height: 1.5,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          c.pronMsg.isEmpty
+                              ? 'Ucapkan target ini untuk mendapat skor kejernihan dari Azure Speech.'
+                              : c.pronMsg,
+                          style: ZwsFonts.sans(
+                            size: 12,
+                            color: t.ink2,
+                            height: 1.5,
+                          ),
+                        ),
+                        if (c.pronTranscript.isNotEmpty) ...[
+                          const SizedBox(height: 5),
+                          Text(
+                            'Terdengar: ${c.pronTranscript}',
+                            style: ZwsFonts.sans(
+                              size: 12,
+                              weight: FontWeight.w700,
+                              color: t.ink,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                        if (c.pronWords.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: [
+                              for (final w in c.pronWords.take(6))
+                                Pill(
+                                  '${w.word}${w.confidence == null ? '' : ' ${w.confidence}'}',
+                                  bg: t.surface2,
+                                  fg: t.ink2,
+                                ),
+                            ],
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                 ],
               ),
+              const SizedBox(height: 12),
+              Material(
+                color: c.pronRecording ? t.seal : t.sealSoft,
+                borderRadius: BorderRadius.circular(12),
+                child: InkWell(
+                  onTap: c.pronBusy ? null : c.togglePronunciationAssessment,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (c.pronBusy)
+                          SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: t.seal,
+                            ),
+                          )
+                        else
+                          Icon(
+                            c.pronRecording ? ZwsIcons.check : ZwsIcons.mic,
+                            size: 18,
+                            color: c.pronRecording ? Colors.white : t.seal,
+                          ),
+                        const SizedBox(width: 8),
+                        Text(
+                          c.pronBusy
+                              ? 'Menganalisis'
+                              : (c.pronRecording
+                                    ? 'Selesai & nilai'
+                                    : 'Nilai pelafalan'),
+                          style: ZwsFonts.sans(
+                            size: 13,
+                            weight: FontWeight.w800,
+                            color: c.pronRecording ? Colors.white : t.seal,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              if (c.pronRecording) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'Rekaman skor memakai mic yang dipilih di bawah.',
+                  style: ZwsFonts.sans(size: 11, color: t.ink3, height: 1.4),
+                ),
+              ],
             ],
           ),
         ),

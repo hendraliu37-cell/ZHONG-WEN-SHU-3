@@ -27,6 +27,7 @@ import '../services/curriculum_service.dart';
 import '../services/stt_service.dart';
 import '../services/ocr_service.dart';
 import '../services/room_service.dart';
+import '../services/pronunciation_service.dart';
 import '../data/seed.dart';
 import '../data/leaderboard.dart';
 import 'persistence.dart';
@@ -293,6 +294,7 @@ class AppController extends ChangeNotifier {
   final CurriculumService curriculum = CurriculumService();
   final SttService _stt = SttService();
   final OcrService _ocr = OcrService();
+  final PronunciationService pronunciation = PronunciationService();
   bool tutorTyping = false;
   List<LeaderRow> leaderRows = [];
   StreamSubscription<AuthState>? _authSub;
@@ -416,6 +418,14 @@ class AppController extends ChangeNotifier {
       []; // semitones of the current syllable, newest last
   double? currentHz;
   double tunerMatch = 0; // 0..1 live tone-shape match for the selected tone
+  bool pronRecording = false;
+  bool pronBusy = false;
+  int? pronScore;
+  String pronTranscript = '';
+  String pronMsg = '';
+  List<PronunciationWordScore> pronWords = [];
+
+  String get pronTarget => track == 'traditional' ? '你好' : '你好';
 
   // ---- chat ----
   String chatInput = '';
@@ -2255,6 +2265,60 @@ class AppController extends ChangeNotifier {
     await _startMic();
   }
 
+  Future<void> togglePronunciationAssessment() async {
+    if (pronBusy) return;
+    if (pronRecording) {
+      pronRecording = false;
+      pronBusy = true;
+      pronMsg = 'Menganalisis pelafalan...';
+      notifyListeners();
+      final result = await pronunciation.stopAndScore(
+        referenceText: pronTarget,
+        lang: 'zh',
+      );
+      pronBusy = false;
+      if (result == null) {
+        pronScore = null;
+        pronTranscript = '';
+        pronWords = [];
+        pronMsg = pronunciation.lastError ?? 'Skor pelafalan belum tersedia.';
+      } else {
+        pronScore = result.score;
+        pronTranscript = result.transcript;
+        pronWords = result.words;
+        pronMsg = _pronVerdict(result.score);
+        xp += result.score >= 75 ? 2 : 1;
+        _save();
+      }
+      notifyListeners();
+      return;
+    }
+
+    if (recording) {
+      recording = false;
+      micLevel = 0;
+      tunerMatch = 0;
+      await _pitch.stop();
+    }
+    if (micList.isEmpty) await loadMics();
+    pronScore = null;
+    pronTranscript = '';
+    pronWords = [];
+    pronMsg = 'Ucapkan $pronTarget dengan jelas, lalu tekan selesai.';
+    pronRecording = await pronunciation.start(device: micDevice);
+    if (!pronRecording) {
+      pronMsg = pronunciation.lastError ?? 'Mikrofon tidak tersedia.';
+    }
+    notifyListeners();
+  }
+
+  String _pronVerdict(int score) {
+    if (score >= 90) return 'Sangat jelas. Pertahankan ritme dan nada.';
+    if (score >= 75) return 'Bagus. Tinggal rapikan nada dan artikulasi.';
+    if (score >= 55) return 'Cukup terdengar. Ulangi lebih pelan dan jelas.';
+    return 'Belum kebaca jelas. Dekatkan mic dan ucapkan perlahan.';
+  }
+
   /// Switch the active microphone. If recording, restart the stream on it.
   Future<void> selectMic(InputDevice? d) async {
     micDevice = d;
@@ -2728,7 +2792,8 @@ class AppController extends ChangeNotifier {
     _speedTimer?.cancel();
     _trDebounce?.cancel();
     _authSub?.cancel();
-    closeRoomChannel();
+    closeRoomChannel(notify: false);
+    pronunciation.cancel();
     _pitch.dispose();
     super.dispose();
   }
