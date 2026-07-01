@@ -1337,8 +1337,9 @@ class AppController extends ChangeNotifier {
     return b.take(math.min(n, b.length)).toList();
   }
 
-  List<String> _makeOptions(int cardId) {
-    if (testDirection == 'id2zh') {
+  List<String> _makeOptions(int cardId, {String? direction}) {
+    final dir = direction ?? testDirection;
+    if (dir == 'id2zh') {
       // id→zh: distractors are other hanzi
       final correct = primaryHanzi(card(cardId));
       final pool = cards.entries
@@ -1372,14 +1373,15 @@ class AppController extends ChangeNotifier {
     return opts;
   }
 
-  List<QuizItem> _buildQuiz(List<int> ids) {
-    if (testDirection == 'id2zh') {
+  List<QuizItem> _buildQuiz(List<int> ids, {String? direction}) {
+    final dir = direction ?? testDirection;
+    if (dir == 'id2zh') {
       return ids
           .map(
             (id) => QuizItem(
               cardId: id,
               correct: primaryHanzi(card(id)),
-              options: _makeOptions(id),
+              options: _makeOptions(id, direction: dir),
             ),
           )
           .toList();
@@ -1389,7 +1391,7 @@ class AppController extends ChangeNotifier {
           (id) => QuizItem(
             cardId: id,
             correct: card(id).primaryMeaning,
-            options: _makeOptions(id),
+            options: _makeOptions(id, direction: dir),
           ),
         )
         .toList();
@@ -2312,7 +2314,7 @@ class AppController extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    _quiz = _buildQuiz(sessionCards);
+    _quiz = _buildQuiz(sessionCards, direction: 'zh2id');
     sub = 'listen';
     quizIdx = 0;
     quizScore = 0;

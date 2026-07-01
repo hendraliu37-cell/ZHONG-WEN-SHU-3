@@ -160,6 +160,25 @@ void main() {
     expect(state.mastery, greaterThan(0));
   });
 
+  test('listening quiz always asks for meaning even after id to zh tests', () {
+    final c = AppController();
+    for (var i = 0; i < 4; i++) {
+      c.cards[i] = _vocab(i);
+    }
+
+    c.toggleTestDirection();
+    expect(c.testDirection, 'id2zh');
+
+    c.goListen();
+    final q = c.currentQuiz!;
+    final card = c.card(q.cardId);
+
+    expect(q.correct, card.primaryMeaning);
+    expect(q.options, contains(card.primaryMeaning));
+    expect(q.options, isNot(contains(c.primaryHanzi(card))));
+    expect(c.testDirection, 'id2zh');
+  });
+
   test('games stay on hub when no cards are available', () {
     final c = AppController();
 
