@@ -147,8 +147,8 @@ class _ChatPaneState extends State<_ChatPane> {
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 15,
-                        vertical: 13,
+                        horizontal: 12,
+                        vertical: 9,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -159,10 +159,10 @@ class _ChatPaneState extends State<_ChatPane> {
                                 child: Text(
                                   'MATERI HARIAN · BERKESINAMBUNGAN',
                                   style: ZwsFonts.sans(
-                                    size: 10,
+                                    size: 9,
                                     weight: FontWeight.w700,
                                     color: t.seal,
-                                    letterSpacing: 1.5,
+                                    letterSpacing: 1.2,
                                   ),
                                 ),
                               ),
@@ -193,10 +193,12 @@ class _ChatPaneState extends State<_ChatPane> {
                             c.dailyMaterial != null
                                 ? '${c.dailyMaterial!.topic}. Target hari ini: ${c.dailyMaterial!.summary}.'
                                 : 'HSK 2 · Unit 4 - Kata kerja perasaan. Target hari ini: 喜欢, 想, 觉得.',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                             style: ZwsFonts.sans(
-                              size: 13,
+                              size: 12,
                               color: t.ink,
-                              height: 1.5,
+                              height: 1.35,
                             ),
                           ),
                         ],
@@ -243,7 +245,7 @@ class _ChatPaneState extends State<_ChatPane> {
             padding: const EdgeInsets.only(bottom: 8),
             children: [
               for (final m in c.messages) ...[
-                _Bubble(msg: m),
+                _Bubble(controller: c, msg: m),
                 const SizedBox(height: 12),
               ],
               if (c.tutorTyping) ...[
@@ -314,8 +316,9 @@ class _ChatPaneState extends State<_ChatPane> {
 }
 
 class _Bubble extends StatelessWidget {
+  final AppController controller;
   final ChatMsg msg;
-  const _Bubble({required this.msg});
+  const _Bubble({required this.controller, required this.msg});
   @override
   Widget build(BuildContext context) {
     final t = ZwsTheme.of(context);
@@ -339,7 +342,10 @@ class _Bubble extends StatelessWidget {
             border: tutor ? Border.all(color: t.line) : null,
           ),
           child: tutor
-              ? TutorText(text: msg.text, color: t.ink)
+              ? TutorText(
+                  text: controller.displayTutorText(msg.text),
+                  color: t.ink,
+                )
               : SelectableText(
                   msg.text,
                   style: ZwsFonts.sans(size: 14, color: t.bg, height: 1.5),

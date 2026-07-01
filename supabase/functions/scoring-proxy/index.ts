@@ -21,6 +21,13 @@ function b64ToBytes(b64: string): Uint8Array {
   return out;
 }
 
+function b64Utf8(value: string): string {
+  const bytes = new TextEncoder().encode(value);
+  let bin = "";
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin);
+}
+
 function wavSampleRate(b: Uint8Array): number {
   if (b.length < 28) return 16000;
   const r = b[24] | (b[25] << 8) | (b[26] << 16) | (b[27] << 24);
@@ -66,6 +73,13 @@ Deno.serve(async (req: Request) => {
     bytes.byteOffset,
     bytes.byteOffset + bytes.byteLength,
   ) as ArrayBuffer;
+  const pronConfig = b64Utf8(JSON.stringify({
+    ReferenceText: refText,
+    GradingSystem: "HundredMark",
+    Granularity: "Word",
+    Dimension: "Comprehensive",
+    EnableMiscue: "True",
+  }));
 
   const endpoint =
     `https://${region}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=${locale}&format=detailed`;
@@ -77,6 +91,7 @@ Deno.serve(async (req: Request) => {
         "Ocp-Apim-Subscription-Key": key,
         "Content-Type": `audio/wav; codecs=audio/pcm; samplerate=${rate}`,
         "Accept": "application/json",
+        "Pronunciation-Assessment": pronConfig,
       },
       body: audioBody,
     });
@@ -95,26 +110,38 @@ Deno.serve(async (req: Request) => {
       return json({ error: "upstream_parse", detail: text.slice(0, 300) }, 502);
     }
 
-    const transcript = data?.DisplayText ??
-      (Array.isArray(data?.NBest) && data.NBest[0]?.Display) ?? "";
-    const confidence =
-      Array.isArray(data?.NBest) && data.NBest[0]?.Confidence != null
-        ? Math.round(data.NBest[0].Confidence * 100)
-        : null;
-    const words = Array.isArray(data?.NBest?.[0]?.Words)
-      ? data.NBest[0].Words.map((w: { Word: string; Confidence?: number }) => ({
+    const best = Array.isArray(data?.NBest) ? data.NBest[0] : null;
+    const assessment = best?.PronunciationAssessment ?? {};
+    const transcript = data?.DisplayText ?? best?.Display ?? "";
+    const words = Array.isArray(best?.Words)
+      ? best.Words.map((w: {
+        Word: string;
+        Confidence?: number;
+        PronunciationAssessment?: {
+          AccuracyScore?: number;
+          ErrorType?: string;
+        };
+      }) => ({
         word: w.Word,
-        confidence: w.Confidence != null
-          ? Math.round(w.Confidence * 100)
-          : null,
+        confidence: typeof w.PronunciationAssessment?.AccuracyScore === "number"
+          ? Math.round(w.PronunciationAssessment.AccuracyScore)
+          : (w.Confidence != null ? Math.round(w.Confidence * 100) : null),
+        errorType: w.PronunciationAssessment?.ErrorType ?? null,
       }))
       : [];
 
-    const score = confidence != null ? confidence : 0;
+    const score = typeof assessment.PronScore === "number"
+      ? Math.round(assessment.PronScore)
+      : (typeof assessment.AccuracyScore === "number"
+        ? Math.round(assessment.AccuracyScore)
+        : 0);
 
     return json({
       transcript: typeof transcript === "string" ? transcript.trim() : "",
       score,
+      accuracy: assessment.AccuracyScore ?? null,
+      fluency: assessment.FluencyScore ?? null,
+      completeness: assessment.CompletenessScore ?? null,
       words,
     });
   } catch (e) {

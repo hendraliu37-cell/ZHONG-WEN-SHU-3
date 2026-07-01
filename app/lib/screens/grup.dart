@@ -512,7 +512,7 @@ class _RoomViewState extends State<_RoomView> {
                   ),
                 ),
               for (final m in c.roomMsgs) ...[
-                _RoomBubble(msg: m, mine: m.isMine(c.authUid)),
+                _RoomBubble(controller: c, msg: m, mine: m.isMine(c.authUid)),
                 const SizedBox(height: 10),
               ],
               if (c.roomGuruBusy) ...[
@@ -673,9 +673,14 @@ class _RoomMenu extends StatelessWidget {
 }
 
 class _RoomBubble extends StatelessWidget {
+  final AppController controller;
   final RoomMessage msg;
   final bool mine;
-  const _RoomBubble({required this.msg, required this.mine});
+  const _RoomBubble({
+    required this.controller,
+    required this.msg,
+    required this.mine,
+  });
   @override
   Widget build(BuildContext context) {
     final t = ZwsTheme.of(context);
@@ -719,7 +724,11 @@ class _RoomBubble extends StatelessWidget {
                 border: (!mine && !guru) ? Border.all(color: t.line) : null,
               ),
               child: guru
-                  ? TutorText(text: msg.body, color: fg, compact: true)
+                  ? TutorText(
+                      text: controller.displayTutorText(msg.body),
+                      color: fg,
+                      compact: true,
+                    )
                   : SelectableText(
                       msg.body,
                       style: ZwsFonts.sans(size: 14, color: fg, height: 1.5),

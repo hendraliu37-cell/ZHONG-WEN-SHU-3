@@ -61,7 +61,7 @@ KEPRIBADIAN:
 ATURAN:
 1. SELALU baca dan pahami pesan user. Jawab sesuai konteks, BUKAN template.
 2. Ikuti track hanzi secara ketat: ${variant}
-3. Format jawaban rapi, pendek, maksimal 4 blok:
+3. Format jawaban rapi, pendek, maksimal 4 blok. Gunakan label persis ini bila bloknya ada:
    Ringkas: jawaban inti dalam 1-2 kalimat.
    Contoh: hanzi (pinyin angka nada atau tanda nada) = arti Indonesia.
    Catatan: koreksi/pola penting bila perlu.

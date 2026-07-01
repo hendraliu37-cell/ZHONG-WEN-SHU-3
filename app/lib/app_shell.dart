@@ -39,7 +39,13 @@ class AppShell extends StatelessWidget {
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) {
-          if (controller.sub != null) {
+          if (controller.leaderOpen) {
+            controller.closeLeader();
+          } else if (controller.tab == 'chat' &&
+              controller.chatTab == 'grup' &&
+              controller.currentRoom != null) {
+            controller.closeRoomChannel();
+          } else if (controller.sub != null) {
             closeSubWithTestGuard(context, controller);
           } else if (controller.tab != 'beranda') {
             controller.go('beranda');

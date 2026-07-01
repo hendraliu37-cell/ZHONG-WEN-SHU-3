@@ -226,6 +226,61 @@ class TestHistoryItem {
 
 const Object _sentinel = Object();
 
+const Map<String, String> _simpToTrad = {
+  '这': '這',
+  '个': '個',
+  '们': '們',
+  '为': '為',
+  '来': '來',
+  '说': '說',
+  '对': '對',
+  '时': '時',
+  '会': '會',
+  '学': '學',
+  '习': '習',
+  '书': '書',
+  '语': '語',
+  '汉': '漢',
+  '问': '問',
+  '听': '聽',
+  '读': '讀',
+  '写': '寫',
+  '话': '話',
+  '请': '請',
+  '谢': '謝',
+  '欢': '歡',
+  '觉': '覺',
+  '饭': '飯',
+  '饮': '飲',
+  '马': '馬',
+  '门': '門',
+  '车': '車',
+  '电': '電',
+  '脑': '腦',
+  '机': '機',
+  '后': '後',
+  '里': '裡',
+  '着': '著',
+  '过': '過',
+  '还': '還',
+  '没': '沒',
+  '气': '氣',
+  '国': '國',
+  '爱': '愛',
+  '长': '長',
+  '吗': '嗎',
+  '哪': '哪',
+  '点': '點',
+  '买': '買',
+  '卖': '賣',
+  '开': '開',
+  '关': '關',
+};
+
+final Map<String, String> _tradToSimp = {
+  for (final e in _simpToTrad.entries) e.value: e.key,
+};
+
 /// A downloadable pack from the asset manifest.
 class PackInfo {
   final String id;
@@ -940,6 +995,69 @@ class AppController extends ChangeNotifier {
   void _speak(String txt) =>
       speech.speak(txt, traditional: track == 'traditional');
 
+  String displayTutorText(String text) =>
+      _formatTutorReply(_convertHanziForTrack(text));
+
+  String _formatTutorReply(String raw) {
+    var text = raw
+        .replaceAll('\r\n', '\n')
+        .replaceAll(RegExp(r'```[a-zA-Z]*'), '')
+        .replaceAll('```', '')
+        .replaceAll(RegExp(r'^\s{0,3}#{1,6}\s*', multiLine: true), '')
+        .replaceAll(RegExp(r'^\s*[-*]\s+', multiLine: true), '')
+        .trim();
+    if (text.isEmpty) return raw.trim();
+
+    final lines = text
+        .split('\n')
+        .map((line) => line.trim())
+        .where((line) => line.isNotEmpty)
+        .toList();
+    final out = <String>[];
+    const labels = ['Ringkas:', 'Contoh:', 'Catatan:', 'Latihan:'];
+    for (final line in lines) {
+      var cleaned = line.replaceFirst(RegExp(r'^\d+[.)]\s*'), '').trim();
+      for (final label in labels) {
+        final re = RegExp('^${RegExp.escape(label)}\\s*', caseSensitive: false);
+        if (re.hasMatch(cleaned)) {
+          cleaned = '$label ${cleaned.replaceFirst(re, '').trim()}';
+          break;
+        }
+      }
+      if (cleaned.isNotEmpty) out.add(cleaned);
+    }
+    return out.take(6).join('\n');
+  }
+
+  String _convertHanziForTrack(String text) {
+    final toTraditional =
+        track == 'traditional' || (track == 'both' && primary == 'traditional');
+    final map = _hanziVariantMap(toTraditional: toTraditional);
+    if (map.isEmpty) return text;
+    final buf = StringBuffer();
+    for (final r in text.runes) {
+      final ch = String.fromCharCode(r);
+      buf.write(map[ch] ?? ch);
+    }
+    return buf.toString();
+  }
+
+  Map<String, String> _hanziVariantMap({required bool toTraditional}) {
+    final map = <String, String>{};
+    for (final c in cards.values) {
+      final s = c.simplified.runes.map(String.fromCharCode).toList();
+      final t = c.traditional.runes.map(String.fromCharCode).toList();
+      if (s.length != t.length) continue;
+      for (var i = 0; i < s.length; i++) {
+        if (s[i] == t[i]) continue;
+        map[toTraditional ? s[i] : t[i]] = toTraditional ? t[i] : s[i];
+      }
+    }
+    final fallback = toTraditional ? _simpToTrad : _tradToSimp;
+    map.addAll(fallback);
+    return map;
+  }
+
   bool get showDailyMaterialBanner =>
       dailyMaterialHiddenUntil == null ||
       DateTime.now().isAfter(dailyMaterialHiddenUntil!);
@@ -1145,6 +1263,26 @@ class AppController extends ChangeNotifier {
     leaderOpen = false;
     adding = false;
     notifyListeners();
+  }
+
+  bool handleBack() {
+    if (leaderOpen) {
+      closeLeader();
+      return true;
+    }
+    if (tab == 'chat' && chatTab == 'grup' && currentRoom != null) {
+      closeRoomChannel();
+      return true;
+    }
+    if (sub != null) {
+      closeSub();
+      return true;
+    }
+    if (tab != 'beranda') {
+      go('beranda');
+      return true;
+    }
+    return false;
   }
 
   void closeSub() {
@@ -1850,18 +1988,28 @@ class AppController extends ChangeNotifier {
   void goGames() {
     _speedTimer?.cancel();
     recording = false;
-    if (baseCards.isEmpty) baseCards = smartPracticeBase();
+    baseCards = smartPracticeBase();
     _clampQCount();
     sub = 'games';
     notifyListeners();
   }
 
   // Tone
-  ({String han, String pinyin, int tone}) get toneCur =>
-      toneBank[toneIdx % toneBank.length];
+  ({String han, String pinyin, int tone}) get toneCur {
+    if (sessionCards.isNotEmpty) {
+      final id = sessionCards[toneIdx % sessionCards.length];
+      final c = card(id);
+      return (han: primaryHanzi(c), pinyin: c.pinyin, tone: c.tone);
+    }
+    return toneBank[toneIdx % toneBank.length];
+  }
+
   int get toneTotal => qCount;
 
   void startTone() {
+    baseCards = smartPracticeBase();
+    _clampQCount();
+    sessionCards = makeSession(baseCards, qCount);
     sub = 'tone';
     toneIdx = 0;
     toneScore = 0;
@@ -1902,6 +2050,8 @@ class AppController extends ChangeNotifier {
   List<({int pid, String kind, String label})> get matchTiles => _matchTiles;
 
   void startMatch() {
+    baseCards = smartPracticeBase();
+    _clampQCount();
     var base = {
       ...(baseCards.isEmpty ? cards.keys.take(6) : baseCards),
     }.toList();
@@ -1958,6 +2108,8 @@ class AppController extends ChangeNotifier {
 
   // Listening
   void goListen() {
+    baseCards = smartPracticeBase();
+    _clampQCount();
     sessionCards = makeSession(baseCards, qCount);
     _quiz = _buildQuiz(sessionCards);
     sub = 'listen';
@@ -1990,6 +2142,8 @@ class AppController extends ChangeNotifier {
   QuizItem? get speedCur => speedIdx < _speed.length ? _speed[speedIdx] : null;
 
   void startSpeed() {
+    baseCards = smartPracticeBase();
+    _clampQCount();
     sessionCards = makeSession(baseCards, qCount);
     _speed = _buildQuiz(sessionCards);
     _speedTimer?.cancel();
@@ -2288,7 +2442,7 @@ class AppController extends ChangeNotifier {
         pronWords = result.words;
         pronMsg = _pronVerdict(result.score);
         xp += result.score >= 75 ? 2 : 1;
-        _save();
+        await _save();
       }
       notifyListeners();
       return;
@@ -2632,6 +2786,7 @@ class AppController extends ChangeNotifier {
       }
     }
     tutorTyping = false;
+    reply = displayTutorText(reply);
     messages = [...messages, ChatMsg('t', reply)];
     _rememberLearningFromText(reply);
     if (messages.length > _maxChatHistory) {
@@ -2677,6 +2832,7 @@ class AppController extends ChangeNotifier {
         'Idiom ${it.simplified} (${it.pinyin}) — ${it.meaning}.'
         '${it.literal.isNotEmpty ? ' Harfiah: ${it.literal}.' : ''}';
     tutorTyping = false;
+    reply = displayTutorText(reply);
     messages = [...messages, ChatMsg('t', reply)];
     _rememberLearningFromText(reply);
     if (messages.length > _maxChatHistory) {

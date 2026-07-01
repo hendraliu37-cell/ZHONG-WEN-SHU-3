@@ -61,8 +61,14 @@ class LlmService {
       return null;
     }
 
+    final variant = track == 'traditional'
+        ? 'TRADITIONAL_ONLY: pakai hanzi tradisional. Jangan tulis simplified kecuali user minta bandingkan.'
+        : 'SIMPLIFIED_ONLY: pakai hanzi sederhana. Jangan tulis traditional kecuali user minta bandingkan.';
     final system =
-        'Kamu Guru Mandarin. Jawab singkat, natural, baca pesan user.';
+        'Kamu Guru Mandarin untuk penutur Indonesia. Baca pesan user dan jawab sesuai konteks. '
+        'Ikuti track hanzi secara ketat: $variant '
+        'Format rapi, maksimal 4 blok pendek dengan label: Ringkas:, Contoh:, Catatan:, Latihan:. '
+        'Format kata baru: hanzi (pinyin) = arti Indonesia. Jangan pakai tabel, code fence, placeholder, atau emoji.';
     final body = [
       {'role': 'system', 'content': system},
       ...messages,
