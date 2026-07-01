@@ -9,8 +9,11 @@ import '../widgets/common.dart';
 class LeaderboardOverlay extends StatelessWidget {
   final AppController controller;
   final bool desktop;
-  const LeaderboardOverlay(
-      {super.key, required this.controller, required this.desktop});
+  const LeaderboardOverlay({
+    super.key,
+    required this.controller,
+    required this.desktop,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -22,11 +25,16 @@ class LeaderboardOverlay extends StatelessWidget {
         children: [
           OverlayBar(
             desktop: desktop,
-            onBack: c.closeLeader,
+            onBack: () => c.closeLeader(),
             title: Center(
-              child: Text('Leaderboard global',
-                  style: ZwsFonts.sans(
-                      size: 15, weight: FontWeight.w800, color: t.ink)),
+              child: Text(
+                'Leaderboard global',
+                style: ZwsFonts.sans(
+                  size: 15,
+                  weight: FontWeight.w800,
+                  color: t.ink,
+                ),
+              ),
             ),
           ),
           Expanded(
@@ -44,7 +52,10 @@ class LeaderboardOverlay extends StatelessWidget {
                             'Papan peringkat masih kosong.\nBelajar & kumpulkan XP untuk muncul di sini.',
                             textAlign: TextAlign.center,
                             style: ZwsFonts.sans(
-                                size: 13, color: t.ink3, height: 1.5),
+                              size: 13,
+                              color: t.ink3,
+                              height: 1.5,
+                            ),
                           ),
                         ),
                       for (final r in c.leaderRows) ...[
@@ -81,8 +92,12 @@ class _Row extends StatelessWidget {
         children: [
           SizedBox(
             width: 30,
-            child: Mono('${row.rank}',
-                size: 15, weight: FontWeight.w700, color: rankColor),
+            child: Mono(
+              '${row.rank}',
+              size: 15,
+              weight: FontWeight.w700,
+              color: rankColor,
+            ),
           ),
           Container(
             width: 38,
@@ -99,9 +114,14 @@ class _Row extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(row.name,
-                    style: ZwsFonts.sans(
-                        size: 14, weight: FontWeight.w700, color: t.ink)),
+                Text(
+                  row.name,
+                  style: ZwsFonts.sans(
+                    size: 14,
+                    weight: FontWeight.w700,
+                    color: t.ink,
+                  ),
+                ),
                 Mono(row.id, size: 11, color: t.ink3),
               ],
             ),
@@ -109,10 +129,16 @@ class _Row extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Mono('${row.score}',
-                  size: 16, weight: FontWeight.w700, color: t.ink),
-              Text('Tier ${row.tier}',
-                  style: ZwsFonts.sans(size: 10, color: t.ink3)),
+              Mono(
+                '${row.score}',
+                size: 16,
+                weight: FontWeight.w700,
+                color: t.ink,
+              ),
+              Text(
+                'Tier ${row.tier}',
+                style: ZwsFonts.sans(size: 10, color: t.ink3),
+              ),
             ],
           ),
         ],

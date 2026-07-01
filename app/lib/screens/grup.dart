@@ -414,7 +414,7 @@ class _RoomViewState extends State<_RoomView> {
                 color: t.surface2,
                 borderRadius: BorderRadius.circular(10),
                 child: InkWell(
-                  onTap: c.closeRoomChannel,
+                  onTap: () => c.closeRoomChannel(),
                   borderRadius: BorderRadius.circular(10),
                   child: SizedBox(
                     width: 40,

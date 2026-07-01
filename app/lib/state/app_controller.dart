@@ -294,18 +294,36 @@ String _formatTutorReply(String raw) {
   var text = raw
       .replaceAll('\r\n', '\n')
       .replaceAll(RegExp(r'```[a-zA-Z]*'), '')
-      .replaceAll('```', '')
+      .replaceAll('```', '');
+  text = text
+      .replaceAllMapped(RegExp(r'\*\*([^*]+)\*\*'), (m) => m.group(1) ?? '')
+      .replaceAllMapped(RegExp(r'__([^_]+)__'), (m) => m.group(1) ?? '')
       .replaceAll(RegExp(r'^\s{0,3}#{1,6}\s*', multiLine: true), '')
-      .replaceAll(RegExp(r'^\s*[-*]\s+', multiLine: true), '')
+      .replaceAll(RegExp(r'^\s*[-*•]\s+', multiLine: true), '')
       .trim();
   if (text.isEmpty) return raw.trim();
 
-  final lines = text
+  final rawLines = text
       .split('\n')
       .map((line) => line.trim())
-      .where((line) => line.isNotEmpty)
+      .where((line) => line.isNotEmpty && !line.startsWith('|'))
       .toList();
-  final out = <String>[];
+  final lines = <String>[];
+  for (final line in rawLines) {
+    final chunks = line
+        .split(
+          RegExp(
+            r'\s+(?=(Ringkas|Contoh|Catatan|Latihan)\s*:)',
+            caseSensitive: false,
+          ),
+        )
+        .map((part) => part.trim())
+        .where((part) => part.isNotEmpty);
+    lines.addAll(chunks);
+  }
+
+  final labelled = <String, String>{};
+  final loose = <String>[];
   const labels = ['Ringkas:', 'Contoh:', 'Catatan:', 'Latihan:'];
   for (final line in lines) {
     var cleaned = line.replaceFirst(RegExp(r'^\d+[.)]\s*'), '').trim();
@@ -318,13 +336,59 @@ String _formatTutorReply(String raw) {
     for (final label in labels) {
       final re = RegExp('^${RegExp.escape(label)}\\s*', caseSensitive: false);
       if (re.hasMatch(cleaned)) {
-        cleaned = '$label ${cleaned.replaceFirst(re, '').trim()}';
+        final body = cleaned.replaceFirst(re, '').trim();
+        if (body.isNotEmpty) {
+          labelled[label] = _appendBlock(labelled[label], body);
+        }
+        cleaned = '';
         break;
       }
     }
-    if (cleaned.isNotEmpty) out.add(cleaned);
+    if (cleaned.isNotEmpty) loose.add(cleaned);
   }
-  return out.take(6).join('\n');
+
+  if (labelled.isEmpty) {
+    for (final line in loose.take(6)) {
+      final lower = line.toLowerCase();
+      final label = line.endsWith('?')
+          ? 'Latihan:'
+          : (_looksLikeExample(line)
+                ? 'Contoh:'
+                : (lower.startsWith('catatan') || lower.contains('jangan ')
+                      ? 'Catatan:'
+                      : (labelled.containsKey('Ringkas:')
+                            ? 'Catatan:'
+                            : 'Ringkas:')));
+      labelled[label] = _appendBlock(labelled[label], line);
+    }
+  } else {
+    for (final line in loose.take(3)) {
+      final label = _looksLikeExample(line) ? 'Contoh:' : 'Catatan:';
+      labelled[label] = _appendBlock(labelled[label], line);
+    }
+  }
+
+  return labels
+      .where((label) => labelled[label]?.trim().isNotEmpty == true)
+      .map((label) => '$label ${labelled[label]!.trim()}')
+      .take(4)
+      .join('\n');
+}
+
+String _appendBlock(String? existing, String next) {
+  final cleaned = next.trim();
+  if (cleaned.isEmpty) return existing ?? '';
+  if (existing == null || existing.trim().isEmpty) return cleaned;
+  return '$existing $cleaned';
+}
+
+bool _looksLikeExample(String line) {
+  final hasHanzi = RegExp(r'[\u3400-\u9fff]').hasMatch(line);
+  final hasGloss = line.contains('=') || line.contains('artinya');
+  final hasPinyin = RegExp(
+    r'\([A-Za-züÜāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ0-9 ]+\)',
+  ).hasMatch(line);
+  return hasHanzi && (hasGloss || hasPinyin);
 }
 
 String _convertHanziForTrack(
@@ -685,6 +749,9 @@ class AppController extends ChangeNotifier {
       if (serial != _curriculumRequestSerial) return;
       if (mat != null && requestedTrack == track) {
         dailyMaterial = mat;
+        if (_rememberLearningFromText(_dailyMaterialSearchText(mat))) {
+          unawaited(_save());
+        }
       }
     } finally {
       if (serial == _curriculumRequestSerial) {
@@ -938,14 +1005,14 @@ class AppController extends ChangeNotifier {
       ..clear()
       ..addAll((j['installedPacks'] as List? ?? []).map((e) => e as String));
     (j['cards'] as Map? ?? {}).forEach((k, v) {
-      cards[int.parse(k as String)] = VocabEntry.fromJson(
-        v as Map<String, dynamic>,
-      );
+      final id = _parseStoredIntKey(k);
+      if (id == null || v is! Map) return;
+      cards[id] = VocabEntry.fromJson(Map<String, dynamic>.from(v));
     });
     (j['srs'] as Map? ?? {}).forEach((k, v) {
-      srs[int.parse(k as String)] = SrsState.fromJson(
-        v as Map<String, dynamic>,
-      );
+      final id = _parseStoredIntKey(k);
+      if (id == null || v is! Map) return;
+      srs[id] = SrsState.fromJson(Map<String, dynamic>.from(v));
     });
     decks
       ..clear()
@@ -983,6 +1050,15 @@ class AppController extends ChangeNotifier {
       srs.putIfAbsent(id, () => SrsState());
     }
   }
+
+  int? _parseStoredIntKey(Object? key) {
+    if (key is int) return key;
+    if (key is num) return key.toInt();
+    return int.tryParse(key?.toString() ?? '');
+  }
+
+  @visibleForTesting
+  void restoreForTest(Map<String, dynamic> json) => _restore(json);
 
   Future<void> _save() async {
     await _store.save({
@@ -1096,7 +1172,7 @@ class AppController extends ChangeNotifier {
 
   String displayTutorText(String text) => formatTutorReplyForDisplay(
     text,
-    track: track,
+    track: _zhTrack,
     primary: primary,
     cards: cards.values,
   );
@@ -1138,7 +1214,7 @@ class AppController extends ChangeNotifier {
     if (limit != null && out.length >= limit) return out;
 
     final mat = dailyMaterial;
-    if (mat != null) addAll(_matchingCardIds('${mat.topic} ${mat.summary}'));
+    if (mat != null) addAll(_matchingCardIds(_dailyMaterialSearchText(mat)));
     if (limit != null && out.length >= limit) return out;
 
     addAll(aiFocusCardIds);
@@ -1163,6 +1239,19 @@ class AppController extends ChangeNotifier {
     if (listEquals(next, aiFocusCardIds)) return false;
     aiFocusCardIds = next;
     return true;
+  }
+
+  String _dailyMaterialSearchText(DailyMaterial mat) {
+    final vocab = mat.vocab
+        .map((v) => '${v.hanzi} ${v.pinyin} ${v.meaning}')
+        .join(' ');
+    return [
+      mat.topic,
+      mat.summary,
+      vocab,
+      ...mat.sentences,
+      mat.exercise,
+    ].join(' ');
   }
 
   List<int> _matchingCardIds(String text, {int limit = 80}) {
@@ -2890,7 +2979,7 @@ class AppController extends ChangeNotifier {
     String? reply;
     try {
       reply = await llm
-          .chat(buildGroundedHistory(_llmHistory(), idiomBank), track: track)
+          .chat(buildGroundedHistory(_llmHistory(), idiomBank), track: _zhTrack)
           .timeout(const Duration(seconds: 40));
     } catch (_) {
       llm.lastError = 'Timeout (>40s)';
@@ -2950,7 +3039,7 @@ class AppController extends ChangeNotifier {
               'beri 1 contoh kalimat baru, lalu beri aku 1 soal singkat.',
         },
       ];
-      reply = await llm.chat(hist, track: track);
+      reply = await llm.chat(hist, track: _zhTrack);
     }
     reply ??=
         'Idiom ${it.simplified} (${it.pinyin}) — ${it.meaning}.'

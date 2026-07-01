@@ -161,23 +161,26 @@ class OverlayBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = ZwsTheme.of(context);
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: desktop ? 22 : 14,
-        vertical: desktop ? 16 : 13,
-      ),
-      decoration: BoxDecoration(
-        color: t.surface,
-        border: Border(bottom: BorderSide(color: t.line)),
-      ),
-      child: Row(
-        children: [
-          _SquareButton(icon: ZwsIcons.back, onTap: onBack),
-          const SizedBox(width: 10),
-          Expanded(child: title),
-          const SizedBox(width: 10),
-          trailing ?? const SizedBox(width: 38),
-        ],
+    return SafeArea(
+      bottom: false,
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: desktop ? 22 : 14,
+          vertical: desktop ? 16 : 13,
+        ),
+        decoration: BoxDecoration(
+          color: t.surface,
+          border: Border(bottom: BorderSide(color: t.line)),
+        ),
+        child: Row(
+          children: [
+            _SquareButton(icon: ZwsIcons.back, onTap: onBack),
+            const SizedBox(width: 10),
+            Expanded(child: title),
+            const SizedBox(width: 10),
+            trailing ?? const SizedBox(width: 38),
+          ],
+        ),
       ),
     );
   }

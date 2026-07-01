@@ -148,10 +148,11 @@ class _ChatPaneState extends State<_ChatPane> {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
-                        vertical: 9,
+                        vertical: 8,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Row(
                             children: [
@@ -162,7 +163,7 @@ class _ChatPaneState extends State<_ChatPane> {
                                     size: 9,
                                     weight: FontWeight.w700,
                                     color: t.seal,
-                                    letterSpacing: 1.2,
+                                    letterSpacing: 0.8,
                                   ),
                                 ),
                               ),
@@ -193,7 +194,7 @@ class _ChatPaneState extends State<_ChatPane> {
                             c.dailyMaterial != null
                                 ? '${c.dailyMaterial!.topic}. Target hari ini: ${c.dailyMaterial!.summary}.'
                                 : 'HSK 2 · Unit 4 - Kata kerja perasaan. Target hari ini: 喜欢, 想, 觉得.',
-                            maxLines: 2,
+                            maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: ZwsFonts.sans(
                               size: 12,

@@ -70,6 +70,77 @@ function buildSystem(track: string): string {
   ].join(" ");
 }
 
+function appendBlock(existing: string | undefined, next: string): string {
+  const cleaned = next.trim();
+  if (!cleaned) return existing ?? "";
+  return existing ? `${existing} ${cleaned}` : cleaned;
+}
+
+function looksLikeExample(line: string): boolean {
+  return /[\u3400-\u9fff]/.test(line) &&
+    (line.includes("=") || line.includes("artinya") || /\([A-Za-z0-9üÜāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ ]+\)/.test(line));
+}
+
+function formatGuruReply(raw: string): string {
+  const cleaned = raw
+    .replace(/\r\n/g, "\n")
+    .replace(/```[a-zA-Z]*/g, "")
+    .replace(/```/g, "")
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/__([^_]+)__/g, "$1")
+    .replace(/^\s{0,3}#{1,6}\s*/gm, "")
+    .replace(/^\s*[-*•]\s+/gm, "")
+    .trim();
+  if (!cleaned) return raw.trim();
+
+  const labels = ["Ringkas:", "Contoh:", "Catatan:", "Latihan:"];
+  const blocks = new Map<string, string>();
+  const loose: string[] = [];
+  const lines = cleaned
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith("|"))
+    .flatMap((line) =>
+      line.split(/\s+(?=(Ringkas|Contoh|Catatan|Latihan)\s*:)/i)
+        .map((part) => part.trim())
+        .filter(Boolean)
+    );
+
+  for (let line of lines) {
+    line = line.replace(/^\d+[.)]\s*/, "").trim();
+    if (/^(jawaban|guru|respons?)$/i.test(line)) continue;
+    let matched = false;
+    for (const label of labels) {
+      const re = new RegExp(`^${label.replace(":", "\\:")}\\s*`, "i");
+      if (re.test(line)) {
+        const body = line.replace(re, "").trim();
+        if (body) blocks.set(label, appendBlock(blocks.get(label), body));
+        matched = true;
+        break;
+      }
+    }
+    if (!matched && line) loose.push(line);
+  }
+
+  for (const line of loose.slice(0, blocks.size ? 3 : 6)) {
+    const label = line.endsWith("?")
+      ? "Latihan:"
+      : looksLikeExample(line)
+      ? "Contoh:"
+      : blocks.has("Ringkas:")
+      ? "Catatan:"
+      : "Ringkas:";
+    blocks.set(label, appendBlock(blocks.get(label), line));
+  }
+
+  const out = labels
+    .filter((label) => blocks.get(label)?.trim())
+    .map((label) => `${label} ${blocks.get(label)!.trim()}`)
+    .slice(0, 4)
+    .join("\n");
+  return out || cleaned;
+}
+
 async function callLLM(
   endpoint: string,
   apiKey: string,
@@ -227,6 +298,7 @@ Deno.serve(async (req: Request) => {
     if (reply) break;
   }
   if (!reply) return json({ error: "llm_failed" }, 502);
+  reply = formatGuruReply(reply);
 
   const { error: insErr } = await admin.from("room_messages").insert({
     room_id: roomId,
