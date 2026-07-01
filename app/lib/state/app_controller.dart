@@ -309,15 +309,16 @@ String _formatTutorReply(String raw) {
 
   final rawLines = text
       .split('\n')
+      .expand(_expandTutorLine)
       .map((line) => line.trim())
-      .where((line) => line.isNotEmpty && !line.startsWith('|'))
+      .where((line) => line.isNotEmpty)
       .toList();
   final lines = <String>[];
   for (final line in rawLines) {
     final chunks = line
         .split(
           RegExp(
-            r'\s+(?=(Ringkas|Contoh|Catatan|Latihan)\s*:)',
+            r'\s+(?=(Ringkas|Contoh|Catatan|Latihan)\b\s*:?)',
             caseSensitive: false,
           ),
         )
@@ -337,16 +338,12 @@ String _formatTutorReply(String raw) {
     ).hasMatch(cleaned)) {
       continue;
     }
-    for (final label in labels) {
-      final re = RegExp('^${RegExp.escape(label)}\\s*', caseSensitive: false);
-      if (re.hasMatch(cleaned)) {
-        final body = cleaned.replaceFirst(re, '').trim();
-        if (body.isNotEmpty) {
-          labelled[label] = _appendBlock(labelled[label], body);
-        }
-        cleaned = '';
-        break;
+    final split = _splitTutorLabel(cleaned);
+    if (split != null) {
+      if (split.body.isNotEmpty) {
+        labelled[split.label] = _appendBlock(labelled[split.label], split.body);
       }
+      cleaned = '';
     }
     if (cleaned.isNotEmpty) loose.add(cleaned);
   }
@@ -377,6 +374,57 @@ String _formatTutorReply(String raw) {
       .map((label) => '$label ${labelled[label]!.trim()}')
       .take(4)
       .join('\n');
+}
+
+Iterable<String> _expandTutorLine(String line) sync* {
+  var cleaned = line.trim();
+  if (cleaned.isEmpty) return;
+  if (RegExp(
+    r'^\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)+\|?$',
+  ).hasMatch(cleaned)) {
+    return;
+  }
+  if (cleaned.startsWith('|')) {
+    final cells = cleaned
+        .split('|')
+        .map((cell) => cell.trim())
+        .where((cell) => cell.isNotEmpty)
+        .toList();
+    if (cells.isEmpty) return;
+    final label = _canonicalTutorLabel(cells.first);
+    if (label != null) {
+      final body = cells.skip(1).join(' ').trim();
+      if (body.isNotEmpty) yield '$label $body';
+      return;
+    }
+    final joined = cells.join(' ').trim();
+    if (joined.isNotEmpty) yield joined;
+    return;
+  }
+  cleaned = cleaned.replaceFirst(RegExp(r'^\s*[-*]\s+'), '').trim();
+  yield cleaned;
+}
+
+({String label, String body})? _splitTutorLabel(String line) {
+  final match = RegExp(
+    r'^(ringkas|contoh|catatan|latihan)\b\s*:?\s*',
+    caseSensitive: false,
+  ).firstMatch(line.trim());
+  if (match == null) return null;
+  final label = _canonicalTutorLabel(match.group(1) ?? '');
+  if (label == null) return null;
+  return (label: label, body: line.substring(match.end).trim());
+}
+
+String? _canonicalTutorLabel(String raw) {
+  final value = raw.replaceAll(RegExp(r'[*_`:#|]'), '').trim().toLowerCase();
+  return switch (value) {
+    'ringkas' => 'Ringkas:',
+    'contoh' => 'Contoh:',
+    'catatan' => 'Catatan:',
+    'latihan' => 'Latihan:',
+    _ => null,
+  };
 }
 
 String _appendBlock(String? existing, String next) {

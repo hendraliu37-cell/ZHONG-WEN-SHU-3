@@ -130,86 +130,8 @@ class _ChatPaneState extends State<_ChatPane> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // curriculum banner — dynamic from curriculum-gen, with fallback
         if (c.showDailyMaterialBanner) ...[
-          Container(
-            clipBehavior: Clip.antiAlias,
-            decoration: BoxDecoration(
-              color: t.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: t.line),
-            ),
-            child: IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Container(width: 3, color: t.seal),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  'MATERI HARIAN · BERKESINAMBUNGAN',
-                                  style: ZwsFonts.sans(
-                                    size: 9,
-                                    weight: FontWeight.w700,
-                                    color: t.seal,
-                                    letterSpacing: 0.8,
-                                  ),
-                                ),
-                              ),
-                              TextButton(
-                                onPressed: c.snoozeDailyMaterial,
-                                style: TextButton.styleFrom(
-                                  minimumSize: Size.zero,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 5,
-                                  ),
-                                  tapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
-                                ),
-                                child: Text(
-                                  'Ingatkan nanti',
-                                  style: ZwsFonts.sans(
-                                    size: 11,
-                                    weight: FontWeight.w700,
-                                    color: t.seal,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            c.dailyMaterial != null
-                                ? '${c.dailyMaterial!.topic}. Target hari ini: ${c.dailyMaterial!.summary}.'
-                                : 'HSK 2 · Unit 4 - Kata kerja perasaan. Target hari ini: 喜欢, 想, 觉得.',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: ZwsFonts.sans(
-                              size: 12,
-                              color: t.ink,
-                              height: 1.35,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          _DailyMaterialStrip(controller: c),
           const SizedBox(height: 8),
         ],
         // action button
@@ -351,6 +273,66 @@ class _Bubble extends StatelessWidget {
                   msg.text,
                   style: ZwsFonts.sans(size: 14, color: t.bg, height: 1.5),
                 ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DailyMaterialStrip extends StatelessWidget {
+  final AppController controller;
+  const _DailyMaterialStrip({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = ZwsTheme.of(context);
+    final c = controller;
+    final text = c.dailyMaterial != null
+        ? '${c.dailyMaterial!.topic}: ${c.dailyMaterial!.summary}'
+        : 'Materi harian siap. Target: 喜欢, 想, 觉得.';
+    return Material(
+      color: t.surface,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(10, 7, 7, 7),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: t.line),
+        ),
+        child: Row(
+          children: [
+            Container(width: 3, height: 28, color: t.seal),
+            const SizedBox(width: 9),
+            Expanded(
+              child: Text(
+                text,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: ZwsFonts.sans(
+                  size: 12,
+                  weight: FontWeight.w600,
+                  color: t.ink,
+                  height: 1.2,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: c.snoozeDailyMaterial,
+              style: TextButton.styleFrom(
+                minimumSize: Size.zero,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text(
+                'Ingatkan nanti',
+                style: ZwsFonts.sans(
+                  size: 11,
+                  weight: FontWeight.w800,
+                  color: t.seal,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

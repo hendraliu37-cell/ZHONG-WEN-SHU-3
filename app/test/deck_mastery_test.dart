@@ -2,6 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zhongwen_shu/models/deck.dart';
+import 'package:zhongwen_shu/models/room.dart';
 import 'package:zhongwen_shu/models/vocab.dart';
 import 'package:zhongwen_shu/state/app_controller.dart';
 
@@ -243,6 +244,50 @@ void main() {
     expect(c.sub, 'games');
     expect(c.speed, isEmpty);
     expect(c.speedIdx, 0);
+  });
+
+  test('daily tests and games use AI-focused learning cards', () {
+    final c = AppController();
+    for (var i = 0; i < 4; i++) {
+      c.cards[i] = _vocab(i);
+    }
+    c.aiFocusCardIds = [2, 1];
+    c.qCount = 2;
+
+    c.goDailyTest();
+    expect(c.baseCards.take(2), [2, 1]);
+
+    c.goGames();
+    expect(c.baseCards.take(2), [2, 1]);
+
+    c.startTone();
+    expect(c.sessionCards, containsAll([2, 1]));
+  });
+
+  test('back handler closes leaderboard and active group room', () {
+    final c = AppController();
+
+    c.leaderOpen = true;
+    expect(c.handleBack(), isTrue);
+    expect(c.leaderOpen, isFalse);
+
+    c
+      ..tab = 'chat'
+      ..chatTab = 'grup'
+      ..currentRoom = const Room(id: 'r1', code: 'ZWS-ABCDE', name: 'Kelas')
+      ..roomMsgs = [
+        RoomMessage(
+          id: 1,
+          senderId: 'u1',
+          authorName: 'A',
+          body: 'halo',
+          createdAt: DateTime(2026),
+        ),
+      ];
+
+    expect(c.handleBack(), isTrue);
+    expect(c.currentRoom, isNull);
+    expect(c.roomMsgs, isEmpty);
   });
 
   test(

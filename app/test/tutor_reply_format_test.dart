@@ -48,6 +48,27 @@ Coba bikin satu kalimat pakai xiang?''',
     ]);
   });
 
+  test('Guru display text normalizes markdown tables and loose labels', () {
+    final text = formatTutorReplyForDisplay(
+      '''
+| Ringkas | 喜欢 berarti suka. |
+| --- | --- |
+Contoh 我喜欢吃饭。
+Catatan Jangan campur terlalu banyak kata baru.
+Latihan Coba tulis satu kalimat.
+''',
+      track: 'traditional',
+      primary: 'traditional',
+    );
+
+    expect(text.split('\n'), [
+      'Ringkas: 喜歡 berarti suka.',
+      'Contoh: 我喜歡吃飯。',
+      'Catatan: Jangan campur terlalu banyak kata baru.',
+      'Latihan: Coba tulis satu kalimat.',
+    ]);
+  });
+
   test('App display uses traditional primary when track is both', () {
     final c = AppController()
       ..track = 'both'
