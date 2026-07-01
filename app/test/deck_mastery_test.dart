@@ -159,4 +159,30 @@ void main() {
     expect(state.isNew, isFalse);
     expect(state.mastery, greaterThan(0));
   });
+
+  test('games stay on hub when no cards are available', () {
+    final c = AppController();
+
+    c.goGames();
+    expect(c.sub, 'games');
+    expect(c.qCount, 0);
+
+    c.startTone();
+    expect(c.sub, 'games');
+    expect(c.sessionCards, isEmpty);
+
+    c.startMatch();
+    expect(c.sub, 'games');
+    expect(c.matchPairs, isEmpty);
+    expect(c.matchTiles, isEmpty);
+
+    c.goListen();
+    expect(c.sub, 'games');
+    expect(c.quiz, isEmpty);
+
+    c.startSpeed();
+    expect(c.sub, 'games');
+    expect(c.speed, isEmpty);
+    expect(c.speedIdx, 0);
+  });
 }

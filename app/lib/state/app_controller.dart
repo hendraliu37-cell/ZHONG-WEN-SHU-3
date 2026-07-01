@@ -2092,6 +2092,13 @@ class AppController extends ChangeNotifier {
     baseCards = smartPracticeBase();
     _clampQCount();
     sessionCards = makeSession(baseCards, qCount);
+    if (sessionCards.isEmpty) {
+      toneIdx = 0;
+      toneScore = 0;
+      tonePicked = null;
+      notifyListeners();
+      return;
+    }
     sub = 'tone';
     toneIdx = 0;
     toneScore = 0;
@@ -2145,6 +2152,15 @@ class AppController extends ChangeNotifier {
     }.toList();
     if (base.length < 4) base = cards.keys.take(6).toList();
     _matchPairs = base.take(6).toList();
+    if (_matchPairs.isEmpty) {
+      _matchTiles = [];
+      matchMatched = [];
+      matchSel = null;
+      matchWrong = [];
+      matchMoves = 0;
+      notifyListeners();
+      return;
+    }
     final tiles = <({int pid, String kind, String label})>[];
     for (final id in _matchPairs) {
       tiles.add((pid: id, kind: 'han', label: primaryHanzi(card(id))));
@@ -2199,6 +2215,14 @@ class AppController extends ChangeNotifier {
     baseCards = smartPracticeBase();
     _clampQCount();
     sessionCards = makeSession(baseCards, qCount);
+    if (sessionCards.isEmpty) {
+      _quiz = [];
+      quizIdx = 0;
+      quizScore = 0;
+      quizPicked = null;
+      notifyListeners();
+      return;
+    }
     _quiz = _buildQuiz(sessionCards);
     sub = 'listen';
     quizIdx = 0;
@@ -2233,6 +2257,15 @@ class AppController extends ChangeNotifier {
     baseCards = smartPracticeBase();
     _clampQCount();
     sessionCards = makeSession(baseCards, qCount);
+    if (sessionCards.isEmpty) {
+      _speedTimer?.cancel();
+      _speed = [];
+      speedIdx = 0;
+      speedScore = 0;
+      speedLeft = 45;
+      notifyListeners();
+      return;
+    }
     _speed = _buildQuiz(sessionCards);
     _speedTimer?.cancel();
     sub = 'speed';
