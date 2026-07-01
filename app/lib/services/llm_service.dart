@@ -2,11 +2,14 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../config.dart';
+
 /// LLM client. Proxy-first (Supabase), direct fallback.
 class LlmService {
   bool get enabled => true;
 
   SupabaseClient? get _sb {
+    if (!zwsSupabaseReady) return null;
     try {
       return Supabase.instance.client;
     } catch (_) {
@@ -57,7 +60,6 @@ class LlmService {
       ),
     );
     if (key.isEmpty) {
-      lastError = 'No API key';
       return null;
     }
 
