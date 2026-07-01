@@ -74,6 +74,19 @@ void main() {
     expect(cards.single.meaning, 'belajar');
   });
 
+  test('imports decimal numeric levels from spreadsheets', () {
+    final service = DeckIoService();
+    final rows = service.readDelimitedForTest(
+      'Chinese,Pinyin,English,tone,hsk,tocfl\n看,kan4,lihat,4.0,2.0,3.0',
+    );
+    final cards = service.rowsToCardsForTest(rows);
+
+    expect(cards, hasLength(1));
+    expect(cards.single.tone, 4);
+    expect(cards.single.hskLevel, 2);
+    expect(cards.single.tocflLevel, 3);
+  });
+
   test(
     'imports Indonesian-front headerless cards by swapping Chinese back',
     () {

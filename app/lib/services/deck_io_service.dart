@@ -286,7 +286,6 @@ class DeckIoService {
     ]);
     if (simplified.isEmpty || meaning.isEmpty) return null;
 
-    int? parseInt(String raw) => raw.isEmpty ? null : int.tryParse(raw);
     return VocabEntry.fromJson({
       's': simplified,
       't': traditional.isEmpty ? simplified : traditional,
@@ -296,9 +295,9 @@ class DeckIoService {
       'exs': get(row, ['example_s', 'examples', 'example']),
       'ext': get(row, ['example_t']),
       'exi': get(row, ['example_id', 'example_translation', 'notes']),
-      'tone': parseInt(get(row, ['tone'])) ?? 1,
-      'hsk': parseInt(get(row, ['hsk', 'hsk_level'])),
-      'tocfl': parseInt(get(row, ['tocfl', 'tocfl_level'])),
+      'tone': _parseIntish(get(row, ['tone'])) ?? 1,
+      'hsk': _parseIntish(get(row, ['hsk', 'hsk_level'])),
+      'tocfl': _parseIntish(get(row, ['tocfl', 'tocfl_level'])),
     });
   }
 
@@ -430,6 +429,12 @@ class DeckIoService {
       r'(?:a|ai|an|ang|ao|e|ei|en|eng|er|i|ia|ian|iang|iao|ie|in|ing|iong|iu|'
       r'o|ong|ou|u|ua|uai|uan|uang|ui|un|uo|v|ve|van|vn|ue)$',
     ).hasMatch(syllable);
+  }
+
+  int? _parseIntish(String raw) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) return null;
+    return int.tryParse(trimmed) ?? double.tryParse(trimmed)?.toInt();
   }
 
   String _csvCell(String value) => '"${value.replaceAll('"', '""')}"';
