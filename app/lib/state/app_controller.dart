@@ -2997,12 +2997,20 @@ class AppController extends ChangeNotifier {
     if (callGuru) roomGuruBusy = true;
     notifyListeners();
 
-    await rooms.sendMessage(
+    final sent = await rooms.sendMessage(
       r.id,
       body: txt,
       authorName: me,
       authorHandle: profileHandle,
     );
+    if (!sent) {
+      roomMsgs = roomMsgs
+          .where((m) => !(m.id == 0 && m.isMine(authUid) && m.body == txt))
+          .toList();
+      if (callGuru) roomGuruBusy = false;
+      notifyListeners();
+      return;
+    }
     if (callGuru) {
       final err = await rooms.callGuru(r.id, track: _zhTrack);
       if (err != null) {

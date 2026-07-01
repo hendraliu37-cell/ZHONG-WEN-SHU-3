@@ -363,9 +363,7 @@ class _RoomViewState extends State<_RoomView> {
         : rawCaret.clamp(0, v.text.length).toInt();
     final before = v.text.substring(0, caret);
     final token = before.split(RegExp(r'\s')).last;
-    final show =
-        token == '@' ||
-        ('@guru'.startsWith(token.toLowerCase()) && token.startsWith('@'));
+    final show = isGuruMentionPrefix(token);
     if (show != _showGuruSuggest && mounted) {
       setState(() => _showGuruSuggest = show);
     }

@@ -7,12 +7,23 @@ void main() {
       expect(mentionsGuru('@Guru apa arti 喜欢?'), isTrue);
       expect(mentionsGuru('halo @guru tolong jelaskan'), isTrue);
       expect(mentionsGuru('eh @GURU'), isTrue);
+      expect(mentionsGuru('halo ＠guru tolong jelaskan'), isTrue);
     });
     test('ignores non-mentions and look-alikes', () {
       expect(mentionsGuru('guru kami baik'), isFalse);
       expect(mentionsGuru('email @guru.com bukan mention'), isFalse);
       expect(mentionsGuru('@gurun salah'), isFalse);
+      expect(mentionsGuru('＠gurun salah'), isFalse);
       expect(mentionsGuru(''), isFalse);
+    });
+
+    test('detects Guru mention prefixes for suggestions', () {
+      expect(isGuruMentionPrefix('@'), isTrue);
+      expect(isGuruMentionPrefix('@g'), isTrue);
+      expect(isGuruMentionPrefix('@Gu'), isTrue);
+      expect(isGuruMentionPrefix('＠gur'), isTrue);
+      expect(isGuruMentionPrefix('guru'), isFalse);
+      expect(isGuruMentionPrefix('@gurun'), isFalse);
     });
   });
 

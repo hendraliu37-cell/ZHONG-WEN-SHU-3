@@ -22,22 +22,22 @@ class Room {
   });
 
   factory Room.fromJson(Map j, {int memberCount = 0}) => Room(
-        id: (j['id'] ?? '').toString(),
-        code: (j['code'] ?? '').toString(),
-        name: (j['name'] ?? 'Ruang').toString(),
-        levelTag: (j['level_tag'] ?? '').toString(),
-        owner: (j['owner'] ?? '').toString(),
-        memberCount: memberCount,
-      );
+    id: (j['id'] ?? '').toString(),
+    code: (j['code'] ?? '').toString(),
+    name: (j['name'] ?? 'Ruang').toString(),
+    levelTag: (j['level_tag'] ?? '').toString(),
+    owner: (j['owner'] ?? '').toString(),
+    memberCount: memberCount,
+  );
 
   Room copyWith({int? memberCount}) => Room(
-        id: id,
-        code: code,
-        name: name,
-        levelTag: levelTag,
-        owner: owner,
-        memberCount: memberCount ?? this.memberCount,
-      );
+    id: id,
+    code: code,
+    name: name,
+    levelTag: levelTag,
+    owner: owner,
+    memberCount: memberCount ?? this.memberCount,
+  );
 }
 
 /// A single message in a room. `senderId == null` && `isGuru` ⇒ the AI tutor.
@@ -61,16 +61,16 @@ class RoomMessage {
   });
 
   factory RoomMessage.fromJson(Map j) => RoomMessage(
-        id: (j['id'] is num) ? (j['id'] as num).toInt() : 0,
-        senderId: j['sender_id']?.toString(),
-        authorName: (j['author_name'] ?? '').toString(),
-        authorHandle: (j['author_handle'] ?? '').toString(),
-        isGuru: j['is_guru'] == true,
-        body: (j['body'] ?? '').toString(),
-        createdAt:
-            DateTime.tryParse((j['created_at'] ?? '').toString())?.toLocal() ??
-                DateTime.now(),
-      );
+    id: (j['id'] is num) ? (j['id'] as num).toInt() : 0,
+    senderId: j['sender_id']?.toString(),
+    authorName: (j['author_name'] ?? '').toString(),
+    authorHandle: (j['author_handle'] ?? '').toString(),
+    isGuru: j['is_guru'] == true,
+    body: (j['body'] ?? '').toString(),
+    createdAt:
+        DateTime.tryParse((j['created_at'] ?? '').toString())?.toLocal() ??
+        DateTime.now(),
+  );
 
   /// True when this message was sent by [uid] (the local user).
   bool isMine(String? uid) => uid != null && senderId == uid;
@@ -80,8 +80,18 @@ class RoomMessage {
 /// requiring a word boundary so "@gurun" or an email-like "x@guru.com" don't
 /// trigger it.
 bool mentionsGuru(String text) {
-  return RegExp(r'(^|[^\w@])@guru($|[^\w.])', caseSensitive: false)
-      .hasMatch(text);
+  return RegExp(
+    r'(^|[^\w@＠])[@＠]guru($|[^\w.])',
+    caseSensitive: false,
+  ).hasMatch(text);
+}
+
+/// True while the user is typing a Guru mention token (`@`, `@g`, `＠gu`, ...).
+/// Accepts fullwidth `＠` because Chinese keyboards can emit it.
+bool isGuruMentionPrefix(String token) {
+  final normalized = token.replaceFirst('＠', '@').toLowerCase();
+  return normalized == '@' ||
+      (normalized.startsWith('@') && '@guru'.startsWith(normalized));
 }
 
 /// Normalizes a typed invite code to canonical form (`ZWS-XXXXX`, uppercase).
