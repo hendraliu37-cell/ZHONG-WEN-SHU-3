@@ -20,22 +20,28 @@ class Deck {
   }) : cardIds = cardIds ?? <int>[];
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'idx': displayIdx,
-        'name': name,
-        'standard': standard,
-        'levelTag': levelTag,
-        'isPack': isPack,
-        'cardIds': cardIds,
-      };
+    'id': id,
+    'idx': displayIdx,
+    'name': name,
+    'standard': standard,
+    'levelTag': levelTag,
+    'isPack': isPack,
+    'cardIds': cardIds,
+  };
 
   factory Deck.fromJson(Map<String, dynamic> j) => Deck(
-        id: j['id'] as String,
-        displayIdx: j['idx'] as String,
-        name: j['name'] as String,
-        standard: (j['standard'] ?? 'mixed') as String,
-        levelTag: (j['levelTag'] ?? '') as String,
-        isPack: (j['isPack'] ?? false) as bool,
-        cardIds: (j['cardIds'] as List).map((e) => e as int).toList(),
-      );
+    id: j['id']?.toString() ?? '',
+    displayIdx: j['idx']?.toString() ?? '01',
+    name: j['name']?.toString() ?? 'Deck',
+    standard: j['standard']?.toString() ?? 'mixed',
+    levelTag: j['levelTag']?.toString() ?? '',
+    isPack: (j['isPack'] as bool?) ?? false,
+    cardIds: ((j['cardIds'] as List?) ?? []).map(_jsonInt).nonNulls.toList(),
+  );
+}
+
+int? _jsonInt(Object? value) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  return int.tryParse(value?.toString() ?? '');
 }

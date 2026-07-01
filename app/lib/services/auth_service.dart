@@ -269,9 +269,7 @@ class AuthService {
           .eq('user_id', id)
           .order('updated_at', ascending: false)
           .limit(80);
-      return (rows as List)
-          .map((row) => Map<String, dynamic>.from(row['payload'] as Map))
-          .toList();
+      return _parseTestHistoryRows(rows);
     } catch (_) {
       return [];
     }
@@ -297,3 +295,19 @@ class AuthService {
     }
   }
 }
+
+List<Map<String, dynamic>> _parseTestHistoryRows(Object? rows) {
+  final out = <Map<String, dynamic>>[];
+  if (rows is! List) return out;
+  for (final row in rows) {
+    if (row is! Map) continue;
+    final payload = row['payload'];
+    if (payload is! Map) continue;
+    out.add(Map<String, dynamic>.from(payload));
+  }
+  return out;
+}
+
+@visibleForTesting
+List<Map<String, dynamic>> parseTestHistoryRowsForTest(Object? rows) =>
+    _parseTestHistoryRows(rows);

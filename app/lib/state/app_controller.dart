@@ -798,8 +798,12 @@ class AppController extends ChangeNotifier {
     if (rows.isEmpty) return;
     final byId = {for (final h in testHistory) h.id: h};
     for (final row in rows) {
-      final incoming = TestHistoryItem.fromJson(row);
-      if (incoming.id.isEmpty || incoming.cardIds.isEmpty) continue;
+      var incoming = TestHistoryItem.fromJson(row);
+      final validCardIds = incoming.cardIds
+          .where((id) => cards.containsKey(id))
+          .toList();
+      if (incoming.id.isEmpty || validCardIds.isEmpty) continue;
+      incoming = incoming.copyWith(cardIds: validCardIds);
       final old = byId[incoming.id];
       if (old == null || incoming.updatedAt.isAfter(old.updatedAt)) {
         byId[incoming.id] = incoming;
@@ -1019,13 +1023,14 @@ class AppController extends ChangeNotifier {
       if (id == null || v is! Map) return;
       srs[id] = SrsState.fromJson(Map<String, dynamic>.from(v));
     });
-    decks
-      ..clear()
-      ..addAll(
-        (j['decks'] as List? ?? []).map(
-          (e) => Deck.fromJson(e as Map<String, dynamic>),
-        ),
-      );
+    decks.clear();
+    for (final rawDeck in j['decks'] as List? ?? []) {
+      if (rawDeck is! Map) continue;
+      final deck = Deck.fromJson(Map<String, dynamic>.from(rawDeck));
+      if (deck.id.isEmpty) continue;
+      deck.cardIds.removeWhere((id) => !cards.containsKey(id));
+      decks.add(deck);
+    }
     messages = (j['chatHistory'] as List? ?? [])
         .whereType<Map>()
         .map((e) => ChatMsg.fromJson(Map<String, dynamic>.from(e)))

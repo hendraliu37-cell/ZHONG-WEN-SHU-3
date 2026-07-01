@@ -37,4 +37,29 @@ void main() {
       expect(msg, 'Email atau kata sandi salah.');
     });
   });
+
+  group('test history cloud rows', () {
+    test('skips malformed payloads without dropping valid rows', () {
+      final parsed = parseTestHistoryRowsForTest([
+        {
+          'payload': {
+            'id': 'ok',
+            'cardIds': [1],
+          },
+        },
+        {'payload': null},
+        'bad-row',
+        {
+          'payload': {
+            'id': 'ok-2',
+            'cardIds': ['2'],
+          },
+        },
+      ]);
+
+      expect(parsed, hasLength(2));
+      expect(parsed.first['id'], 'ok');
+      expect(parsed.last['id'], 'ok-2');
+    });
+  });
 }

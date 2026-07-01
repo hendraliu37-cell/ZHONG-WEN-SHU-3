@@ -33,10 +33,17 @@ void main() {
           'bad-srs': {'reps': 99},
         },
         'decks': [
+          'not-a-deck',
           {
             'id': 'custom',
             'idx': '01',
             'name': 'Custom',
+            'cardIds': ['1', 2.0, 'bad-id'],
+          },
+          {
+            'id': '',
+            'idx': '99',
+            'name': 'Broken',
             'cardIds': [1],
           },
         ],
