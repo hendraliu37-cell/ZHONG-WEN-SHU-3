@@ -621,6 +621,7 @@ class AppController extends ChangeNotifier {
   int tunerTone = 2;
   bool recording = false;
   final PitchService _pitch = PitchService();
+  bool _disposed = false;
   List<double> pitchTrace =
       []; // semitones of the current syllable, newest last
   double? currentHz;
@@ -1173,6 +1174,19 @@ class AppController extends ChangeNotifier {
 
   void _speak(String txt) =>
       speech.speak(txt, traditional: track == 'traditional');
+
+  void _safeNotify() {
+    if (!_disposed) notifyListeners();
+  }
+
+  void _speakLater(Duration delay, String Function() textOf) {
+    Future.delayed(delay, () {
+      if (_disposed) return;
+      final text = textOf().trim();
+      if (text.isEmpty) return;
+      _speak(text);
+    });
+  }
 
   String displayTutorText(String text) => formatTutorReplyForDisplay(
     text,
@@ -2199,10 +2213,7 @@ class AppController extends ChangeNotifier {
     toneScore = 0;
     tonePicked = null;
     notifyListeners();
-    Future.delayed(
-      const Duration(milliseconds: 250),
-      () => _speak(toneCur.han),
-    );
+    _speakLater(const Duration(milliseconds: 250), () => toneCur.han);
   }
 
   void pickTone(int n) {
@@ -2222,10 +2233,7 @@ class AppController extends ChangeNotifier {
     toneIdx++;
     tonePicked = null;
     if (toneIdx < toneTotal) {
-      Future.delayed(
-        const Duration(milliseconds: 250),
-        () => _speak(toneCur.han),
-      );
+      _speakLater(const Duration(milliseconds: 250), () => toneCur.han);
     } else {
       xp += toneScore;
       _save();
@@ -2298,8 +2306,9 @@ class AppController extends ChangeNotifier {
       matchWrong = [matchSel!, tileIdx];
       matchSel = null;
       Future.delayed(const Duration(milliseconds: 700), () {
+        if (_disposed || sub != 'match') return;
         matchWrong = [];
-        notifyListeners();
+        _safeNotify();
       });
     }
     notifyListeners();
@@ -2324,7 +2333,10 @@ class AppController extends ChangeNotifier {
     quizScore = 0;
     quizPicked = null;
     notifyListeners();
-    Future.delayed(const Duration(milliseconds: 350), playListenCur);
+    _speakLater(
+      const Duration(milliseconds: 350),
+      () => currentQuiz == null ? '' : primaryHanzi(card(currentQuiz!.cardId)),
+    );
   }
 
   void playListenCur() {
@@ -2340,7 +2352,10 @@ class AppController extends ChangeNotifier {
       _save();
     }
     notifyListeners();
-    Future.delayed(const Duration(milliseconds: 350), playListenCur);
+    _speakLater(
+      const Duration(milliseconds: 350),
+      () => currentQuiz == null ? '' : primaryHanzi(card(currentQuiz!.cardId)),
+    );
   }
 
   // Speed
@@ -2434,8 +2449,9 @@ class AppController extends ChangeNotifier {
     notifyListeners();
     _save();
     Future.delayed(const Duration(milliseconds: 2600), () {
+      if (_disposed) return;
       writeMsg = '';
-      notifyListeners();
+      _safeNotify();
     });
   }
 
@@ -3179,12 +3195,14 @@ class AppController extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
     _speedTimer?.cancel();
     _trDebounce?.cancel();
     _authSub?.cancel();
     closeRoomChannel(notify: false);
     pronunciation.cancel();
     _pitch.dispose();
+    speech.dispose();
     super.dispose();
   }
 }

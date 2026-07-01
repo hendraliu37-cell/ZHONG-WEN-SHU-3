@@ -204,4 +204,27 @@ void main() {
     expect(c.speed, isEmpty);
     expect(c.speedIdx, 0);
   });
+
+  test(
+    'delayed match feedback does not notify after controller dispose',
+    () async {
+      final c = AppController();
+      for (var i = 0; i < 4; i++) {
+        c.cards[i] = _vocab(i);
+      }
+
+      c.startMatch();
+      final first = 0;
+      final second = c.matchTiles.indexWhere((tile) {
+        final selected = c.matchTiles[first];
+        return tile.pid != selected.pid;
+      });
+      expect(second, isNonNegative);
+
+      c.matchTap(first);
+      c.matchTap(second);
+      c.dispose();
+      await Future<void>.delayed(const Duration(milliseconds: 800));
+    },
+  );
 }
