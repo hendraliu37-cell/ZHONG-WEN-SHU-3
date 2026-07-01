@@ -281,6 +281,89 @@ final Map<String, String> _tradToSimp = {
   for (final e in _simpToTrad.entries) e.value: e.key,
 };
 
+String formatTutorReplyForDisplay(
+  String text, {
+  required String track,
+  required String primary,
+  Iterable<VocabEntry> cards = const [],
+}) => _formatTutorReply(
+  _convertHanziForTrack(text, track: track, primary: primary, cards: cards),
+);
+
+String _formatTutorReply(String raw) {
+  var text = raw
+      .replaceAll('\r\n', '\n')
+      .replaceAll(RegExp(r'```[a-zA-Z]*'), '')
+      .replaceAll('```', '')
+      .replaceAll(RegExp(r'^\s{0,3}#{1,6}\s*', multiLine: true), '')
+      .replaceAll(RegExp(r'^\s*[-*]\s+', multiLine: true), '')
+      .trim();
+  if (text.isEmpty) return raw.trim();
+
+  final lines = text
+      .split('\n')
+      .map((line) => line.trim())
+      .where((line) => line.isNotEmpty)
+      .toList();
+  final out = <String>[];
+  const labels = ['Ringkas:', 'Contoh:', 'Catatan:', 'Latihan:'];
+  for (final line in lines) {
+    var cleaned = line.replaceFirst(RegExp(r'^\d+[.)]\s*'), '').trim();
+    if (RegExp(
+      r'^(jawaban|guru|respons?)$',
+      caseSensitive: false,
+    ).hasMatch(cleaned)) {
+      continue;
+    }
+    for (final label in labels) {
+      final re = RegExp('^${RegExp.escape(label)}\\s*', caseSensitive: false);
+      if (re.hasMatch(cleaned)) {
+        cleaned = '$label ${cleaned.replaceFirst(re, '').trim()}';
+        break;
+      }
+    }
+    if (cleaned.isNotEmpty) out.add(cleaned);
+  }
+  return out.take(6).join('\n');
+}
+
+String _convertHanziForTrack(
+  String text, {
+  required String track,
+  required String primary,
+  required Iterable<VocabEntry> cards,
+}) {
+  final toTraditional =
+      track == 'traditional' || (track == 'both' && primary == 'traditional');
+  final map = _hanziVariantMap(toTraditional: toTraditional, cards: cards);
+  if (map.isEmpty) return text;
+  final buf = StringBuffer();
+  for (final r in text.runes) {
+    final ch = String.fromCharCode(r);
+    buf.write(map[ch] ?? ch);
+  }
+  return buf.toString();
+}
+
+Map<String, String> _hanziVariantMap({
+  required bool toTraditional,
+  required Iterable<VocabEntry> cards,
+}) {
+  final map = <String, String>{};
+  for (final c in cards) {
+    final s = c.simplified.runes.map(String.fromCharCode).toList();
+    final t = c.traditional.runes.map(String.fromCharCode).toList();
+    if (s.length != t.length) continue;
+    for (var i = 0; i < s.length; i++) {
+      if (s[i] == t[i]) continue;
+      map[toTraditional ? s[i] : t[i]] = toTraditional ? t[i] : s[i];
+    }
+  }
+  final fallback = toTraditional ? _simpToTrad : _tradToSimp;
+  map.addAll(fallback);
+  return map;
+}
+
 /// A downloadable pack from the asset manifest.
 class PackInfo {
   final String id;
@@ -406,6 +489,7 @@ class AppController extends ChangeNotifier {
   DailyMaterial? dailyMaterial;
   bool curriculumLoading = false;
   DateTime? dailyMaterialHiddenUntil;
+  int _curriculumRequestSerial = 0;
 
   // ---- shared session ----
   int qCount = 20;
@@ -524,7 +608,6 @@ class AppController extends ChangeNotifier {
     // ... rest unchanged
 
     idiomBank.load();
-    fetchDailyMaterial();
     _loadTranslationDict();
 
     try {
@@ -552,6 +635,8 @@ class AppController extends ChangeNotifier {
         ),
       ];
     }
+
+    unawaited(fetchDailyMaterial());
 
     // Auth: only if Supabase is ready. Do NOT block on network calls.
     if (auth.enabled) {
@@ -588,11 +673,13 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void> fetchDailyMaterial() async {
-    if (curriculumLoading) return;
+    final serial = ++_curriculumRequestSerial;
+    final requestedTrack = track;
     curriculumLoading = true;
     notifyListeners();
-    final mat = await curriculum.fetch(track: track, level: 'HSK 1-2');
-    if (mat != null) {
+    final mat = await curriculum.fetch(track: requestedTrack, level: 'HSK 1-2');
+    if (serial != _curriculumRequestSerial) return;
+    if (mat != null && requestedTrack == track) {
       dailyMaterial = mat;
       notifyListeners();
     }
@@ -604,6 +691,7 @@ class AppController extends ChangeNotifier {
     if (!auth.signedIn) return;
     final p = await auth.fetchProfile();
     if (p != null) {
+      final oldTrack = track;
       profileName = p.displayName.isNotEmpty ? p.displayName : p.handle;
       profileHandle = p.handle;
       profileId = '#${p.publicId}';
@@ -618,6 +706,10 @@ class AppController extends ChangeNotifier {
       _registerAttendanceToday();
       refreshLeaderboard();
       refreshMyRooms();
+      if (track != oldTrack) {
+        dailyMaterial = null;
+        unawaited(fetchDailyMaterial());
+      }
     }
     notifyListeners();
   }
@@ -995,68 +1087,12 @@ class AppController extends ChangeNotifier {
   void _speak(String txt) =>
       speech.speak(txt, traditional: track == 'traditional');
 
-  String displayTutorText(String text) =>
-      _formatTutorReply(_convertHanziForTrack(text));
-
-  String _formatTutorReply(String raw) {
-    var text = raw
-        .replaceAll('\r\n', '\n')
-        .replaceAll(RegExp(r'```[a-zA-Z]*'), '')
-        .replaceAll('```', '')
-        .replaceAll(RegExp(r'^\s{0,3}#{1,6}\s*', multiLine: true), '')
-        .replaceAll(RegExp(r'^\s*[-*]\s+', multiLine: true), '')
-        .trim();
-    if (text.isEmpty) return raw.trim();
-
-    final lines = text
-        .split('\n')
-        .map((line) => line.trim())
-        .where((line) => line.isNotEmpty)
-        .toList();
-    final out = <String>[];
-    const labels = ['Ringkas:', 'Contoh:', 'Catatan:', 'Latihan:'];
-    for (final line in lines) {
-      var cleaned = line.replaceFirst(RegExp(r'^\d+[.)]\s*'), '').trim();
-      for (final label in labels) {
-        final re = RegExp('^${RegExp.escape(label)}\\s*', caseSensitive: false);
-        if (re.hasMatch(cleaned)) {
-          cleaned = '$label ${cleaned.replaceFirst(re, '').trim()}';
-          break;
-        }
-      }
-      if (cleaned.isNotEmpty) out.add(cleaned);
-    }
-    return out.take(6).join('\n');
-  }
-
-  String _convertHanziForTrack(String text) {
-    final toTraditional =
-        track == 'traditional' || (track == 'both' && primary == 'traditional');
-    final map = _hanziVariantMap(toTraditional: toTraditional);
-    if (map.isEmpty) return text;
-    final buf = StringBuffer();
-    for (final r in text.runes) {
-      final ch = String.fromCharCode(r);
-      buf.write(map[ch] ?? ch);
-    }
-    return buf.toString();
-  }
-
-  Map<String, String> _hanziVariantMap({required bool toTraditional}) {
-    final map = <String, String>{};
-    for (final c in cards.values) {
-      final s = c.simplified.runes.map(String.fromCharCode).toList();
-      final t = c.traditional.runes.map(String.fromCharCode).toList();
-      if (s.length != t.length) continue;
-      for (var i = 0; i < s.length; i++) {
-        if (s[i] == t[i]) continue;
-        map[toTraditional ? s[i] : t[i]] = toTraditional ? t[i] : s[i];
-      }
-    }
-    final fallback = toTraditional ? _simpToTrad : _tradToSimp;
-    map.addAll(fallback);
-    return map;
-  }
+  String displayTutorText(String text) => formatTutorReplyForDisplay(
+    text,
+    track: track,
+    primary: primary,
+    cards: cards.values,
+  );
 
   bool get showDailyMaterialBanner =>
       dailyMaterialHiddenUntil == null ||
@@ -1470,10 +1506,13 @@ class AppController extends ChangeNotifier {
   // ===========================================================================
 
   void setTrack(String t) {
+    if (track == t) return;
     track = t;
     if (t != 'both') primary = t;
+    dailyMaterial = null;
     notifyListeners();
     _save();
+    unawaited(fetchDailyMaterial());
     if (auth.signedIn) auth.updateTrack(t); // sync to profile (best-effort)
   }
 
