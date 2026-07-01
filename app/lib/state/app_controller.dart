@@ -1192,6 +1192,9 @@ class AppController extends ChangeNotifier {
   List<int> reviewQueue() {
     final now = DateTime.now();
     final ids = cards.keys.toList();
+    for (final id in ids) {
+      srs.putIfAbsent(id, () => SrsState());
+    }
     ids.sort((a, b) {
       final sa = srs[a]!, sb = srs[b]!;
       return sa.due.compareTo(sb.due);
@@ -2069,8 +2072,14 @@ class AppController extends ChangeNotifier {
 
   void pickTone(int n) {
     if (tonePicked != null) return;
+    final cur = toneCur;
+    final correct = n == cur.tone;
     tonePicked = n;
-    if (n == toneCur.tone) toneScore++;
+    if (correct) toneScore++;
+    if (sessionCards.isNotEmpty) {
+      final id = sessionCards[toneIdx % sessionCards.length];
+      _recordPractice(id, correct, xpCorrect: 0, xpWrong: 0);
+    }
     notifyListeners();
   }
 

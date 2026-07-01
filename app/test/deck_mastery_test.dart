@@ -9,6 +9,7 @@ VocabEntry _vocab(int i) => VocabEntry(
   traditional: '字$i',
   pinyin: 'zi$i',
   meaning: 'arti $i',
+  tone: (i % 4) + 1,
 );
 
 void main() {
@@ -107,6 +108,25 @@ void main() {
     c.recordUjianAkhirAnswer(0, true);
 
     final state = c.srs[0];
+    expect(state, isNotNull);
+    expect(state!.reps, 1);
+    expect(state.isNew, isFalse);
+    expect(state.mastery, greaterThan(0));
+  });
+
+  test('tone game answers update SRS mastery', () {
+    final c = AppController();
+    for (var i = 0; i < 4; i++) {
+      c.cards[i] = _vocab(i);
+    }
+
+    c.qCount = 1;
+    c.startTone();
+    final id = c.sessionCards.first;
+
+    c.pickTone(c.card(id).tone);
+
+    final state = c.srs[id];
     expect(state, isNotNull);
     expect(state!.reps, 1);
     expect(state.isNew, isFalse);
