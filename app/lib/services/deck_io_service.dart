@@ -207,10 +207,15 @@ class DeckIoService {
   }
 
   String _detectDelimiter(String text) {
-    final firstLine = text.split(RegExp(r'\r?\n')).firstOrNull ?? '';
-    final tabs = '\t'.allMatches(firstLine).length;
-    final commas = ','.allMatches(firstLine).length;
-    return tabs > commas ? '\t' : ',';
+    final firstLine = text
+        .split(RegExp(r'\r?\n'))
+        .firstWhere((line) => line.trim().isNotEmpty, orElse: () => '');
+    final counts = {
+      '\t': '\t'.allMatches(firstLine).length,
+      ',': ','.allMatches(firstLine).length,
+      ';': ';'.allMatches(firstLine).length,
+    };
+    return counts.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
   }
 
   List<VocabEntry> _rowsToCards(List<List<String>> rows) {
@@ -243,6 +248,7 @@ class DeckIoService {
   ) {
     final simplified = get(row, [
       'simplified',
+      'simplified_chinese',
       's',
       'front',
       'hanzi',
@@ -254,7 +260,12 @@ class DeckIoService {
       'term',
       'question',
     ]);
-    final traditional = get(row, ['traditional', 't', 'traditional_hanzi']);
+    final traditional = get(row, [
+      'traditional',
+      'traditional_chinese',
+      't',
+      'traditional_hanzi',
+    ]);
     final meaning = get(row, [
       'meaning',
       'm',
@@ -264,7 +275,9 @@ class DeckIoService {
       'answer',
       'translation',
       'translations',
+      'translation_english',
       'definitions',
+      'english_definition',
       'english',
       'indonesian',
       'indonesia',
@@ -325,7 +338,9 @@ class DeckIoService {
 
   bool _isKnownHeader(String value) => const {
     'simplified',
+    'simplified_chinese',
     'traditional',
+    'traditional_chinese',
     'front',
     'back',
     'hanzi',
@@ -337,8 +352,10 @@ class DeckIoService {
     'term',
     'definition',
     'translation',
+    'translation_english',
     'translations',
     'definitions',
+    'english_definition',
     'english',
     'indonesian',
     'indonesia',

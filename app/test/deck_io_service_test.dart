@@ -46,6 +46,34 @@ void main() {
     expect(cards.last.meaning, 'study');
   });
 
+  test('imports semicolon CSV exported by spreadsheet locales', () {
+    final service = DeckIoService();
+    final rows = service.readDelimitedForTest(
+      'Chinese;Pinyin;English\n吃;chi1;makan\n喝;he1;minum',
+    );
+    final cards = service.rowsToCardsForTest(rows);
+
+    expect(cards, hasLength(2));
+    expect(cards.first.simplified, '吃');
+    expect(cards.first.meaning, 'makan');
+    expect(cards.last.simplified, '喝');
+    expect(cards.last.meaning, 'minum');
+  });
+
+  test('imports common Simplified Chinese header names', () {
+    final service = DeckIoService();
+    final rows = service.readDelimitedForTest(
+      'Simplified Chinese,Traditional Chinese,Pinyin,English Definition\n学习,學習,xue2 xi2,belajar',
+    );
+    final cards = service.rowsToCardsForTest(rows);
+
+    expect(cards, hasLength(1));
+    expect(cards.single.simplified, '学习');
+    expect(cards.single.traditional, '學習');
+    expect(cards.single.pinyin, 'xue2 xi2');
+    expect(cards.single.meaning, 'belajar');
+  });
+
   test(
     'imports Indonesian-front headerless cards by swapping Chinese back',
     () {
