@@ -1,8 +1,23 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zhongwen_shu/state/app_controller.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  const recordChannel = MethodChannel('com.llfbandit.record/messages');
+
+  setUp(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          recordChannel,
+          (MethodCall call) async => null,
+        );
+  });
+
+  tearDown(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(recordChannel, null);
+  });
 
   test(
     'restore skips malformed card and srs keys without dropping valid data',
@@ -34,4 +49,33 @@ void main() {
       expect(c.decks.single.cardIds, [1]);
     },
   );
+
+  test('restore tolerates legacy string card ids in test history', () {
+    final c = AppController();
+
+    c.restoreForTest({
+      'cards': {
+        '1': {'s': '吃', 't': '吃', 'py': 'chi1', 'm': 'makan'},
+        '2': {'s': '喝', 't': '喝', 'py': 'he1', 'm': 'minum'},
+      },
+      'testHistory': [
+        {
+          'id': 'legacy',
+          'mode': 'mc',
+          'title': 'Tes lama',
+          'direction': 'zh2id',
+          'cardIds': ['1', 2.0, 'bad-id'],
+          'index': '1',
+          'score': '1',
+          'startedAt': '2026-07-01T00:00:00.000',
+          'updatedAt': '2026-07-01T00:01:00.000',
+        },
+      ],
+    });
+
+    expect(c.testHistory, hasLength(1));
+    expect(c.testHistory.single.cardIds, [1, 2]);
+    expect(c.testHistory.single.index, 1);
+    expect(c.testHistory.single.score, 1);
+  });
 }

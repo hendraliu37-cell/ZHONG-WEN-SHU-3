@@ -187,11 +187,9 @@ class TestHistoryItem {
     title: (j['title'] as String?) ?? 'Tes',
     deckId: j['deckId'] as String?,
     direction: (j['direction'] as String?) ?? 'zh2id',
-    cardIds: ((j['cardIds'] as List?) ?? [])
-        .map((e) => (e as num).toInt())
-        .toList(),
-    index: (j['index'] as num?)?.toInt() ?? 0,
-    score: (j['score'] as num?)?.toInt() ?? 0,
+    cardIds: ((j['cardIds'] as List?) ?? []).map(_jsonInt).nonNulls.toList(),
+    index: _jsonInt(j['index']) ?? 0,
+    score: _jsonInt(j['score']) ?? 0,
     picked: j['picked'] as String?,
     spellInput: (j['spellInput'] as String?) ?? '',
     spellChecked: (j['spellChecked'] as bool?) ?? false,
@@ -225,6 +223,12 @@ class TestHistoryItem {
 }
 
 const Object _sentinel = Object();
+
+int? _jsonInt(Object? value) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  return int.tryParse(value?.toString() ?? '');
+}
 
 const Map<String, String> _simpToTrad = {
   '这': '這',
