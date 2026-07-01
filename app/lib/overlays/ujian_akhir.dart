@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../state/app_controller.dart';
@@ -33,41 +35,31 @@ class _UjianAkhirOverlayState extends State<UjianAkhirOverlay> {
     allIds.shuffle(c.rng);
 
     final soal = <_UjianSoal>[];
-    final used = <int>{};
 
-    // 8 multiple choice
-    for (var i = 0; i < allIds.length && soal.length < 8; i++) {
-      final card = c.cards[allIds[i]]!;
-      if (used.contains(allIds[i])) continue;
-      used.add(allIds[i]);
+    // Keep the exam mixed even for small decks. Reusing the same card across
+    // different skill types is better than turning a two-card exam into MC-only.
+    final countMc = math.min(8, allIds.length);
+    final countSpell = math.min(6, allIds.length);
+    final countTone = math.min(6, allIds.length);
+
+    for (final id in allIds.take(countMc)) {
+      final card = c.cards[id];
+      if (card == null) continue;
+      soal.add(_McSoal(c, id, c.primaryHanzi(card), card.primaryMeaning));
+    }
+
+    for (final id in allIds.take(countSpell)) {
+      final card = c.cards[id];
+      if (card == null) continue;
       soal.add(
-        _McSoal(c, allIds[i], c.primaryHanzi(card), card.primaryMeaning),
+        _SpellSoal(id, card.meaningPreview, c.primaryHanzi(card), card.pinyin),
       );
     }
 
-    // 6 spelling
-    for (var i = 0; i < allIds.length && soal.length < 14; i++) {
-      if (used.contains(allIds[i])) continue;
-      final card = c.cards[allIds[i]]!;
-      used.add(allIds[i]);
-      soal.add(
-        _SpellSoal(
-          allIds[i],
-          card.meaningPreview,
-          c.primaryHanzi(card),
-          card.pinyin,
-        ),
-      );
-    }
-
-    // 6 tone
-    for (var i = 0; i < allIds.length && soal.length < 20; i++) {
-      if (used.contains(allIds[i])) continue;
-      final card = c.cards[allIds[i]]!;
-      used.add(allIds[i]);
-      soal.add(
-        _ToneSoal(allIds[i], c.primaryHanzi(card), card.pinyin, card.tone),
-      );
+    for (final id in allIds.take(countTone)) {
+      final card = c.cards[id];
+      if (card == null) continue;
+      soal.add(_ToneSoal(id, c.primaryHanzi(card), card.pinyin, card.tone));
     }
 
     soal.shuffle(c.rng);
