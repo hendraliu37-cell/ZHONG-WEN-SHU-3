@@ -307,4 +307,50 @@ void main() {
     expect(traditional.primary, 'traditional');
     expect(traditional.usesTraditionalHanzi, isTrue);
   });
+
+  test('restore tolerates malformed scalar and collection containers', () {
+    final c = AppController();
+
+    expect(
+      () => c.restoreForTest({
+        'onboarded': 'true',
+        'zhuyin': 'false',
+        'xp': '42',
+        'streak': 2.9,
+        'lastTestPct': 150,
+        'lastUjianAkhirPct': -7,
+        'lastActiveDate': 123,
+        'dailyMaterialHiddenUntil': 99,
+        'nextId': 'bad',
+        'installedPacks': 'hsk1',
+        'cards': {
+          '3': {'s': '\u559d', 't': '\u559d', 'py': 'he1', 'm': 'minum'},
+        },
+        'srs': 'broken',
+        'decks': 'broken',
+        'chatHistory': 'broken',
+        'translateHistory': {'not': 'a-list'},
+        'testHistory': 'broken',
+        'aiFocusCardIds': 'broken',
+      }),
+      returnsNormally,
+    );
+
+    expect(c.onboarded, isTrue);
+    expect(c.zhuyin, isFalse);
+    expect(c.xp, 42);
+    expect(c.streak, 2);
+    expect(c.lastTestPct, 100);
+    expect(c.lastUjianAkhirPct, 0);
+    expect(c.lastActiveDate, isNull);
+    expect(c.dailyMaterialHiddenUntil, isNull);
+    expect(c.installedPacks, isEmpty);
+    expect(c.cards.keys, [3]);
+    expect(c.srs.keys, [3]);
+    expect(c.decks, isEmpty);
+    expect(c.messages, isEmpty);
+    expect(c.trHistory, isEmpty);
+    expect(c.testHistory, isEmpty);
+    expect(c.aiFocusCardIds, isEmpty);
+  });
 }

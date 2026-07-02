@@ -1173,7 +1173,7 @@ class AppController extends ChangeNotifier {
   }
 
   void _restore(Map<String, dynamic> j) {
-    onboarded = j['onboarded'] as bool? ?? false;
+    onboarded = _boolOf(j['onboarded'], fallback: false);
     themeMode = _oneOf(j['themeMode'], const {
       'system',
       'light',
@@ -1190,58 +1190,61 @@ class AppController extends ChangeNotifier {
             'traditional',
           }, fallback: 'simplified')
         : track;
-    zhuyin = j['zhuyin'] as bool? ?? true;
-    xp = j['xp'] as int? ?? 0;
-    streak = j['streak'] as int? ?? 0;
-    lastTestPct = j['lastTestPct'] as int? ?? 0;
-    lastUjianAkhirPct = j['lastUjianAkhirPct'] as int? ?? 0;
-    lastActiveDate = j['lastActiveDate'] as String?;
-    dailyMaterialHiddenUntil = DateTime.tryParse(
-      (j['dailyMaterialHiddenUntil'] as String?) ?? '',
+    zhuyin = _boolOf(j['zhuyin'], fallback: true);
+    xp = _intOf(j['xp'], fallback: 0, min: 0);
+    streak = _intOf(j['streak'], fallback: 0, min: 0);
+    lastTestPct = _intOf(j['lastTestPct'], fallback: 0, min: 0, max: 100);
+    lastUjianAkhirPct = _intOf(
+      j['lastUjianAkhirPct'],
+      fallback: 0,
+      min: 0,
+      max: 100,
     );
-    _nextId = j['nextId'] as int? ?? 0;
+    lastActiveDate = _stringOf(j['lastActiveDate']);
+    dailyMaterialHiddenUntil = _dateOf(j['dailyMaterialHiddenUntil']);
+    _nextId = _intOf(j['nextId'], fallback: 0, min: 0);
     installedPacks
       ..clear()
       ..addAll(
-        (j['installedPacks'] as List? ?? []).whereType<String>().where(
-          (id) => id.trim().isNotEmpty,
-        ),
+        _listOf(
+          j['installedPacks'],
+        ).whereType<String>().where((id) => id.trim().isNotEmpty),
       );
     cards.clear();
-    (j['cards'] as Map? ?? {}).forEach((k, v) {
+    _mapOf(j['cards']).forEach((k, v) {
       final id = _parseStoredIntKey(k);
       if (id == null || v is! Map) return;
       cards[id] = VocabEntry.fromJson(Map<String, dynamic>.from(v));
     });
     srs.clear();
-    (j['srs'] as Map? ?? {}).forEach((k, v) {
+    _mapOf(j['srs']).forEach((k, v) {
       final id = _parseStoredIntKey(k);
       if (id == null || v is! Map) return;
       srs[id] = SrsState.fromJson(Map<String, dynamic>.from(v));
     });
     decks.clear();
-    for (final rawDeck in j['decks'] as List? ?? []) {
+    for (final rawDeck in _listOf(j['decks'])) {
       if (rawDeck is! Map) continue;
       final deck = Deck.fromJson(Map<String, dynamic>.from(rawDeck));
       if (deck.id.isEmpty) continue;
       deck.cardIds.removeWhere((id) => !cards.containsKey(id));
       decks.add(deck);
     }
-    final restoredMessages = (j['chatHistory'] as List? ?? [])
+    final restoredMessages = _listOf(j['chatHistory'])
         .whereType<Map>()
         .map(_chatMsgFromJsonSafely)
         .nonNulls
         .where((m) => m.text.trim().isNotEmpty)
         .toList();
     messages = _latestChatMessages(restoredMessages);
-    trHistory = (j['translateHistory'] as List? ?? [])
+    trHistory = _listOf(j['translateHistory'])
         .whereType<Map>()
         .map(_translateHistoryFromJsonSafely)
         .nonNulls
         .where((h) => h.source.trim().isNotEmpty && h.translation.isNotEmpty)
         .take(_maxTranslateHistory)
         .toList();
-    testHistory = (j['testHistory'] as List? ?? [])
+    testHistory = _listOf(j['testHistory'])
         .whereType<Map>()
         .map(_testHistoryFromJsonSafely)
         .nonNulls
@@ -1249,7 +1252,7 @@ class AppController extends ChangeNotifier {
         .nonNulls
         .take(_maxTestHistory)
         .toList();
-    aiFocusCardIds = (j['aiFocusCardIds'] as List? ?? [])
+    aiFocusCardIds = _listOf(j['aiFocusCardIds'])
         .map(_jsonInt)
         .nonNulls
         .where((id) => cards.containsKey(id))
@@ -1279,6 +1282,42 @@ class AppController extends ChangeNotifier {
     final text = value?.toString();
     return text != null && allowed.contains(text) ? text : fallback;
   }
+
+  bool _boolOf(Object? value, {required bool fallback}) {
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    if (value is String) {
+      final text = value.trim().toLowerCase();
+      if (text == 'true' || text == '1') return true;
+      if (text == 'false' || text == '0') return false;
+    }
+    return fallback;
+  }
+
+  int _intOf(Object? value, {required int fallback, int? min, int? max}) {
+    var parsed = _jsonInt(value);
+    if (parsed == null) return fallback;
+    if (min != null && parsed < min) parsed = min;
+    if (max != null && parsed > max) parsed = max;
+    return parsed;
+  }
+
+  String? _stringOf(Object? value) {
+    if (value is! String) return null;
+    final text = value.trim();
+    return text.isEmpty ? null : text;
+  }
+
+  DateTime? _dateOf(Object? value) {
+    final text = _stringOf(value);
+    return text == null ? null : DateTime.tryParse(text);
+  }
+
+  Iterable<Object?> _listOf(Object? value) =>
+      value is List ? value : const <Object?>[];
+
+  Map<dynamic, dynamic> _mapOf(Object? value) =>
+      value is Map ? value : const <dynamic, dynamic>{};
 
   List<ChatMsg> _latestChatMessages(List<ChatMsg> items) {
     if (items.length <= _maxChatHistory) return items;
