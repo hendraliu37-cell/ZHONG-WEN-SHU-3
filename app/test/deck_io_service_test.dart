@@ -74,6 +74,23 @@ void main() {
     expect(cards.single.meaning, 'belajar');
   });
 
+  test('imports Mandarin-language headers without creating header cards', () {
+    final service = DeckIoService();
+    final rows = service.readDelimitedForTest(
+      '汉字,拼音,释义,繁體,声调\n吃,chī,makan,吃,1\n学习,xuéxí,belajar,學習,2',
+    );
+    final cards = service.rowsToCardsForTest(rows);
+
+    expect(cards, hasLength(2));
+    expect(cards.first.simplified, '吃');
+    expect(cards.first.pinyin, 'chī');
+    expect(cards.first.meaning, 'makan');
+    expect(cards.first.tone, 1);
+    expect(cards.last.simplified, '学习');
+    expect(cards.last.traditional, '學習');
+    expect(cards.last.meaning, 'belajar');
+  });
+
   test('imports decimal numeric levels from spreadsheets', () {
     final service = DeckIoService();
     final rows = service.readDelimitedForTest(

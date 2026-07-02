@@ -329,11 +329,58 @@ class DeckIoService {
     });
   }
 
-  String _normalizeHeader(String value) => value
-      .toLowerCase()
-      .trim()
-      .replaceAll(RegExp(r'\s+'), '_')
-      .replaceAll(RegExp(r'[^a-z0-9_]+'), '');
+  String _normalizeHeader(String value) {
+    final compact = value.toLowerCase().trim().replaceAll(RegExp(r'\s+'), '');
+    const localized = {
+      '汉字': 'hanzi',
+      '漢字': 'hanzi',
+      '中文': 'chinese',
+      '简体': 'simplified',
+      '簡體': 'simplified',
+      '简体字': 'simplified',
+      '簡體字': 'simplified',
+      '简体中文': 'simplified_chinese',
+      '簡體中文': 'simplified_chinese',
+      '繁体': 'traditional',
+      '繁體': 'traditional',
+      '繁体字': 'traditional',
+      '繁體字': 'traditional',
+      '繁体中文': 'traditional_chinese',
+      '繁體中文': 'traditional_chinese',
+      '拼音': 'pinyin',
+      '注音': 'zhuyin',
+      '意思': 'meaning',
+      '释义': 'meaning',
+      '釋義': 'meaning',
+      '含义': 'meaning',
+      '含義': 'meaning',
+      '翻译': 'translation',
+      '翻譯': 'translation',
+      '英文': 'english',
+      '印尼语': 'indonesian',
+      '印尼語': 'indonesian',
+      '印度尼西亚语': 'indonesian',
+      '印度尼西亞語': 'indonesian',
+      '例句': 'example_s',
+      '简体例句': 'example_s',
+      '簡體例句': 'example_s',
+      '繁体例句': 'example_t',
+      '繁體例句': 'example_t',
+      '例句翻译': 'example_id',
+      '例句翻譯': 'example_id',
+      '声调': 'tone',
+      '聲調': 'tone',
+      '等级': 'hsk',
+      '等級': 'hsk',
+    };
+    final mapped = localized[compact];
+    if (mapped != null) return mapped;
+    return value
+        .toLowerCase()
+        .trim()
+        .replaceAll(RegExp(r'\s+'), '_')
+        .replaceAll(RegExp(r'[^a-z0-9_]+'), '');
+  }
 
   bool _isKnownHeader(String value) => const {
     'simplified',
@@ -363,9 +410,20 @@ class DeckIoService {
     'pinyin',
     'py',
     'reading',
+    'zhuyin',
+    'zy',
+    'bopomofo',
     'meaning',
     'question',
     'answer',
+    'example_s',
+    'example_t',
+    'example_id',
+    'tone',
+    'hsk',
+    'hsk_level',
+    'tocfl',
+    'tocfl_level',
   }.contains(value);
 
   bool _hasCjk(String value) => RegExp(r'[一-鿿㐀-䶿]').hasMatch(value);
