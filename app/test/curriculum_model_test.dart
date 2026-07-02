@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zhongwen_shu/models/curriculum.dart';
+import 'package:zhongwen_shu/services/curriculum_service.dart';
 
 void main() {
   test('DailyMaterial parser keeps valid rows from loose server payloads', () {
@@ -37,5 +38,32 @@ void main() {
     expect(material.sentences, isEmpty);
     expect(material.exercise, '');
     expect(material.summary, 'Kosong');
+  });
+
+  test('curriculum response parser picks the first usable material', () {
+    final material = parseCurriculumResponse({
+      'cached': true,
+      'materials': [
+        'bad-row',
+        {'topic': '', 'vocab': [], 'sentences': [], 'exercise': ''},
+        {
+          'topic': 'Makan',
+          'vocab': [
+            {'hanzi': '\u5403', 'pinyin': 'chi1', 'meaning': 'makan'},
+          ],
+          'sentences': ['\u6211\u5403\u996d\u3002'],
+          'exercise': 'Buat satu kalimat.',
+        },
+      ],
+    });
+
+    expect(material, isNotNull);
+    expect(material!.topic, 'Makan');
+    expect(material.vocab.single.hanzi, '\u5403');
+  });
+
+  test('curriculum response parser tolerates missing material list', () {
+    expect(parseCurriculumResponse({'materials': 'bad'}), isNull);
+    expect(parseCurriculumResponse(null), isNull);
   });
 }

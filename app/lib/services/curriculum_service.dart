@@ -18,22 +18,33 @@ class CurriculumService {
   }) async {
     if (!enabled) return null;
     try {
-      final res = await _sb.functions.invoke('curriculum-gen', body: {
-        'track': track,
-        'level': level,
-        if (force) 'force': true,
-      });
+      final res = await _sb.functions.invoke(
+        'curriculum-gen',
+        body: {'track': track, 'level': level, if (force) 'force': true},
+      );
       final data = res.data;
       if (data == null) return null;
 
       // Edge function returns { cached, materials: [...] }
-      final materials = (data is Map) ? data['materials'] : null;
-      if (materials is List && materials.isNotEmpty) {
-        return DailyMaterial.fromJson(materials[0] as Map<String, dynamic>);
-      }
-      return null;
+      return parseCurriculumResponse(data);
     } catch (_) {
       return null;
     }
   }
+}
+
+DailyMaterial? parseCurriculumResponse(Object? data) {
+  final materials = data is Map ? data['materials'] : null;
+  if (materials is! List) return null;
+  for (final item in materials) {
+    if (item is! Map) continue;
+    final material = DailyMaterial.fromJson(Map<String, dynamic>.from(item));
+    if (material.topic.isNotEmpty ||
+        material.vocab.isNotEmpty ||
+        material.sentences.isNotEmpty ||
+        material.exercise.isNotEmpty) {
+      return material;
+    }
+  }
+  return null;
 }
