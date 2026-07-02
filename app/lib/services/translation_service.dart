@@ -251,9 +251,7 @@ class TranslationService {
         // Error response dari edge function
         if (data['error'] is String) {
           lastError = 'Server: ${data['error']}';
-          return null;
-        }
-        if (data['translation'] is String) {
+        } else if (data['translation'] is String) {
           final trans = (data['translation'] as String).trim();
           if (trans.isNotEmpty) {
             final tokens = (data['tokens'] as List? ?? []).map((e) {

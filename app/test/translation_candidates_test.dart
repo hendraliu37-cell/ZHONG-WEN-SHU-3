@@ -24,6 +24,21 @@ void main() {
     },
   );
 
+  test('AI translate accepts direct LLM JSON embedded in prose', () async {
+    final service = TranslationService(
+      llm: _FakeLlmService(
+        'Berikut hasilnya:\n{"translation":"makan","tokens":[{"hanzi":"吃","meaning":"makan"}]}\nSelesai.',
+      ),
+    );
+
+    final result = await service.translate('吃', from: 'zh', to: 'id');
+
+    expect(result, isNotNull);
+    expect(result!.translation, 'makan');
+    expect(result.tokens.single.hanzi, '吃');
+    expect(service.lastError, isNull);
+  });
+
   test(
     'Indonesian halo prefers the common greeting before phone hello',
     () async {

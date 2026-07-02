@@ -151,15 +151,15 @@ class LlmService {
               return reply.trim();
             }
           } catch (_) {
-            lastError = 'Bad JSON: ${resp.body.substring(0, 100)}';
+            lastError = 'Bad JSON: ${_snippet(resp.body, 100)}';
           }
         } else if (resp.statusCode == 401 || resp.statusCode == 403) {
           lastError =
-              'Auth(${resp.statusCode}) for $model: ${resp.body.substring(0, 100)}';
+              'Auth(${resp.statusCode}) for $model: ${_snippet(resp.body, 100)}';
           break;
         } else {
           lastError =
-              'HTTP ${resp.statusCode} for $model: ${resp.body.substring(0, 80)}';
+              'HTTP ${resp.statusCode} for $model: ${_snippet(resp.body, 80)}';
         }
       } catch (e) {
         lastError = 'Net: $e'.substring(0, 100);
@@ -169,6 +169,9 @@ class LlmService {
 
     return null;
   }
+
+  String _snippet(String text, int max) =>
+      text.length <= max ? text : text.substring(0, max);
 
   String? _openModelText(dynamic data) {
     final content = data is Map ? data['content'] : null;
