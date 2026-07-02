@@ -204,6 +204,35 @@ void main() {
     expect(cards.last.meaning, 'halo');
   });
 
+  test('headerless notes column is not mistaken for traditional Hanzi', () {
+    final service = DeckIoService();
+    final rows = service.readDelimitedForTest(
+      '\u5403\tchi1\tmakan\tcommon verb\n'
+      '\u5b66\u4e60\txue2 xi2\tbelajar\t\u5b78\u7fd2',
+    );
+    final cards = service.rowsToCardsForTest(rows);
+
+    expect(cards, hasLength(2));
+    expect(cards.first.simplified, '\u5403');
+    expect(cards.first.traditional, '\u5403');
+    expect(cards.first.meaning, 'makan');
+    expect(cards.last.simplified, '\u5b66\u4e60');
+    expect(cards.last.traditional, '\u5b78\u7fd2');
+  });
+
+  test('imports common Anki extra field as example notes', () {
+    final service = DeckIoService();
+    final rows = service.readDelimitedForTest(
+      'Expression,Reading,Meaning,Extra\n'
+      '\u5403,chi1,makan,kata kerja umum',
+    );
+    final cards = service.rowsToCardsForTest(rows);
+
+    expect(cards, hasLength(1));
+    expect(cards.single.simplified, '\u5403');
+    expect(cards.single.exampleId, 'kata kerja umum');
+  });
+
   test('roundtrips exported Excel rows back into cards', () {
     final service = DeckIoService();
     final bytes = service.buildExcelForTest([

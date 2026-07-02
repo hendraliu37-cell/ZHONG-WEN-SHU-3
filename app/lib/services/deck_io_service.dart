@@ -321,7 +321,16 @@ class DeckIoService {
       'm': VocabEntry.splitMeanings(meaning).join(' / '),
       'exs': get(row, ['example_s', 'examples', 'example']),
       'ext': get(row, ['example_t']),
-      'exi': get(row, ['example_id', 'example_translation', 'notes']),
+      'exi': get(row, [
+        'example_id',
+        'example_translation',
+        'notes',
+        'note',
+        'extra',
+        'extras',
+        'comment',
+        'comments',
+      ]),
       'tone': _parseIntish(get(row, ['tone'])) ?? 1,
       'hsk': _parseIntish(get(row, ['hsk', 'hsk_level'])),
       'tocfl': _parseIntish(get(row, ['tocfl', 'tocfl_level'])),
@@ -334,14 +343,14 @@ class DeckIoService {
     var front = cells[0];
     var back = cells[1];
     var pinyin = cells.length > 2 ? cells[2] : '';
-    var traditional = cells.length > 3 && cells[3].isNotEmpty ? cells[3] : '';
+    var traditional = cells.length > 3 && _hasCjk(cells[3]) ? cells[3] : '';
     if (_hasCjk(front) &&
         cells.length > 2 &&
         _looksLikePinyin(cells[1]) &&
         cells[2].isNotEmpty) {
       pinyin = cells[1];
       back = cells[2];
-      traditional = cells.length > 3 && cells[3].isNotEmpty ? cells[3] : '';
+      traditional = cells.length > 3 && _hasCjk(cells[3]) ? cells[3] : '';
     }
     if (!_hasCjk(front) && _hasCjk(back)) {
       final tmp = front;
@@ -460,6 +469,12 @@ class DeckIoService {
     'example_s',
     'example_t',
     'example_id',
+    'note',
+    'notes',
+    'extra',
+    'extras',
+    'comment',
+    'comments',
     'tone',
     'hsk',
     'hsk_level',
