@@ -53,21 +53,19 @@ class VocabEntry {
   }
 
   factory VocabEntry.fromJson(Map<String, dynamic> j) => VocabEntry(
-    simplified: (j['s'] ?? j['simplified'] ?? '') as String,
+    simplified: _string(j['s'] ?? j['simplified']),
     traditional: normalizeModernTraditional(
-      (j['t'] ?? j['traditional'] ?? j['s'] ?? '') as String,
+      _string(j['t'] ?? j['traditional'] ?? j['s'] ?? j['simplified']),
     ),
-    pinyin: (j['py'] ?? j['pinyin'] ?? '') as String,
-    zhuyin: (j['zy'] ?? j['zhuyin'] ?? '') as String,
-    meaning: (j['m'] ?? j['meaning'] ?? '') as String,
-    exampleS: (j['exs'] ?? j['example_s'] ?? '') as String,
-    exampleT: normalizeModernTraditional(
-      (j['ext'] ?? j['example_t'] ?? '') as String,
-    ),
-    exampleId: (j['exi'] ?? j['example_id'] ?? '') as String,
-    tone: (j['tone'] ?? 1) as int,
-    hskLevel: j['hsk'] as int?,
-    tocflLevel: j['tocfl'] as int?,
+    pinyin: _string(j['py'] ?? j['pinyin']),
+    zhuyin: _string(j['zy'] ?? j['zhuyin']),
+    meaning: _string(j['m'] ?? j['meaning']),
+    exampleS: _string(j['exs'] ?? j['example_s']),
+    exampleT: normalizeModernTraditional(_string(j['ext'] ?? j['example_t'])),
+    exampleId: _string(j['exi'] ?? j['example_id']),
+    tone: _intish(j['tone']) ?? 1,
+    hskLevel: _intish(j['hsk']),
+    tocflLevel: _intish(j['tocfl']),
   );
 
   Map<String, dynamic> toJson() => {
@@ -100,6 +98,17 @@ class VocabEntry {
       .trim()
       .replaceAll(RegExp(r'[^a-z0-9\s]'), ' ')
       .replaceAll(RegExp(r'\s+'), ' ');
+
+  static String _string(Object? value) => value?.toString() ?? '';
+
+  static int? _intish(Object? value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    final text = value.toString().trim();
+    if (text.isEmpty) return null;
+    return int.tryParse(text) ?? double.tryParse(text)?.toInt();
+  }
 
   static String normalizeModernTraditional(String value) {
     const replacements = {

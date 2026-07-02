@@ -42,4 +42,20 @@ void main() {
     expect(entry.traditional, '好吃');
     expect(entry.exampleT, '他為了朋友在城裡過著忙碌生活。');
   });
+
+  test('loads legacy numeric strings from stored or imported cards', () {
+    final entry = VocabEntry.fromJson({
+      's': '\u770b',
+      't': '\u770b',
+      'py': 'kan4',
+      'm': 'lihat',
+      'tone': '4.0',
+      'hsk': '2',
+      'tocfl': 3.0,
+    });
+
+    expect(entry.tone, 4);
+    expect(entry.hskLevel, 2);
+    expect(entry.tocflLevel, 3);
+  });
 }
