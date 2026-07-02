@@ -603,14 +603,32 @@ class PackInfo {
     required this.levelTag,
     required this.asset,
   });
-  factory PackInfo.fromJson(Map<String, dynamic> j) => PackInfo(
-    id: j['id'] as String,
-    name: j['name'] as String,
-    meta: j['meta'] as String,
-    standard: j['standard'] as String,
-    levelTag: (j['levelTag'] ?? '') as String,
-    asset: j['asset'] as String,
-  );
+  factory PackInfo.fromJson(Map<String, dynamic> j) {
+    final id = _stringValue(j['id']);
+    final asset = _stringValue(j['asset']);
+    return PackInfo(
+      id: id,
+      name: _stringValue(j['name'], fallback: id),
+      meta: _stringValue(j['meta']),
+      standard: _stringValue(j['standard'], fallback: 'mixed'),
+      levelTag: _stringValue(j['levelTag']),
+      asset: asset,
+    );
+  }
+}
+
+List<PackInfo> parsePackManifest(Object? rawItems) {
+  if (rawItems is! List) return const [];
+  return rawItems
+      .whereType<Map>()
+      .map((e) => PackInfo.fromJson(Map<String, dynamic>.from(e)))
+      .where((p) => p.id.isNotEmpty && p.asset.isNotEmpty)
+      .toList();
+}
+
+String _stringValue(Object? value, {String fallback = ''}) {
+  final text = value?.toString().trim() ?? '';
+  return text.isEmpty ? fallback : text;
 }
 
 /// Mengembalikan salinan [history] di mana pesan user TERAKHIR diperkaya blok
@@ -1376,7 +1394,7 @@ class AppController extends ChangeNotifier {
       final list = jsonDecode(raw) as List;
       packCatalog
         ..clear()
-        ..addAll(list.map((e) => PackInfo.fromJson(e as Map<String, dynamic>)));
+        ..addAll(parsePackManifest(list));
     } catch (e) {
       if (kDebugMode) debugPrint('[packs] manifest load failed: $e');
     }
@@ -2772,12 +2790,20 @@ class AppController extends ChangeNotifier {
 
   bool isInstalled(String packId) => installedPacks.contains(packId);
 
+  List<Map<String, dynamic>> _packCards(Object? rawCards) {
+    if (rawCards is! List) return const [];
+    return rawCards
+        .whereType<Map>()
+        .map((e) => Map<String, dynamic>.from(e))
+        .toList();
+  }
+
   Future<void> installPack(PackInfo pack) async {
     if (installedPacks.contains(pack.id)) return;
     try {
       final raw = await rootBundle.loadString(pack.asset);
       final data = jsonDecode(raw) as Map<String, dynamic>;
-      final list = (data['cards'] as List).cast<Map<String, dynamic>>();
+      final list = _packCards(data['cards']);
       final deck = Deck(
         id: 'pack_${pack.id}',
         displayIdx: (decks.length + 1).toString().padLeft(2, '0'),
@@ -2862,7 +2888,7 @@ class AppController extends ChangeNotifier {
         final pack = matches.first;
         final raw = await rootBundle.loadString(pack.asset);
         final data = jsonDecode(raw) as Map<String, dynamic>;
-        final list = (data['cards'] as List).cast<Map<String, dynamic>>();
+        final list = _packCards(data['cards']);
         final oldIds = List<int>.of(deck.cardIds);
         final oldIdsBySignature = _cardIdsBySignature(oldIds);
         final newIds = <int>[];
