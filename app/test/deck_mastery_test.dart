@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -403,6 +405,55 @@ void main() {
       expect(c.smartPracticeBase(), containsAll([1, 2]));
     },
   );
+
+  test('database update remaps pack test history and AI focus cards', () async {
+    final raw = await rootBundle.loadString('assets/packs/hsk1.json');
+    final data = jsonDecode(raw) as Map<String, dynamic>;
+    final packCard = VocabEntry.fromJson(
+      Map<String, dynamic>.from((data['cards'] as List).first as Map),
+    );
+    final c = AppController();
+    c.cards[1] = packCard;
+    c.srs[1] = SrsState(stability: 20, reps: 4, isNew: false);
+    c.decks.add(
+      Deck(
+        id: 'pack_hsk1',
+        displayIdx: '01',
+        name: 'Paket HSK 1 lama',
+        standard: 'hsk',
+        levelTag: 'HSK 1',
+        isPack: true,
+        cardIds: [1],
+      ),
+    );
+    c.installedPacks.add('hsk1');
+    c.aiFocusCardIds = [1];
+    c.testHistory = [
+      TestHistoryItem(
+        id: 'history',
+        mode: 'mc',
+        title: 'Tes HSK 1',
+        deckId: 'pack_hsk1',
+        direction: 'zh2id',
+        cardIds: const [1],
+        index: 0,
+        score: 0,
+        startedAt: DateTime(2026, 7),
+        updatedAt: DateTime(2026, 7, 1, 0, 1),
+      ),
+    ];
+
+    await c.syncDatabaseUpdate();
+
+    final updatedDeck = c.decks.singleWhere((d) => d.id == 'pack_hsk1');
+    final newId = updatedDeck.cardIds.first;
+    expect(newId, isNot(1));
+    expect(c.cards.containsKey(1), isFalse);
+    expect(c.srs[newId]?.reps, 4);
+    expect(c.aiFocusCardIds, [newId]);
+    expect(c.testHistory.single.cardIds, [newId]);
+    expect(c.testHistory.single.completed, isFalse);
+  });
 
   test('back handler closes leaderboard and active group room', () {
     final c = AppController();

@@ -2621,15 +2621,12 @@ class AppController extends ChangeNotifier {
 
   SrsState _copySrs(SrsState s) => SrsState.fromJson(s.toJson());
 
-  Map<String, List<SrsState>> _srsByCardSignature(Iterable<int> ids) {
-    final out = <String, List<SrsState>>{};
+  Map<String, List<int>> _cardIdsBySignature(Iterable<int> ids) {
+    final out = <String, List<int>>{};
     for (final id in ids) {
       final v = cards[id];
-      final state = srs[id];
-      if (v == null || state == null) continue;
-      out
-          .putIfAbsent(_cardSignature(v), () => <SrsState>[])
-          .add(_copySrs(state));
+      if (v == null) continue;
+      out.putIfAbsent(_cardSignature(v), () => <int>[]).add(id);
     }
     return out;
   }
@@ -2666,6 +2663,7 @@ class AppController extends ChangeNotifier {
       await _loadPackCatalog();
       var updatedDecks = 0;
       var updatedCards = 0;
+      final idRemap = <int, int>{};
       for (var i = 0; i < decks.length; i++) {
         final deck = decks[i];
         if (!deck.isPack || !deck.id.startsWith('pack_')) continue;
@@ -2677,16 +2675,21 @@ class AppController extends ChangeNotifier {
         final data = jsonDecode(raw) as Map<String, dynamic>;
         final list = (data['cards'] as List).cast<Map<String, dynamic>>();
         final oldIds = List<int>.of(deck.cardIds);
-        final oldSrs = _srsByCardSignature(oldIds);
+        final oldIdsBySignature = _cardIdsBySignature(oldIds);
         final newIds = <int>[];
         for (final cj in list) {
           final vocab = VocabEntry.fromJson(cj);
           final sig = _cardSignature(vocab);
-          final preserved = oldSrs[sig];
-          final state = preserved != null && preserved.isNotEmpty
-              ? preserved.removeAt(0)
-              : SrsState();
-          newIds.add(_addCardWithSrs(vocab, state));
+          final matchingOldIds = oldIdsBySignature[sig];
+          final oldId = matchingOldIds != null && matchingOldIds.isNotEmpty
+              ? matchingOldIds.removeAt(0)
+              : null;
+          final state = oldId == null
+              ? SrsState()
+              : _copySrs(srs[oldId] ?? SrsState());
+          final newId = _addCardWithSrs(vocab, state);
+          if (oldId != null) idRemap[oldId] = newId;
+          newIds.add(newId);
         }
         _removeCardsIfUnreferenced(oldIds, exceptDeckId: deck.id);
         decks[i] = Deck(
@@ -2701,6 +2704,7 @@ class AppController extends ChangeNotifier {
         updatedDecks++;
         updatedCards += newIds.length;
       }
+      _remapLearningReferences(idRemap);
       await _loadTranslationDict();
       _clampQCount();
       databaseSyncMsg = updatedDecks == 0
@@ -2712,6 +2716,27 @@ class AppController extends ChangeNotifier {
     }
     databaseSyncBusy = false;
     notifyListeners();
+  }
+
+  void _remapLearningReferences(Map<int, int> idRemap) {
+    if (idRemap.isEmpty) return;
+    int mapped(int id) => idRemap[id] ?? id;
+    final seenFocus = <int>{};
+    aiFocusCardIds = [
+      for (final id in aiFocusCardIds.map(mapped))
+        if (cards.containsKey(id) && seenFocus.add(id)) id,
+    ].take(_maxAiFocusCards).toList();
+
+    testHistory = testHistory
+        .map((item) {
+          final remappedIds = item.cardIds.map(mapped).toList();
+          return _sanitizeTestHistoryItem(item.copyWith(cardIds: remappedIds));
+        })
+        .nonNulls
+        .take(_maxTestHistory)
+        .toList();
+    baseCards = baseCards.map(mapped).where(cards.containsKey).toList();
+    sessionCards = sessionCards.map(mapped).where(cards.containsKey).toList();
   }
 
   // ===========================================================================
