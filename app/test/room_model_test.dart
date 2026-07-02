@@ -86,6 +86,26 @@ void main() {
       expect(g.senderId, isNull);
       expect(g.isMine('u-1'), isFalse);
     });
+
+    test('normalizes loose realtime row field types', () {
+      final m = RoomMessage.fromJson({
+        'id': '44.0',
+        'sender_id': '  ',
+        'author_name': 123,
+        'author_handle': null,
+        'is_guru': 'true',
+        'body': 456,
+        'created_at': 'bad-date',
+      });
+
+      expect(m.id, 44);
+      expect(m.senderId, isNull);
+      expect(m.authorName, '123');
+      expect(m.authorHandle, '');
+      expect(m.isGuru, isTrue);
+      expect(m.body, '456');
+      expect(m.createdAt, isA<DateTime>());
+    });
   });
 
   group('room failure copy', () {

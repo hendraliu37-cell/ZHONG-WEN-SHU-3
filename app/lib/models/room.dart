@@ -61,19 +61,41 @@ class RoomMessage {
   });
 
   factory RoomMessage.fromJson(Map j) => RoomMessage(
-    id: (j['id'] is num) ? (j['id'] as num).toInt() : 0,
-    senderId: j['sender_id']?.toString(),
-    authorName: (j['author_name'] ?? '').toString(),
-    authorHandle: (j['author_handle'] ?? '').toString(),
-    isGuru: j['is_guru'] == true,
-    body: (j['body'] ?? '').toString(),
+    id: _intish(j['id']) ?? 0,
+    senderId: _nullableString(j['sender_id']),
+    authorName: _stringish(j['author_name']),
+    authorHandle: _stringish(j['author_handle']),
+    isGuru: _boolish(j['is_guru']),
+    body: _stringish(j['body']),
     createdAt:
-        DateTime.tryParse((j['created_at'] ?? '').toString())?.toLocal() ??
+        DateTime.tryParse(_stringish(j['created_at']))?.toLocal() ??
         DateTime.now(),
   );
 
   /// True when this message was sent by [uid] (the local user).
   bool isMine(String? uid) => uid != null && senderId == uid;
+}
+
+String _stringish(Object? value) => value?.toString().trim() ?? '';
+
+String? _nullableString(Object? value) {
+  final text = _stringish(value);
+  return text.isEmpty ? null : text;
+}
+
+int? _intish(Object? value) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  final text = _stringish(value);
+  if (text.isEmpty) return null;
+  return int.tryParse(text) ?? double.tryParse(text)?.toInt();
+}
+
+bool _boolish(Object? value) {
+  if (value is bool) return value;
+  if (value is num) return value != 0;
+  final text = _stringish(value).toLowerCase();
+  return text == 'true' || text == '1' || text == 'yes';
 }
 
 /// True if [text] calls the tutor with an `@Guru` mention (case-insensitive),
