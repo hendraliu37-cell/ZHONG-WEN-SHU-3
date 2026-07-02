@@ -1510,6 +1510,9 @@ class AppController extends ChangeNotifier {
 
   void closeSub() {
     _speedTimer?.cancel();
+    if (hasActiveTestInProgress) {
+      abandonActiveTestToHistory();
+    }
     if (_deckCtx != null && sub != 'deck') {
       sub = 'deck';
       flipped = false;

@@ -151,6 +151,33 @@ void main() {
     expect(c.sessionCards.length, 6);
   });
 
+  test('controller back saves unfinished active test history', () {
+    final c = AppController();
+    final ids = <int>[];
+    for (var i = 0; i < 6; i++) {
+      c.cards[i] = _vocab(i);
+      ids.add(i);
+    }
+
+    c.goTestPick(base: ids);
+    c.qCount = 6;
+    c.startMc();
+    final first = c.currentQuiz!;
+    c.pickQuiz(first.correct);
+    c.nextQuiz();
+
+    expect(c.handleBack(), isTrue);
+    final saved = c.testHistory.first;
+    expect(saved.completed, isFalse);
+    expect(saved.index, 1);
+    expect(saved.score, 1);
+
+    c.resumeTestHistory(saved);
+    expect(c.sub, 'quiz');
+    expect(c.quizIdx, 1);
+    expect(c.quizScore, 1);
+  });
+
   test('completed test history cannot be resumed into an invalid session', () {
     final c = AppController();
     for (var i = 0; i < 2; i++) {
