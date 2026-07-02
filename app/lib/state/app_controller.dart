@@ -846,12 +846,8 @@ class AppController extends ChangeNotifier {
     if (rows.isEmpty) return;
     final byId = {for (final h in testHistory) h.id: h};
     for (final row in rows) {
-      var incoming = TestHistoryItem.fromJson(row);
-      final validCardIds = incoming.cardIds
-          .where((id) => cards.containsKey(id))
-          .toList();
-      if (incoming.id.isEmpty || validCardIds.isEmpty) continue;
-      incoming = incoming.copyWith(cardIds: validCardIds);
+      final incoming = _sanitizeTestHistoryItem(TestHistoryItem.fromJson(row));
+      if (incoming == null) continue;
       final old = byId[incoming.id];
       if (old == null || incoming.updatedAt.isAfter(old.updatedAt)) {
         byId[incoming.id] = incoming;
@@ -861,6 +857,21 @@ class AppController extends ChangeNotifier {
       ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
     testHistory = testHistory.take(_maxTestHistory).toList();
     await _save();
+  }
+
+  TestHistoryItem? _sanitizeTestHistoryItem(TestHistoryItem item) {
+    final validCardIds = item.cardIds
+        .where((id) => cards.containsKey(id))
+        .toList();
+    if (item.id.isEmpty || validCardIds.isEmpty) return null;
+    final safeIndex = item.index.clamp(0, validCardIds.length).toInt();
+    final safeScore = item.score.clamp(0, validCardIds.length).toInt();
+    return item.copyWith(
+      cardIds: validCardIds,
+      index: safeIndex,
+      score: safeScore,
+      completed: item.completed || safeIndex >= validCardIds.length,
+    );
   }
 
   /// The signed-in user's rank on the global leaderboard (0 = not ranked yet).
@@ -1094,7 +1105,8 @@ class AppController extends ChangeNotifier {
     testHistory = (j['testHistory'] as List? ?? [])
         .whereType<Map>()
         .map((e) => TestHistoryItem.fromJson(Map<String, dynamic>.from(e)))
-        .where((h) => h.id.isNotEmpty && h.cardIds.isNotEmpty)
+        .map(_sanitizeTestHistoryItem)
+        .nonNulls
         .take(_maxTestHistory)
         .toList();
     aiFocusCardIds = (j['aiFocusCardIds'] as List? ?? [])

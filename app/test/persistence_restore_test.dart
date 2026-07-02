@@ -71,7 +71,7 @@ void main() {
           'mode': 'mc',
           'title': 'Tes lama',
           'direction': 'zh2id',
-          'cardIds': ['1', 2.0, 'bad-id'],
+          'cardIds': ['1', 2.0, 99, 'bad-id'],
           'index': '1',
           'score': '1',
           'startedAt': '2026-07-01T00:00:00.000',
@@ -84,6 +84,48 @@ void main() {
     expect(c.testHistory.single.cardIds, [1, 2]);
     expect(c.testHistory.single.index, 1);
     expect(c.testHistory.single.score, 1);
+  });
+
+  test('restore prunes stale test history card ids and stale resumes', () {
+    final c = AppController();
+
+    c.restoreForTest({
+      'cards': {
+        '1': {'s': 'åƒ', 't': 'åƒ', 'py': 'chi1', 'm': 'makan'},
+      },
+      'testHistory': [
+        {
+          'id': 'gone',
+          'mode': 'mc',
+          'title': 'Semua kartu hilang',
+          'direction': 'zh2id',
+          'cardIds': [99],
+          'index': 0,
+          'score': 0,
+          'startedAt': '2026-07-01T00:00:00.000',
+          'updatedAt': '2026-07-01T00:01:00.000',
+        },
+        {
+          'id': 'stale',
+          'mode': 'mc',
+          'title': 'Sebagian kartu hilang',
+          'direction': 'zh2id',
+          'cardIds': [1, 99],
+          'index': 2,
+          'score': 5,
+          'completed': false,
+          'startedAt': '2026-07-01T00:00:00.000',
+          'updatedAt': '2026-07-01T00:02:00.000',
+        },
+      ],
+    });
+
+    expect(c.testHistory, hasLength(1));
+    expect(c.testHistory.single.id, 'stale');
+    expect(c.testHistory.single.cardIds, [1]);
+    expect(c.testHistory.single.index, 1);
+    expect(c.testHistory.single.score, 1);
+    expect(c.testHistory.single.completed, isTrue);
   });
 
   test('restore respects daily material snooze windows', () {
