@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../config.dart';
@@ -24,14 +25,7 @@ class RoomService {
           .from('rooms')
           .select('id, code, name, level_tag, owner, room_members(count)')
           .order('created_at', ascending: false);
-      return (rows as List).whereType<Map>().map((j) {
-        var count = 0;
-        final rm = j['room_members'];
-        if (rm is List && rm.isNotEmpty && rm.first is Map) {
-          count = ((rm.first as Map)['count'] as num?)?.toInt() ?? 0;
-        }
-        return Room.fromJson(j, memberCount: count);
-      }).toList();
+      return _parseRoomRows(rows);
     } catch (_) {
       return [];
     }
@@ -45,8 +39,7 @@ class RoomService {
         'create_room',
         params: {'p_name': name, 'p_level': level},
       );
-      final map = (row is List ? row.first : row) as Map;
-      return Room.fromJson(map, memberCount: 1);
+      return _parseRoomRpcRow(row, memberCount: 1);
     } catch (_) {
       return null;
     }
@@ -57,8 +50,7 @@ class RoomService {
     if (!enabled || _uid == null) return null;
     try {
       final row = await _sb.rpc('join_room', params: {'p_code': code});
-      final map = (row is List ? row.first : row) as Map;
-      return Room.fromJson(map);
+      return _parseRoomRpcRow(row);
     } catch (_) {
       return null;
     }
@@ -98,11 +90,7 @@ class RoomService {
           .eq('room_id', roomId)
           .order('created_at', ascending: false)
           .limit(limit);
-      final list = (rows as List)
-          .whereType<Map>()
-          .map(RoomMessage.fromJson)
-          .toList();
-      return list.reversed.toList();
+      return _parseRoomHistoryRows(rows);
     } catch (_) {
       return [];
     }
@@ -142,11 +130,7 @@ class RoomService {
         body: {'room_id': roomId, 'track': track},
       );
       final data = res.data;
-      if (data is Map && data['ok'] == true) return null;
-      if (data is Map && data['error'] is String) {
-        return data['error'] as String;
-      }
-      return 'failed';
+      return _parseGuruCallError(data);
     } catch (_) {
       return 'failed';
     }
@@ -208,3 +192,65 @@ class RoomService {
     }
   }
 }
+
+List<Room> _parseRoomRows(Object? rows) {
+  if (rows is! List) return const [];
+  return rows.whereType<Map>().map((j) {
+    return Room.fromJson(j, memberCount: _parseMemberCount(j['room_members']));
+  }).toList();
+}
+
+Room? _parseRoomRpcRow(Object? row, {int memberCount = 0}) {
+  final payload = row is List ? (row.isEmpty ? null : row.first) : row;
+  if (payload is! Map) return null;
+  return Room.fromJson(payload, memberCount: memberCount);
+}
+
+List<RoomMessage> _parseRoomHistoryRows(Object? rows) {
+  if (rows is! List) return const [];
+  final list = rows.whereType<Map>().map(RoomMessage.fromJson).toList();
+  return list.reversed.toList();
+}
+
+String? _parseGuruCallError(Object? data) {
+  if (data is Map) {
+    if (_boolish(data['ok'])) return null;
+    final error = data['error']?.toString().trim();
+    if (error != null && error.isNotEmpty) return error;
+  }
+  return 'failed';
+}
+
+int _parseMemberCount(Object? value) {
+  if (value is num) return value.toInt().clamp(0, 1 << 31);
+  if (value is String) {
+    final count = int.tryParse(value) ?? double.tryParse(value)?.toInt();
+    return count == null ? 0 : count.clamp(0, 1 << 31);
+  }
+  if (value is List && value.isNotEmpty && value.first is Map) {
+    return _parseMemberCount((value.first as Map)['count']);
+  }
+  if (value is Map) return _parseMemberCount(value['count']);
+  return 0;
+}
+
+bool _boolish(Object? value) {
+  if (value is bool) return value;
+  if (value is num) return value != 0;
+  final text = value?.toString().trim().toLowerCase() ?? '';
+  return text == 'true' || text == '1' || text == 'yes';
+}
+
+@visibleForTesting
+List<Room> parseRoomRowsForTest(Object? rows) => _parseRoomRows(rows);
+
+@visibleForTesting
+Room? parseRoomRpcRowForTest(Object? row, {int memberCount = 0}) =>
+    _parseRoomRpcRow(row, memberCount: memberCount);
+
+@visibleForTesting
+List<RoomMessage> parseRoomHistoryRowsForTest(Object? rows) =>
+    _parseRoomHistoryRows(rows);
+
+@visibleForTesting
+String? parseGuruCallErrorForTest(Object? data) => _parseGuruCallError(data);

@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zhongwen_shu/models/room.dart';
+import 'package:zhongwen_shu/services/room_service.dart';
 
 void main() {
   group('mentionsGuru', () {
@@ -105,6 +106,77 @@ void main() {
       expect(m.isGuru, isTrue);
       expect(m.body, '456');
       expect(m.createdAt, isA<DateTime>());
+    });
+  });
+
+  group('RoomService backend parsers', () {
+    test('room rows tolerate loose member-count shapes', () {
+      final rooms = parseRoomRowsForTest([
+        {
+          'id': 'r1',
+          'code': 'ZWS-ABCDE',
+          'name': 'Kelas A',
+          'level_tag': 'HSK 1',
+          'owner': 'u1',
+          'room_members': [
+            {'count': '3.0'},
+          ],
+        },
+        {
+          'id': 'r2',
+          'code': 'ZWS-FGHIJ',
+          'name': 'Kelas B',
+          'room_members': {'count': 2},
+        },
+        'bad-row',
+      ]);
+
+      expect(rooms, hasLength(2));
+      expect(rooms.first.memberCount, 3);
+      expect(rooms.last.memberCount, 2);
+    });
+
+    test('RPC row parser rejects empty or malformed payloads', () {
+      expect(parseRoomRpcRowForTest([]), isNull);
+      expect(parseRoomRpcRowForTest('bad'), isNull);
+
+      final room = parseRoomRpcRowForTest([
+        {'id': 'r1', 'code': 'ZWS-ABCDE', 'name': 'Kelas'},
+      ], memberCount: 1);
+
+      expect(room, isNotNull);
+      expect(room!.memberCount, 1);
+      expect(room.name, 'Kelas');
+    });
+
+    test('history parser skips bad rows and restores chronological order', () {
+      final history = parseRoomHistoryRowsForTest([
+        {
+          'id': 2,
+          'author_name': 'Guru',
+          'is_guru': true,
+          'body': 'baik',
+          'created_at': '2026-07-02T02:00:00Z',
+        },
+        'bad-row',
+        {
+          'id': 1,
+          'author_name': 'Hendra',
+          'body': 'halo',
+          'created_at': '2026-07-02T01:00:00Z',
+        },
+      ]);
+
+      expect(history.map((m) => m.id), [1, 2]);
+      expect(history.last.isGuru, isTrue);
+    });
+
+    test('Guru call parser accepts loose ok and error payloads', () {
+      expect(parseGuruCallErrorForTest({'ok': 'true'}), isNull);
+      expect(parseGuruCallErrorForTest({'ok': 1}), isNull);
+      expect(parseGuruCallErrorForTest({'error': 123}), '123');
+      expect(parseGuruCallErrorForTest({'error': '  '}), 'failed');
+      expect(parseGuruCallErrorForTest('bad'), 'failed');
     });
   });
 
