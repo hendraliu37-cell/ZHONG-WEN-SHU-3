@@ -529,9 +529,10 @@ List<Map<String, String>> buildGroundedHistory(
 /// all state and every action, and notifies listeners on change (the UI
 /// re-renders wholesale, exactly like the prototype's setState).
 class AppController extends ChangeNotifier {
-  AppController({Persistence? store, SpeechService? speech})
+  AppController({Persistence? store, SpeechService? speech, LlmService? llm})
     : _store = store ?? Persistence(),
-      speech = speech ?? SpeechService();
+      speech = speech ?? SpeechService(),
+      llm = llm ?? LlmService();
 
   final Persistence _store;
   final SpeechService speech;
@@ -540,7 +541,7 @@ class AppController extends ChangeNotifier {
 
   // ---- auth ----
   final AuthService auth = AuthService();
-  final LlmService llm = LlmService();
+  final LlmService llm;
   final TranslationService translation = TranslationService();
   final DeckIoService deckIo = DeckIoService();
   final DictionaryService dict = DictionaryService();
@@ -3169,7 +3170,7 @@ class AppController extends ChangeNotifier {
     tutorTyping = true;
     notifyListeners();
     String? reply;
-    if (llm.enabled && signedIn) {
+    if (llm.enabled) {
       final hist = [
         ..._llmHistory(),
         {
@@ -3179,7 +3180,14 @@ class AppController extends ChangeNotifier {
               'beri 1 contoh kalimat baru, lalu beri aku 1 soal singkat.',
         },
       ];
-      reply = await llm.chat(hist, track: _zhTrack);
+      try {
+        reply = await llm
+            .chat(hist, track: _zhTrack)
+            .timeout(const Duration(seconds: 40));
+      } catch (_) {
+        llm.lastError = 'Timeout (>40s)';
+        reply = null;
+      }
     }
     reply ??=
         'Idiom ${it.simplified} (${it.pinyin}) — ${it.meaning}.'

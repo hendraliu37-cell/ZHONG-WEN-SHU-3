@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:zhongwen_shu/services/llm_service.dart';
 import 'package:zhongwen_shu/state/app_controller.dart';
 
 void main() {
@@ -98,4 +99,41 @@ Latihan Coba tulis satu kalimat.
     expect(text, isNot(contains('喜欢')));
     expect(text, isNot(contains('饭')));
   });
+
+  test('Belajar idiom tries LLM fallback without requiring sign-in', () async {
+    final llm = _FakeLlmService();
+    final c = AppController(llm: llm)
+      ..track = 'both'
+      ..primary = 'traditional';
+    await c.idiomBank.load();
+    expect(c.idiomBank.count, greaterThan(0));
+
+    await c.learnIdiomWithGuru();
+
+    expect(llm.called, isTrue);
+    expect(llm.track, 'traditional');
+    expect(c.tutorTyping, isFalse);
+    expect(c.messages.last.who, 't');
+    expect(c.messages.last.text, contains('\u559c\u6b61'));
+    expect(c.messages.last.text, contains('\u98ef'));
+  });
+}
+
+class _FakeLlmService extends LlmService {
+  bool called = false;
+  String? track;
+
+  @override
+  Future<String?> chat(
+    List<Map<String, String>> messages, {
+    required String track,
+    String level = 'HSK 1-2',
+    String? systemOverride,
+    double temperature = 0.8,
+    int maxTokens = 800,
+  }) async {
+    called = true;
+    this.track = track;
+    return 'Ringkas: \u6211\u559c\u6b22\u5403\u996d\u3002';
+  }
 }
