@@ -372,6 +372,8 @@ void main() {
       ..tab = 'chat'
       ..chatTab = 'grup'
       ..currentRoom = const Room(id: 'r1', code: 'ZWS-ABCDE', name: 'Kelas')
+      ..roomLoading = true
+      ..roomGuruBusy = true
       ..roomMsgs = [
         RoomMessage(
           id: 1,
@@ -385,6 +387,8 @@ void main() {
     expect(c.handleBack(), isTrue);
     expect(c.currentRoom, isNull);
     expect(c.roomMsgs, isEmpty);
+    expect(c.roomLoading, isFalse);
+    expect(c.roomGuruBusy, isFalse);
   });
 
   test(

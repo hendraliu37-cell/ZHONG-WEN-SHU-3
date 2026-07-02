@@ -1594,7 +1594,9 @@ class AppController extends ChangeNotifier {
     roomOnline = 0;
     roomLoading = true;
     notifyListeners();
-    roomMsgs = await rooms.history(room.id);
+    final history = await rooms.history(room.id);
+    if (currentRoom?.id != room.id) return;
+    roomMsgs = history;
     var learnedFromHistory = false;
     for (final m in roomMsgs) {
       learnedFromHistory =
@@ -1606,6 +1608,7 @@ class AppController extends ChangeNotifier {
       room.id,
       presencePayload: {'user_id': authUid, 'handle': profileHandle},
       onMessage: (m) {
+        if (currentRoom?.id != room.id) return;
         // Already have this exact row (e.g. a duplicate event) — skip.
         if (m.id != 0 && roomMsgs.any((x) => x.id == m.id)) return;
         // Reconcile my optimistic echo (id 0, same body) with the real row.
@@ -1625,6 +1628,7 @@ class AppController extends ChangeNotifier {
         notifyListeners();
       },
       onPresence: (n) {
+        if (currentRoom?.id != room.id) return;
         roomOnline = n;
         notifyListeners();
       },
@@ -1639,6 +1643,7 @@ class AppController extends ChangeNotifier {
     currentRoom = null;
     roomMsgs = [];
     roomOnline = 0;
+    roomLoading = false;
     roomGuruBusy = false;
     if (ch != null) {
       try {
