@@ -43,6 +43,7 @@ class AuthService {
   String _friendlyAuthError(Object error) {
     final raw = error is AuthException ? error.message : error.toString();
     final msg = raw.toLowerCase();
+    if (_looksLikeHandleTaken(msg)) return 'Username sudah dipakai.';
     if (msg.contains('email rate limit') ||
         msg.contains('rate limit') ||
         msg.contains('rate_limit') ||
@@ -68,6 +69,12 @@ class AuthService {
     }
     return raw;
   }
+
+  bool _looksLikeHandleTaken(String msg) =>
+      msg.contains('profiles_handle') ||
+      msg.contains('handle_idx') ||
+      (msg.contains('23505') && msg.contains('handle')) ||
+      (msg.contains('unique constraint') && msg.contains('handle'));
 
   @visibleForTesting
   String friendlyAuthErrorForTest(Object error) => _friendlyAuthError(error);
@@ -111,7 +118,8 @@ class AuthService {
     } catch (e) {
       // The signup trigger raises a unique-violation if the handle is taken.
       final s = e.toString();
-      if (s.contains('profiles_handle') || s.contains('duplicate')) {
+      final lower = s.toLowerCase();
+      if (_looksLikeHandleTaken(lower) || lower.contains('duplicate')) {
         return 'Username sudah dipakai.';
       }
       return _friendlyAuthError(e);
@@ -205,7 +213,8 @@ class AuthService {
       return null;
     } catch (e) {
       final s = e.toString();
-      if (s.contains('profiles_handle') || s.contains('duplicate')) {
+      final lower = s.toLowerCase();
+      if (_looksLikeHandleTaken(lower) || lower.contains('duplicate')) {
         return 'Username sudah dipakai.';
       }
       return s;

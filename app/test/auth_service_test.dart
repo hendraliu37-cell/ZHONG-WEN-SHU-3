@@ -36,6 +36,17 @@ void main() {
 
       expect(msg, 'Email atau kata sandi salah.');
     });
+
+    test('maps handle unique constraint errors to username copy', () {
+      final auth = AuthService();
+
+      final msg = auth.friendlyAuthErrorForTest(
+        'PostgrestException(code: 23505, message: duplicate key value '
+        'violates unique constraint "profiles_handle_idx")',
+      );
+
+      expect(msg, 'Username sudah dipakai.');
+    });
   });
 
   group('test history cloud rows', () {
