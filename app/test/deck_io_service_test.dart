@@ -117,6 +117,34 @@ void main() {
     },
   );
 
+  test('imports front/back headers when Chinese is on the back side', () {
+    final service = DeckIoService();
+    final rows = service.readDelimitedForTest(
+      'Front,Back,Pinyin\nmakan,\u5403,chi1\nhalo,\u4f60\u597d,ni3 hao3',
+    );
+    final cards = service.rowsToCardsForTest(rows);
+
+    expect(cards, hasLength(2));
+    expect(cards.first.simplified, '\u5403');
+    expect(cards.first.traditional, '\u5403');
+    expect(cards.first.meaning, 'makan');
+    expect(cards.first.pinyin, 'chi1');
+    expect(cards.last.simplified, '\u4f60\u597d');
+    expect(cards.last.meaning, 'halo');
+  });
+
+  test('ignores latin-only flashcard rows in Chinese deck imports', () {
+    final service = DeckIoService();
+    final rows = service.readDelimitedForTest(
+      'Term,Definition\nhello,greeting\nmakan,\u5403',
+    );
+    final cards = service.rowsToCardsForTest(rows);
+
+    expect(cards, hasLength(1));
+    expect(cards.single.simplified, '\u5403');
+    expect(cards.single.meaning, 'makan');
+  });
+
   test('parses a single headerless card row', () {
     final service = DeckIoService();
     final rows = service.readDelimitedForTest('吃\tmakan\tchī');

@@ -246,7 +246,7 @@ class DeckIoService {
     List<String> row,
     String Function(List<String>, List<String>) get,
   ) {
-    final simplified = get(row, [
+    var simplified = get(row, [
       'simplified',
       'simplified_chinese',
       's',
@@ -260,13 +260,13 @@ class DeckIoService {
       'term',
       'question',
     ]);
-    final traditional = get(row, [
+    var traditional = get(row, [
       'traditional',
       'traditional_chinese',
       't',
       'traditional_hanzi',
     ]);
-    final meaning = get(row, [
+    var meaning = get(row, [
       'meaning',
       'm',
       'back',
@@ -285,6 +285,15 @@ class DeckIoService {
       'bahasa_indonesia',
     ]);
     if (simplified.isEmpty || meaning.isEmpty) return null;
+    if (!_hasCjk(simplified) && _hasCjk(meaning)) {
+      final originalFront = simplified;
+      simplified = meaning;
+      meaning = originalFront;
+      if (traditional.isEmpty || !_hasCjk(traditional)) {
+        traditional = simplified;
+      }
+    }
+    if (!_hasCjk(simplified)) return null;
 
     return VocabEntry.fromJson({
       's': simplified,
@@ -321,6 +330,7 @@ class DeckIoService {
       front = back;
       back = tmp;
     }
+    if (!_hasCjk(front)) return null;
     return VocabEntry.fromJson({
       's': front,
       't': traditional.isNotEmpty ? traditional : front,
