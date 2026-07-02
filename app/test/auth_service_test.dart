@@ -73,4 +73,51 @@ void main() {
       expect(parsed.last['id'], 'ok-2');
     });
   });
+
+  group('backend row parsers', () {
+    test('profile parser normalizes loose field values', () {
+      final profile = parseProfileRowForTest({
+        'handle': 123,
+        'public_id': '456.0',
+        'display_name': null,
+        'track': 'classic',
+        'xp': '-9',
+        'streak': '3.0',
+        'avatar_url': '  ',
+        'last_active_date': 20260702,
+      });
+
+      expect(profile.handle, '123');
+      expect(profile.publicId, 456);
+      expect(profile.displayName, '');
+      expect(profile.track, 'both');
+      expect(profile.xp, 0);
+      expect(profile.streak, 3);
+      expect(profile.avatarUrl, isNull);
+      expect(profile.lastActiveDate, '20260702');
+    });
+
+    test('leaderboard parser skips bad rows and keeps typed UI fields', () {
+      final rows = parseLeaderboardRowsForTest([
+        'bad-row',
+        {
+          'handle': 123,
+          'display_name': ' Budi ',
+          'public_id': '77.0',
+          'xp': '-12',
+        },
+        {'handle': null, 'display_name': null, 'public_id': null, 'xp': '800'},
+      ]);
+
+      expect(rows, hasLength(2));
+      expect(rows.first, {
+        'handle': '123',
+        'display_name': 'Budi',
+        'public_id': 77,
+        'xp': 0,
+      });
+      expect(rows.last['handle'], '');
+      expect(rows.last['xp'], 800);
+    });
+  });
 }

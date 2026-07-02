@@ -165,16 +165,7 @@ class AuthService {
           .eq('id', id)
           .maybeSingle();
       if (row == null) return null;
-      return ZwsProfile(
-        handle: (row['handle'] as String?) ?? '',
-        publicId: (row['public_id'] as num?)?.toInt() ?? 0,
-        displayName: (row['display_name'] as String?) ?? '',
-        track: (row['track'] as String?) ?? 'both',
-        xp: (row['xp'] as num?)?.toInt() ?? 0,
-        streak: (row['streak'] as num?)?.toInt() ?? 0,
-        avatarUrl: row['avatar_url'] as String?,
-        lastActiveDate: row['last_active_date']?.toString(),
-      );
+      return _parseProfileRow(row);
     } catch (_) {
       return null;
     }
@@ -262,7 +253,7 @@ class AuthService {
           .select('handle, display_name, public_id, xp')
           .order('xp', ascending: false)
           .limit(limit);
-      return (rows as List).cast<Map<String, dynamic>>();
+      return _parseLeaderboardRows(rows);
     } catch (_) {
       return [];
     }
@@ -305,6 +296,39 @@ class AuthService {
   }
 }
 
+ZwsProfile _parseProfileRow(Map row) {
+  final track = _oneOf(row['track'], const {
+    'simplified',
+    'traditional',
+    'both',
+  }, fallback: 'both');
+  return ZwsProfile(
+    handle: _stringish(row['handle']),
+    publicId: _intish(row['public_id']) ?? 0,
+    displayName: _stringish(row['display_name']),
+    track: track,
+    xp: _intish(row['xp'], min: 0) ?? 0,
+    streak: _intish(row['streak'], min: 0) ?? 0,
+    avatarUrl: _nullableString(row['avatar_url']),
+    lastActiveDate: _nullableString(row['last_active_date']),
+  );
+}
+
+List<Map<String, dynamic>> _parseLeaderboardRows(Object? rows) {
+  final out = <Map<String, dynamic>>[];
+  if (rows is! List) return out;
+  for (final row in rows) {
+    if (row is! Map) continue;
+    out.add({
+      'handle': _stringish(row['handle']),
+      'display_name': _stringish(row['display_name']),
+      'public_id': _intish(row['public_id']) ?? 0,
+      'xp': _intish(row['xp'], min: 0) ?? 0,
+    });
+  }
+  return out;
+}
+
 List<Map<String, dynamic>> _parseTestHistoryRows(Object? rows) {
   final out = <Map<String, dynamic>>[];
   if (rows is! List) return out;
@@ -317,6 +341,40 @@ List<Map<String, dynamic>> _parseTestHistoryRows(Object? rows) {
   return out;
 }
 
+String _stringish(Object? value) => value?.toString().trim() ?? '';
+
+String? _nullableString(Object? value) {
+  final text = _stringish(value);
+  return text.isEmpty ? null : text;
+}
+
+int? _intish(Object? value, {int? min}) {
+  int? parsed;
+  if (value is int) {
+    parsed = value;
+  } else if (value is num) {
+    parsed = value.toInt();
+  } else {
+    final text = _stringish(value);
+    parsed = int.tryParse(text) ?? double.tryParse(text)?.toInt();
+  }
+  if (parsed == null) return null;
+  if (min != null && parsed < min) return min;
+  return parsed;
+}
+
+String _oneOf(Object? value, Set<String> allowed, {required String fallback}) {
+  final text = _stringish(value);
+  return allowed.contains(text) ? text : fallback;
+}
+
 @visibleForTesting
 List<Map<String, dynamic>> parseTestHistoryRowsForTest(Object? rows) =>
     _parseTestHistoryRows(rows);
+
+@visibleForTesting
+ZwsProfile parseProfileRowForTest(Map row) => _parseProfileRow(row);
+
+@visibleForTesting
+List<Map<String, dynamic>> parseLeaderboardRowsForTest(Object? rows) =>
+    _parseLeaderboardRows(rows);
