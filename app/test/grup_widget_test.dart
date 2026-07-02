@@ -13,8 +13,9 @@ void main() {
     zwsSupabaseReady = false;
   });
 
-  testWidgets('Grup tab shows the sign-in empty state in guest mode',
-      (tester) async {
+  testWidgets('Grup tab shows the sign-in empty state in guest mode', (
+    tester,
+  ) async {
     SharedPreferences.setMockInitialValues({});
     await tester.pumpWidget(const ProviderScope(child: ZwsApp()));
     for (var i = 0; i < 40 && find.text('Masuk').evaluate().isEmpty; i++) {

@@ -1643,6 +1643,7 @@ class AppController extends ChangeNotifier {
     currentRoom = null;
     roomMsgs = [];
     roomOnline = 0;
+    roomInput = '';
     roomLoading = false;
     roomGuruBusy = false;
     if (ch != null) {

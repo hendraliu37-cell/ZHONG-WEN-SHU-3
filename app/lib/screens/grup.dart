@@ -392,11 +392,25 @@ class _RoomViewState extends State<_RoomView> {
     setState(() => _showGuruSuggest = false);
   }
 
+  void _restoreDraftAfterFailedSend(AppController c) {
+    if (widget.msgCtl.text.isNotEmpty || c.roomInput.isEmpty) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final draft = widget.controller.roomInput;
+      if (draft.isEmpty || widget.msgCtl.text.isNotEmpty) return;
+      widget.msgCtl.value = TextEditingValue(
+        text: draft,
+        selection: TextSelection.collapsed(offset: draft.length),
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = ZwsTheme.of(context);
     final c = widget.controller;
     final room = c.currentRoom!;
+    _restoreDraftAfterFailedSend(c);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollCtrl.hasClients) {
         _scrollCtrl.jumpTo(_scrollCtrl.position.maxScrollExtent);
@@ -586,6 +600,7 @@ class _RoomViewState extends State<_RoomView> {
                 child: TextField(
                   controller: widget.msgCtl,
                   style: ZwsFonts.sans(size: 14, color: t.ink),
+                  onChanged: c.setRoomInput,
                   onSubmitted: (_) => widget.onSend(),
                   decoration: InputDecoration(
                     isDense: true,

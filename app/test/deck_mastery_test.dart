@@ -391,6 +391,23 @@ void main() {
     expect(c.roomGuruBusy, isFalse);
   });
 
+  test('failed room send keeps draft for retry and close clears it', () async {
+    final c = AppController()
+      ..currentRoom = const Room(id: 'r1', code: 'ZWS-ABCDE', name: 'Kelas')
+      ..profileName = 'Hendra'
+      ..profileHandle = '#1234';
+
+    c.setRoomInput('halo gagal');
+    await c.sendRoom();
+
+    expect(c.roomInput, 'halo gagal');
+    expect(c.roomMsgs.last.body, roomSendFailureMessage());
+
+    c.closeRoomChannel();
+    expect(c.roomInput, isEmpty);
+    expect(c.roomMsgs, isEmpty);
+  });
+
   test(
     'delayed match feedback does not notify after controller dispose',
     () async {
