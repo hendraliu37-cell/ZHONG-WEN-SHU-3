@@ -229,7 +229,7 @@ void main() {
           'to': 'id',
           'at': '2026-07-01T00:00:00.000',
         },
-        {'source': 7, 'translation': 'rusak', 'at': 99},
+        {'source': 7, 'translation': 'loose', 'from': 9, 'to': 'bad', 'at': 99},
       ],
       'testHistory': [
         {
@@ -251,9 +251,12 @@ void main() {
       ],
     });
 
-    expect(c.messages.map((m) => m.text), ['valid chat']);
-    expect(c.trHistory.single.source, '吃');
-    expect(c.trHistory.single.translation, 'makan');
+    expect(c.messages.map((m) => m.text), ['valid chat', '99']);
+    expect(c.messages.last.who, 't');
+    expect(c.trHistory.map((h) => h.source), ['吃', '7']);
+    expect(c.trHistory.map((h) => h.translation), ['makan', 'loose']);
+    expect(c.trHistory.last.from, 'zh');
+    expect(c.trHistory.last.to, 'id');
     expect(c.testHistory.single.id, 'ok');
   });
 

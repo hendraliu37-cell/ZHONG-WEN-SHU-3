@@ -52,9 +52,9 @@ class ChatMsg {
   ChatMsg(this.who, this.text, {this.name});
 
   factory ChatMsg.fromJson(Map<String, dynamic> j) => ChatMsg(
-    (j['who'] as String?) == 'me' ? 'me' : 't',
-    (j['text'] as String?) ?? '',
-    name: j['name'] as String?,
+    _chatWho(j['who']),
+    _stringValue(j['text']),
+    name: _nullableStringValue(j['name']),
   );
 
   Map<String, dynamic> toJson() => {
@@ -85,13 +85,13 @@ class TranslateHistoryItem {
 
   factory TranslateHistoryItem.fromJson(Map<String, dynamic> j) =>
       TranslateHistoryItem(
-        source: (j['source'] as String?) ?? '',
-        translation: (j['translation'] as String?) ?? '',
-        from: (j['from'] as String?) ?? 'zh',
-        to: (j['to'] as String?) ?? 'id',
-        engine: (j['engine'] as String?) ?? 'dict',
-        pinyin: j['pinyin'] as String?,
-        at: DateTime.tryParse((j['at'] as String?) ?? '') ?? DateTime.now(),
+        source: _stringValue(j['source']),
+        translation: _stringValue(j['translation']),
+        from: _langCode(j['from'], fallback: 'zh'),
+        to: _langCode(j['to'], fallback: 'id'),
+        engine: _stringValue(j['engine'], fallback: 'dict'),
+        pinyin: _nullableStringValue(j['pinyin']),
+        at: DateTime.tryParse(_stringValue(j['at'])) ?? DateTime.now(),
       );
 
   Map<String, dynamic> toJson() => {
@@ -254,6 +254,18 @@ int? _jsonInt(Object? value) {
   if (value is int) return value;
   if (value is num) return value.toInt();
   return int.tryParse(value?.toString() ?? '');
+}
+
+String _chatWho(Object? value) => _stringValue(value) == 'me' ? 'me' : 't';
+
+String? _nullableStringValue(Object? value) {
+  final text = _stringValue(value);
+  return text.isEmpty ? null : text;
+}
+
+String _langCode(Object? value, {required String fallback}) {
+  final text = _stringValue(value).toLowerCase();
+  return text == 'zh' || text == 'id' ? text : fallback;
 }
 
 const Map<String, String> _simpToTrad = {
