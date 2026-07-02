@@ -1208,10 +1208,13 @@ class AppController extends ChangeNotifier {
 
   VocabEntry card(int id) => cards[id] ?? seedVocab.first;
 
+  bool get usesTraditionalHanzi =>
+      track == 'traditional' || (track == 'both' && primary == 'traditional');
+
   String primaryHanzi(VocabEntry c) {
-    if (track == 'traditional') return c.traditional;
+    if (usesTraditionalHanzi) return c.traditional;
     if (track == 'simplified') return c.simplified;
-    return primary == 'traditional' ? c.traditional : c.simplified;
+    return c.simplified;
   }
 
   String normalize(String s) {
@@ -1257,7 +1260,7 @@ class AppController extends ChangeNotifier {
   }
 
   void _speak(String txt) =>
-      speech.speak(txt, traditional: track == 'traditional');
+      speech.speak(txt, traditional: usesTraditionalHanzi);
 
   void _safeNotify() {
     if (!_disposed) notifyListeners();
@@ -2913,10 +2916,7 @@ class AppController extends ChangeNotifier {
   Timer? _trDebounce;
   int _trSeq = 0; // ignore stale async results
 
-  String get _zhTrack =>
-      (track == 'traditional' || (track == 'both' && primary == 'traditional'))
-      ? 'traditional'
-      : 'simplified';
+  String get _zhTrack => usesTraditionalHanzi ? 'traditional' : 'simplified';
 
   void trSetSource(String text) {
     trSource = text;
@@ -3089,7 +3089,7 @@ class AppController extends ChangeNotifier {
         ? trResult?.translation
         : (trFrom == 'zh' ? trSource : null);
     if (zh != null && zh.trim().isNotEmpty) {
-      speech.speak(zh, traditional: track == 'traditional');
+      speech.speak(zh, traditional: usesTraditionalHanzi);
     }
   }
 

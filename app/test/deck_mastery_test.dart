@@ -33,6 +33,22 @@ void main() {
         .setMockMethodCallHandler(recordChannel, null);
   });
 
+  test('both-track voice and primary Hanzi follow traditional primary', () {
+    final c = AppController()
+      ..track = 'both'
+      ..primary = 'traditional';
+    final card = VocabEntry(
+      simplified: '\u7231',
+      traditional: '\u611b',
+      pinyin: 'ai4',
+      meaning: 'cinta',
+      tone: 4,
+    );
+
+    expect(c.usesTraditionalHanzi, isTrue);
+    expect(c.primaryHanzi(card), '\u611b');
+  });
+
   test('deck test count is capped by the active deck size', () {
     final c = AppController();
     final ids = <int>[];

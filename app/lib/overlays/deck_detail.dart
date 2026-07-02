@@ -406,7 +406,7 @@ class _CardRow extends StatelessWidget {
                   _VoiceButton(
                     onTap: () => controller.speech.speak(
                       controller.primaryHanzi(c),
-                      traditional: controller.track == 'traditional',
+                      traditional: controller.usesTraditionalHanzi,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -519,7 +519,7 @@ class _InlineCardDetail extends StatelessWidget {
                   compact: true,
                   onTap: () => controller.speech.speak(
                     hanzi,
-                    traditional: controller.track == 'traditional',
+                    traditional: controller.usesTraditionalHanzi,
                   ),
                 ),
                 const SizedBox(width: 10),

@@ -113,7 +113,7 @@ class _ActiveState extends State<_Active> {
               InkWell(
                 onTap: () => c.speech.speak(
                   c.primaryHanzi(card),
-                  traditional: c.track == 'traditional',
+                  traditional: c.usesTraditionalHanzi,
                 ),
                 borderRadius: BorderRadius.circular(10),
                 child: Container(

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -29,6 +30,7 @@ class SpeechService {
   final FlutterTts _tts = FlutterTts();
   AudioPlayer? _player;
   bool _enabled = true;
+  bool _disposed = false;
   bool _configured = false;
 
   // text|lang → cached MP3 file path (cleared with the temp dir on restart).
@@ -36,9 +38,17 @@ class SpeechService {
 
   SupabaseClient get _sb => Supabase.instance.client;
 
+  bool get _canSpeak => _enabled && !_disposed;
+
+  @visibleForTesting
+  bool get enabledForTest => _enabled;
+
+  @visibleForTesting
+  bool get disposedForTest => _disposed;
+
   /// Speak [text]; [traditional] picks zh-TW over zh-CN.
   Future<void> speak(String text, {bool traditional = false}) async {
-    if (!_enabled || text.trim().isEmpty) return;
+    if (!_canSpeak || text.trim().isEmpty) return;
     if (zwsSupabaseReady && await _speakNeural(text, traditional)) return;
     await _speakOs(text, traditional);
   }
@@ -64,6 +74,7 @@ class SpeechService {
         path = await _writeCache(key, bytes);
         _cache[key] = path;
       }
+      if (!_canSpeak) return false;
       final p = _player ??= AudioPlayer();
       await p.stop();
       await p.setPlayerMode(PlayerMode.lowLatency);
@@ -99,6 +110,7 @@ class SpeechService {
   /// OS engine fallback (flutter_tts).
   Future<void> _speakOs(String text, bool traditional) async {
     try {
+      if (!_canSpeak) return;
       if (!_configured) {
         _configured = true;
         // Slow + clear so learners can hear each tone distinctly.
@@ -117,9 +129,47 @@ class SpeechService {
     }
   }
 
-  void setEnabled(bool v) => _enabled = v;
+  Future<void> stop() async {
+    await Future.wait([_stopPlayer(_player), _stopTts()]);
+  }
+
+  void setEnabled(bool v) {
+    _enabled = v;
+    if (!v) unawaited(stop());
+  }
 
   void dispose() {
-    _player?.dispose();
+    _enabled = false;
+    _disposed = true;
+    final player = _player;
+    _player = null;
+    unawaited(_stopTts());
+    if (player != null) unawaited(_disposePlayer(player));
+  }
+
+  Future<void> _stopPlayer(AudioPlayer? player) async {
+    if (player == null) return;
+    try {
+      await player.stop();
+    } catch (_) {
+      // Best-effort cleanup. Some platforms throw after engine teardown.
+    }
+  }
+
+  Future<void> _disposePlayer(AudioPlayer player) async {
+    await _stopPlayer(player);
+    try {
+      await player.dispose();
+    } catch (_) {
+      // Best-effort cleanup. Some platforms throw after engine teardown.
+    }
+  }
+
+  Future<void> _stopTts() async {
+    try {
+      await _tts.stop();
+    } catch (_) {
+      // Best-effort cleanup. Some platforms throw after engine teardown.
+    }
   }
 }
