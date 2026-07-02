@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 import '../state/app_controller.dart';
@@ -7,8 +5,9 @@ import '../theme/tokens.dart';
 import '../theme/zws_theme.dart';
 import '../widgets/common.dart';
 
-/// Comprehensive final exam: mix of MC, spelling, and tone questions
-/// drawn from all user cards. Score feeds into the rapor.
+/// Comprehensive final exam drawn from the same smart practice pool as daily
+/// tests and games. Every source card appears at least once; tiny decks repeat
+/// only enough to keep MC, spelling, and tone coverage.
 class UjianAkhirOverlay extends StatefulWidget {
   final AppController controller;
   const UjianAkhirOverlay({super.key, required this.controller});
@@ -35,31 +34,43 @@ class _UjianAkhirOverlayState extends State<UjianAkhirOverlay> {
     allIds.shuffle(c.rng);
 
     final soal = <_UjianSoal>[];
+    const types = [_ExamType.mc, _ExamType.spell, _ExamType.tone];
+    var typeIndex = 0;
 
-    // Keep the exam mixed even for small decks. Reusing the same card across
-    // different skill types is better than turning a two-card exam into MC-only.
-    final countMc = math.min(8, allIds.length);
-    final countSpell = math.min(6, allIds.length);
-    final countTone = math.min(6, allIds.length);
-
-    for (final id in allIds.take(countMc)) {
+    void addQuestion(int id, _ExamType type) {
       final card = c.cards[id];
-      if (card == null) continue;
-      soal.add(_McSoal(c, id, c.primaryHanzi(card), card.primaryMeaning));
+      if (card == null) return;
+      switch (type) {
+        case _ExamType.mc:
+          soal.add(_McSoal(c, id, c.primaryHanzi(card), card.primaryMeaning));
+          break;
+        case _ExamType.spell:
+          soal.add(
+            _SpellSoal(
+              id,
+              card.meaningPreview,
+              c.primaryHanzi(card),
+              card.pinyin,
+            ),
+          );
+          break;
+        case _ExamType.tone:
+          soal.add(_ToneSoal(id, c.primaryHanzi(card), card.pinyin, card.tone));
+          break;
+      }
     }
 
-    for (final id in allIds.take(countSpell)) {
-      final card = c.cards[id];
-      if (card == null) continue;
-      soal.add(
-        _SpellSoal(id, card.meaningPreview, c.primaryHanzi(card), card.pinyin),
+    for (final id in allIds) {
+      addQuestion(id, types[typeIndex % types.length]);
+      typeIndex++;
+    }
+
+    while (soal.length < types.length && allIds.isNotEmpty) {
+      addQuestion(
+        allIds[soal.length % allIds.length],
+        types[typeIndex % types.length],
       );
-    }
-
-    for (final id in allIds.take(countTone)) {
-      final card = c.cards[id];
-      if (card == null) continue;
-      soal.add(_ToneSoal(id, c.primaryHanzi(card), card.pinyin, card.tone));
+      typeIndex++;
     }
 
     soal.shuffle(c.rng);
@@ -84,12 +95,16 @@ class _UjianAkhirOverlayState extends State<UjianAkhirOverlay> {
   Widget build(BuildContext context) {
     final t = ZwsTheme.of(context);
     if (_soal.isEmpty) {
-      return Scaffold(
-        backgroundColor: t.bg,
-        body: Center(
-          child: Text(
-            'Belum ada kartu untuk diujikan. Tambah kartu dulu.',
-            style: ZwsFonts.sans(size: 14, color: t.ink3),
+      return _ScaffoldFrame(
+        onBack: widget.controller.closeSub,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              'Belum ada kartu untuk diujikan. Tambah kartu dulu.',
+              textAlign: TextAlign.center,
+              style: ZwsFonts.sans(size: 14, color: t.ink3),
+            ),
           ),
         ),
       );
@@ -98,48 +113,86 @@ class _UjianAkhirOverlayState extends State<UjianAkhirOverlay> {
     return _buildQuestion(t);
   }
 
+  Future<void> _backFromQuestion() async {
+    if (_done || _idx == 0) {
+      widget.controller.closeSub();
+      return;
+    }
+    final t = ZwsTheme.of(context);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: t.surface,
+        title: Text(
+          'Keluar dari ujian?',
+          style: ZwsFonts.sans(size: 17, weight: FontWeight.w800, color: t.ink),
+        ),
+        content: Text(
+          'Progress Ujian Akhir belum bisa dilanjutkan nanti. Nilai hanya disimpan kalau ujian selesai.',
+          style: ZwsFonts.sans(size: 13, color: t.ink2, height: 1.45),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Batal', style: ZwsFonts.sans(size: 13, color: t.ink2)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(
+              'Keluar',
+              style: ZwsFonts.sans(
+                size: 13,
+                weight: FontWeight.w700,
+                color: t.seal,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) widget.controller.closeSub();
+  }
+
   Widget _buildQuestion(ZwsTokens t) {
     final s = _soal[_idx];
-    return Scaffold(
-      backgroundColor: t.bg,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    'Ujian Akhir · Soal ${_idx + 1}/${_soal.length}',
-                    style: ZwsFonts.sans(
-                      size: 13,
-                      weight: FontWeight.w700,
-                      color: t.ink,
-                    ),
+    return _ScaffoldFrame(
+      onBack: _backFromQuestion,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Text(
+                  'Soal ${_idx + 1}/${_soal.length}',
+                  style: ZwsFonts.sans(
+                    size: 13,
+                    weight: FontWeight.w700,
+                    color: t.ink,
                   ),
-                  const Spacer(),
-                  Mono('Skor: $_score', size: 12, color: t.seal),
-                ],
-              ),
-              const SizedBox(height: 4),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: (_idx + 1) / _soal.length,
-                  minHeight: 4,
-                  backgroundColor: t.line2,
-                  valueColor: const AlwaysStoppedAnimation(Color(0xFFB8860B)),
                 ),
+                const Spacer(),
+                Mono('Skor: $_score', size: 12, color: t.seal),
+              ],
+            ),
+            const SizedBox(height: 4),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: (_idx + 1) / _soal.length,
+                minHeight: 4,
+                backgroundColor: t.line2,
+                valueColor: const AlwaysStoppedAnimation(Color(0xFFB8860B)),
               ),
-              const SizedBox(height: 20),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: s.buildWidget(() => setState(() {}), _answer, t),
-                ),
+            ),
+            const SizedBox(height: 20),
+            Expanded(
+              child: SingleChildScrollView(
+                child: s.buildWidget(() => setState(() {}), _answer, t),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -148,69 +201,64 @@ class _UjianAkhirOverlayState extends State<UjianAkhirOverlay> {
   Widget _buildResult(ZwsTokens t) {
     final pct = _soal.isEmpty ? 0 : (_score * 100 / _soal.length).round();
     final lulus = pct >= 70;
-    return Scaffold(
-      backgroundColor: t.bg,
-      body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  lulus ? 'SELAMAT!' : 'COBA LAGI',
-                  style: ZwsFonts.sans(
-                    size: 28,
-                    weight: FontWeight.w800,
-                    color: lulus ? t.green : t.ink3,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  'Nilai Ujian Akhir',
-                  style: ZwsFonts.sans(size: 14, color: t.ink2),
-                ),
-                const SizedBox(height: 6),
-                Mono(
-                  '$_score / ${_soal.length}',
-                  size: 48,
+    return _ScaffoldFrame(
+      onBack: widget.controller.closeSub,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                lulus ? 'SELAMAT!' : 'COBA LAGI',
+                style: ZwsFonts.sans(
+                  size: 28,
                   weight: FontWeight.w800,
-                  color: t.ink,
+                  color: lulus ? t.green : t.ink3,
                 ),
-                const SizedBox(height: 4),
-                Mono('($pct%)', size: 16, color: t.seal),
-                const SizedBox(height: 8),
-                Text(
-                  lulus
-                      ? 'Kamu lulus! Skor masuk ke rapor.'
-                      : 'Belum lulus (min 70). Coba lagi nanti.',
-                  style: ZwsFonts.sans(size: 13, color: t.ink2),
-                ),
-                const SizedBox(height: 24),
-                Material(
-                  color: t.seal,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Nilai Ujian Akhir',
+                style: ZwsFonts.sans(size: 14, color: t.ink2),
+              ),
+              const SizedBox(height: 6),
+              Mono(
+                '$_score / ${_soal.length}',
+                size: 48,
+                weight: FontWeight.w800,
+                color: t.ink,
+              ),
+              const SizedBox(height: 4),
+              Mono('($pct%)', size: 16, color: t.seal),
+              const SizedBox(height: 8),
+              Text(
+                lulus
+                    ? 'Kamu lulus! Skor masuk ke rapor.'
+                    : 'Belum lulus (min 70). Coba lagi nanti.',
+                style: ZwsFonts.sans(size: 13, color: t.ink2),
+              ),
+              const SizedBox(height: 24),
+              Material(
+                color: t.seal,
+                borderRadius: BorderRadius.circular(12),
+                child: InkWell(
+                  onTap: () => widget.controller.closeSub(),
                   borderRadius: BorderRadius.circular(12),
-                  child: InkWell(
-                    onTap: () => widget.controller.closeSub(),
-                    borderRadius: BorderRadius.circular(12),
-                    child: const Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 32,
-                        vertical: 14,
-                      ),
-                      child: Text(
-                        'Kembali',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15,
-                        ),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                    child: Text(
+                      'Kembali',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
                       ),
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -218,7 +266,40 @@ class _UjianAkhirOverlayState extends State<UjianAkhirOverlay> {
   }
 }
 
-// ---- question types ----
+enum _ExamType { mc, spell, tone }
+
+class _ScaffoldFrame extends StatelessWidget {
+  final VoidCallback onBack;
+  final Widget child;
+
+  const _ScaffoldFrame({required this.onBack, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = ZwsTheme.of(context);
+    return Scaffold(
+      backgroundColor: t.bg,
+      body: Column(
+        children: [
+          OverlayBar(
+            onBack: onBack,
+            title: Center(
+              child: Text(
+                'Ujian Akhir',
+                style: ZwsFonts.sans(
+                  size: 15,
+                  weight: FontWeight.w800,
+                  color: t.ink,
+                ),
+              ),
+            ),
+          ),
+          Expanded(child: child),
+        ],
+      ),
+    );
+  }
+}
 
 abstract class _UjianSoal {
   int get cardId;
@@ -264,7 +345,7 @@ class _McSoal extends _UjianSoal {
         const SizedBox(height: 14),
         Center(
           child: Text(
-            'Arti dari hanzi di atas adalah…',
+            'Arti dari hanzi di atas adalah...',
             style: ZwsFonts.sans(size: 13, color: t.ink3),
           ),
         ),
@@ -342,7 +423,7 @@ class _SpellSoal extends _UjianSoal {
           autofocus: true,
           style: ZwsFonts.sans(size: 24, color: t.ink),
           decoration: InputDecoration(
-            hintText: 'Tulis hanzi di sini…',
+            hintText: 'Tulis hanzi di sini...',
             hintStyle: ZwsFonts.sans(size: 16, color: t.ink3),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
@@ -427,10 +508,10 @@ class _ToneSoal extends _UjianSoal {
   _ToneSoal(this.cardId, this.hanzi, this.pinyin, this.correct);
 
   static const _names = {
-    1: 'Pertama (—)',
-    2: 'Kedua (ˊ)',
-    3: 'Ketiga (ˇ)',
-    4: 'Keempat (ˋ)',
+    1: 'Pertama (1)',
+    2: 'Kedua (2)',
+    3: 'Ketiga (3)',
+    4: 'Keempat (4)',
   };
 
   @override

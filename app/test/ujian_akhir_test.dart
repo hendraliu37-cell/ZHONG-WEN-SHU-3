@@ -63,4 +63,79 @@ void main() {
     expect(find.text('Nilai Ujian Akhir'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('final exam question count follows all source cards', (
+    tester,
+  ) async {
+    final c = AppController();
+    for (var i = 1; i <= 25; i++) {
+      c.cards[i] = _vocab(
+        hanzi: '字$i',
+        pinyin: 'zi$i',
+        meaning: 'arti $i',
+        tone: (i % 4) + 1,
+      );
+    }
+
+    await tester.pumpWidget(
+      ZwsTheme(
+        tokens: ZwsTokens.light,
+        child: MaterialApp(home: UjianAkhirOverlay(controller: c)),
+      ),
+    );
+
+    expect(find.text('Soal 1/25'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('final exam back confirms after progress', (tester) async {
+    final c = AppController()..sub = 'ujian_akhir';
+    for (var i = 1; i <= 4; i++) {
+      c.cards[i] = _vocab(
+        hanzi: '字$i',
+        pinyin: 'zi$i',
+        meaning: 'arti $i',
+        tone: (i % 4) + 1,
+      );
+    }
+
+    await tester.pumpWidget(
+      ZwsTheme(
+        tokens: ZwsTokens.light,
+        child: MaterialApp(home: UjianAkhirOverlay(controller: c)),
+      ),
+    );
+
+    await _answerCurrentQuestion(tester);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.arrow_back).first);
+    await tester.pumpAndSettle();
+    expect(find.text('Keluar dari ujian?'), findsOneWidget);
+    await tester.tap(find.text('Batal'));
+    await tester.pumpAndSettle();
+    expect(c.sub, 'ujian_akhir');
+
+    await tester.tap(find.byIcon(Icons.arrow_back).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Keluar'));
+    await tester.pumpAndSettle();
+    expect(c.sub, isNull);
+    expect(tester.takeException(), isNull);
+  });
+}
+
+Future<void> _answerCurrentQuestion(WidgetTester tester) async {
+  if (find.textContaining('PILIH ARTI').evaluate().isNotEmpty) {
+    await tester.tap(find.textContaining('arti ').first);
+  } else if (find.textContaining('TULIS HANZI').evaluate().isNotEmpty) {
+    await tester.enterText(find.byType(TextField), 'x');
+    await tester.tap(find.text('Periksa'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Periksa'));
+  } else if (find.textContaining('NADA SUKU').evaluate().isNotEmpty) {
+    await tester.tap(find.textContaining('Nada ').first);
+  } else {
+    fail('Unknown final exam question type');
+  }
 }
