@@ -372,23 +372,14 @@ class _RoomViewState extends State<_RoomView> {
   void _insertGuruMention() {
     final ctl = widget.msgCtl;
     final value = ctl.value;
-    final rawCaret = value.selection.baseOffset;
-    final caret = rawCaret < 0
-        ? value.text.length
-        : rawCaret.clamp(0, value.text.length).toInt();
-    final before = value.text.substring(0, caret);
-    final after = value.text.substring(caret);
-    final start = before.lastIndexOf(RegExp(r'\s'));
-    final tokenStart = start < 0 ? 0 : start + 1;
-    final nextText = '${before.substring(0, tokenStart)}@Guru $after'
-        .replaceAll('  ', ' ');
-    final nextCaret = tokenStart + 6;
+    final inserted = insertGuruMention(value.text, value.selection.baseOffset);
     ctl.value = TextEditingValue(
-      text: nextText,
+      text: inserted.text,
       selection: TextSelection.collapsed(
-        offset: nextCaret.clamp(0, nextText.length).toInt(),
+        offset: inserted.caret.clamp(0, inserted.text.length).toInt(),
       ),
     );
+    widget.controller.setRoomInput(inserted.text);
     setState(() => _showGuruSuggest = false);
   }
 

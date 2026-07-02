@@ -418,6 +418,36 @@ void main() {
     expect(c.roomGuruBusy, isFalse);
   });
 
+  test('profile reset clears active group session state', () {
+    final c = AppController()
+      ..myRooms = [const Room(id: 'r1', code: 'ZWS-ABCDE', name: 'Kelas')]
+      ..currentRoom = const Room(id: 'r1', code: 'ZWS-ABCDE', name: 'Kelas')
+      ..roomInput = '@Guru bantu'
+      ..roomOnline = 3
+      ..roomLoading = true
+      ..roomGuruBusy = true
+      ..roomMsgs = [
+        RoomMessage(
+          id: 1,
+          senderId: 'u1',
+          authorName: 'A',
+          body: 'halo',
+          createdAt: DateTime(2026),
+        ),
+      ];
+
+    c.resetProfileToGuestForTest();
+
+    expect(c.profileName, 'Murid');
+    expect(c.myRooms, isEmpty);
+    expect(c.currentRoom, isNull);
+    expect(c.roomMsgs, isEmpty);
+    expect(c.roomInput, isEmpty);
+    expect(c.roomOnline, 0);
+    expect(c.roomLoading, isFalse);
+    expect(c.roomGuruBusy, isFalse);
+  });
+
   test('failed room send keeps draft for retry and close clears it', () async {
     final c = AppController()
       ..currentRoom = const Room(id: 'r1', code: 'ZWS-ABCDE', name: 'Kelas')

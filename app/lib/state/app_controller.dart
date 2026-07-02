@@ -913,6 +913,8 @@ class AppController extends ChangeNotifier {
   }
 
   void _resetProfileToGuest() {
+    closeRoomChannel(notify: false);
+    myRooms = [];
     profileName = 'Murid';
     profileHandle = '';
     profileId = '';
@@ -1134,6 +1136,9 @@ class AppController extends ChangeNotifier {
 
   @visibleForTesting
   void restoreForTest(Map<String, dynamic> json) => _restore(json);
+
+  @visibleForTesting
+  void resetProfileToGuestForTest() => _resetProfileToGuest();
 
   Future<void> _save() async {
     await _store.save({

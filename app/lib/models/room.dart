@@ -94,6 +94,21 @@ bool isGuruMentionPrefix(String token) {
       (normalized.startsWith('@') && '@guru'.startsWith(normalized));
 }
 
+/// Replaces the mention token around [caret] with `@Guru `.
+({String text, int caret}) insertGuruMention(String text, int caret) {
+  final safeCaret = caret < 0 ? text.length : caret.clamp(0, text.length);
+  final before = text.substring(0, safeCaret);
+  final after = text.substring(safeCaret);
+  final start = before.lastIndexOf(RegExp(r'\s'));
+  final tokenStart = start < 0 ? 0 : start + 1;
+  final nextText = '${before.substring(0, tokenStart)}@Guru $after'.replaceAll(
+    RegExp(r' {2,}'),
+    ' ',
+  );
+  final nextCaret = (tokenStart + 6).clamp(0, nextText.length).toInt();
+  return (text: nextText, caret: nextCaret);
+}
+
 /// Normalizes a typed invite code to canonical form (`ZWS-XXXXX`, uppercase).
 /// Accepts input with or without the `ZWS-` prefix and stray spaces/dashes.
 String normalizeRoomCode(String input) {

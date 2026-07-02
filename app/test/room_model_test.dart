@@ -25,6 +25,20 @@ void main() {
       expect(isGuruMentionPrefix('guru'), isFalse);
       expect(isGuruMentionPrefix('@gurun'), isFalse);
     });
+
+    test('inserts the Guru mention at the active token', () {
+      final plain = insertGuruMention('@', 1);
+      expect(plain.text, '@Guru ');
+      expect(plain.caret, 6);
+
+      final sentence = insertGuruMention('tolong @g jelaskan', 9);
+      expect(sentence.text, 'tolong @Guru jelaskan');
+      expect(sentence.caret, 13);
+
+      final noCaret = insertGuruMention('halo @', -1);
+      expect(noCaret.text, 'halo @Guru ');
+      expect(noCaret.caret, 11);
+    });
   });
 
   group('room code', () {
