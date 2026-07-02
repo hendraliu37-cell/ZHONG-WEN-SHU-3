@@ -37,8 +37,14 @@ class IdiomBank {
     try {
       final raw = await rootBundle.loadString('assets/packs/idioms.json');
       final data = jsonDecode(raw) as Map<String, dynamic>;
-      final cards = (data['cards'] as List).cast<Map<String, dynamic>>();
-      _ingest(cards.map(Idiom.fromJson));
+      final cards = data['cards'];
+      if (cards is List) {
+        _ingest(
+          cards.whereType<Map>().map(
+            (e) => Idiom.fromJson(Map<String, dynamic>.from(e)),
+          ),
+        );
+      }
     } catch (_) {
       // aset belum ada / gagal → bank kosong, fitur lain tetap jalan.
     }
@@ -49,29 +55,45 @@ class IdiomBank {
 
   int get count => _all.length;
 
-  static const int _maxLen = 8; // peribahasa terpanjang di bank ~8 hanzi (mis. 一分耕耘一分收获)
+  static const int _maxLen =
+      8; // peribahasa terpanjang di bank ~8 hanzi (mis. 一分耕耘一分收获)
 
   /// Idiom yang muncul dalam [text] (longest-match, tanpa tumpang tindih).
   List<Idiom> detect(String text) {
     final out = <Idiom>[];
     var i = 0;
     while (i < text.length) {
-      if (!kCjkChar.hasMatch(text[i])) { i++; continue; }
-      Idiom? hit; var len = 0;
+      if (!kCjkChar.hasMatch(text[i])) {
+        i++;
+        continue;
+      }
+      Idiom? hit;
+      var len = 0;
       final maxLen = math.min(_maxLen, text.length - i);
       for (var l = maxLen; l >= 2; l--) {
         final cand = text.substring(i, i + l);
         final e = _byHanzi[cand];
-        if (e != null) { hit = e; len = l; break; }
+        if (e != null) {
+          hit = e;
+          len = l;
+          break;
+        }
       }
-      if (hit != null) { out.add(hit); i += len; } else { i++; }
+      if (hit != null) {
+        out.add(hit);
+        i += len;
+      } else {
+        i++;
+      }
     }
     return out;
   }
 
   /// Pilih satu idiom untuk diajarkan (opsional per kategori).
   Idiom? randomForTeaching({String? cat}) {
-    final pool = cat == null ? _all : _all.where((e) => e.category == cat).toList();
+    final pool = cat == null
+        ? _all
+        : _all.where((e) => e.category == cat).toList();
     if (pool.isEmpty) return null;
     return pool[_rng.nextInt(pool.length)];
   }
@@ -79,13 +101,17 @@ class IdiomBank {
   /// Blok ringkas untuk disuntik ke prompt LLM.
   String contextBlock(List<Idiom> items) {
     final label = {'chengyu': '成语', 'yanyu': '谚语', 'suyu': '俗语'};
-    return items.map((e) {
-      final parts = <String>['${label[e.category] ?? ''} ${e.simplified} (${e.pinyin})'];
-      if (e.literal.isNotEmpty) parts.add('harfiah: "${e.literal}"');
-      parts.add('makna: ${e.meaning}');
-      if (e.exampleS.isNotEmpty) parts.add('contoh: ${e.exampleS}');
-      if (e.origin.isNotEmpty) parts.add('asal: ${e.origin}');
-      return parts.join('; ');
-    }).join('\n');
+    return items
+        .map((e) {
+          final parts = <String>[
+            '${label[e.category] ?? ''} ${e.simplified} (${e.pinyin})',
+          ];
+          if (e.literal.isNotEmpty) parts.add('harfiah: "${e.literal}"');
+          parts.add('makna: ${e.meaning}');
+          if (e.exampleS.isNotEmpty) parts.add('contoh: ${e.exampleS}');
+          if (e.origin.isNotEmpty) parts.add('asal: ${e.origin}');
+          return parts.join('; ');
+        })
+        .join('\n');
   }
 }
