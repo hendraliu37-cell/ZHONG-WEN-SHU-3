@@ -210,6 +210,53 @@ void main() {
     expect(c.messages.last.text, 'pesan 124');
   });
 
+  test('restore skips malformed history rows without dropping valid rows', () {
+    final c = AppController();
+
+    c.restoreForTest({
+      'cards': {
+        '1': {'s': '吃', 't': '吃', 'py': 'chi1', 'm': 'makan'},
+      },
+      'chatHistory': [
+        {'who': 'me', 'text': 'valid chat'},
+        {'who': 1, 'text': 99},
+      ],
+      'translateHistory': [
+        {
+          'source': '吃',
+          'translation': 'makan',
+          'from': 'zh',
+          'to': 'id',
+          'at': '2026-07-01T00:00:00.000',
+        },
+        {'source': 7, 'translation': 'rusak', 'at': 99},
+      ],
+      'testHistory': [
+        {
+          'id': 'ok',
+          'mode': 'mc',
+          'title': 'Tes valid',
+          'direction': 'zh2id',
+          'cardIds': [1],
+          'index': 0,
+          'score': 0,
+          'startedAt': '2026-07-01T00:00:00.000',
+          'updatedAt': '2026-07-01T00:01:00.000',
+        },
+        {
+          'id': 9,
+          'title': 99,
+          'cardIds': [1],
+        },
+      ],
+    });
+
+    expect(c.messages.map((m) => m.text), ['valid chat']);
+    expect(c.trHistory.single.source, '吃');
+    expect(c.trHistory.single.translation, 'makan');
+    expect(c.testHistory.single.id, 'ok');
+  });
+
   test('restore accepts legacy string ids for AI-focused learning cards', () {
     final c = AppController();
 

@@ -105,6 +105,32 @@ class TranslateHistoryItem {
   };
 }
 
+ChatMsg? _chatMsgFromJsonSafely(Map<dynamic, dynamic> raw) {
+  try {
+    return ChatMsg.fromJson(Map<String, dynamic>.from(raw));
+  } catch (_) {
+    return null;
+  }
+}
+
+TranslateHistoryItem? _translateHistoryFromJsonSafely(
+  Map<dynamic, dynamic> raw,
+) {
+  try {
+    return TranslateHistoryItem.fromJson(Map<String, dynamic>.from(raw));
+  } catch (_) {
+    return null;
+  }
+}
+
+TestHistoryItem? _testHistoryFromJsonSafely(Map<dynamic, dynamic> raw) {
+  try {
+    return TestHistoryItem.fromJson(Map<String, dynamic>.from(raw));
+  } catch (_) {
+    return null;
+  }
+}
+
 class TestHistoryItem {
   final String id;
   final String mode; // 'mc' | 'self' | 'spell'
@@ -929,7 +955,9 @@ class AppController extends ChangeNotifier {
     if (rows.isEmpty) return;
     final byId = {for (final h in testHistory) h.id: h};
     for (final row in rows) {
-      final incoming = _sanitizeTestHistoryItem(TestHistoryItem.fromJson(row));
+      final parsed = _testHistoryFromJsonSafely(row);
+      if (parsed == null) continue;
+      final incoming = _sanitizeTestHistoryItem(parsed);
       if (incoming == null) continue;
       final old = byId[incoming.id];
       if (old == null || incoming.updatedAt.isAfter(old.updatedAt)) {
@@ -1183,19 +1211,22 @@ class AppController extends ChangeNotifier {
     }
     final restoredMessages = (j['chatHistory'] as List? ?? [])
         .whereType<Map>()
-        .map((e) => ChatMsg.fromJson(Map<String, dynamic>.from(e)))
+        .map(_chatMsgFromJsonSafely)
+        .nonNulls
         .where((m) => m.text.trim().isNotEmpty)
         .toList();
     messages = _latestChatMessages(restoredMessages);
     trHistory = (j['translateHistory'] as List? ?? [])
         .whereType<Map>()
-        .map((e) => TranslateHistoryItem.fromJson(Map<String, dynamic>.from(e)))
+        .map(_translateHistoryFromJsonSafely)
+        .nonNulls
         .where((h) => h.source.trim().isNotEmpty && h.translation.isNotEmpty)
         .take(_maxTranslateHistory)
         .toList();
     testHistory = (j['testHistory'] as List? ?? [])
         .whereType<Map>()
-        .map((e) => TestHistoryItem.fromJson(Map<String, dynamic>.from(e)))
+        .map(_testHistoryFromJsonSafely)
+        .nonNulls
         .map(_sanitizeTestHistoryItem)
         .nonNulls
         .take(_maxTestHistory)
