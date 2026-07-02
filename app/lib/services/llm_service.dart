@@ -23,16 +23,34 @@ class LlmService {
     List<Map<String, String>> messages, {
     required String track,
     String level = 'HSK 1-2',
+    String? systemOverride,
+    double temperature = 0.8,
+    int maxTokens = 800,
   }) async {
+    final variant = track == 'traditional'
+        ? 'TRADITIONAL_ONLY: pakai hanzi tradisional. Jangan tulis simplified kecuali user minta bandingkan.'
+        : 'SIMPLIFIED_ONLY: pakai hanzi sederhana. Jangan tulis traditional kecuali user minta bandingkan.';
+    final system =
+        systemOverride ??
+        'Kamu Guru Mandarin untuk penutur Indonesia. Baca pesan user dan jawab sesuai konteks. '
+            'Ikuti track hanzi secara ketat: $variant '
+            'Format rapi, maksimal 4 blok pendek dengan label: Ringkas:, Contoh:, Catatan:, Latihan:. '
+            'Format kata baru: hanzi (pinyin) = arti Indonesia. Jangan pakai tabel, code fence, placeholder, atau emoji.';
+
     // 1. Try Supabase proxy
     final sb = _sb;
     if (sb != null) {
       try {
+        final proxyBody = <String, Object?>{
+          'messages': messages,
+          'track': track,
+          'level': level,
+          'temperature': temperature,
+          'max_tokens': maxTokens,
+        };
+        if (systemOverride != null) proxyBody['system'] = systemOverride;
         final res = await sb.functions
-            .invoke(
-              'llm-proxy',
-              body: {'messages': messages, 'track': track, 'level': level},
-            )
+            .invoke('llm-proxy', body: proxyBody)
             .timeout(const Duration(seconds: 30));
         final data = res.data;
         if (data is Map && data['reply'] is String) {
@@ -63,14 +81,6 @@ class LlmService {
       return null;
     }
 
-    final variant = track == 'traditional'
-        ? 'TRADITIONAL_ONLY: pakai hanzi tradisional. Jangan tulis simplified kecuali user minta bandingkan.'
-        : 'SIMPLIFIED_ONLY: pakai hanzi sederhana. Jangan tulis traditional kecuali user minta bandingkan.';
-    final system =
-        'Kamu Guru Mandarin untuk penutur Indonesia. Baca pesan user dan jawab sesuai konteks. '
-        'Ikuti track hanzi secara ketat: $variant '
-        'Format rapi, maksimal 4 blok pendek dengan label: Ringkas:, Contoh:, Catatan:, Latihan:. '
-        'Format kata baru: hanzi (pinyin) = arti Indonesia. Jangan pakai tabel, code fence, placeholder, atau emoji.';
     final body = [
       {'role': 'system', 'content': system},
       ...messages,
@@ -119,14 +129,14 @@ class LlmService {
                       'model': model,
                       'system': system,
                       'messages': messages,
-                      'temperature': 0.8,
-                      'max_tokens': 800,
+                      'temperature': temperature,
+                      'max_tokens': maxTokens,
                     })
                   : jsonEncode({
                       'model': model,
                       'messages': body,
-                      'temperature': 0.8,
-                      'max_tokens': 800,
+                      'temperature': temperature,
+                      'max_tokens': maxTokens,
                     }),
             )
             .timeout(const Duration(seconds: 30));

@@ -5,6 +5,7 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/vocab.dart';
+import 'llm_service.dart';
 
 /// One token of a translation's word-by-word breakdown.
 class TranslateToken {
@@ -76,6 +77,9 @@ class TranslationResult {
 /// The LLM handles full-sentence context and word choice; the dictionary enriches
 /// the per-word breakdown with pinyin/HSK level when available.
 class TranslationService {
+  TranslationService({LlmService? llm}) : _llm = llm ?? LlmService();
+
+  final LlmService _llm;
   final Map<String, _DictEntry> _dict = {};
   bool _loaded = false;
 
@@ -224,8 +228,8 @@ class TranslationService {
   ) async {
     final sb = _sb;
     if (sb == null) {
-      lastError = 'Supabase belum siap — mode offline';
-      return null;
+      lastError = 'Supabase belum siap - mode offline';
+      return _translateViaDirectLlm(text, from, to, track);
     }
     try {
       final res = await sb.functions
@@ -274,7 +278,93 @@ class TranslationService {
       lastError =
           'Koneksi gagal: ${e.toString().substring(0, math.min(80, e.toString().length))}';
     }
+    return _translateViaDirectLlm(text, from, to, track);
+  }
+
+  Future<TranslationResult?> _translateViaDirectLlm(
+    String text,
+    String from,
+    String to,
+    String track,
+  ) async {
+    final fromLabel = from == 'zh' ? 'Mandarin' : 'Indonesia';
+    final toLabel = to == 'zh' ? 'Mandarin' : 'Indonesia';
+    final variant = track == 'traditional'
+        ? 'Gunakan hanzi tradisional untuk semua output Mandarin.'
+        : 'Gunakan hanzi sederhana untuk semua output Mandarin.';
+    final system =
+        'Kamu mesin terjemahan Mandarin-Indonesia. Terjemahkan natural dan akurat. '
+        '$variant Balas hanya JSON valid tanpa markdown.';
+    final prompt =
+        'Terjemahkan teks dari $fromLabel ke $toLabel.\n'
+        'Teks: $text\n\n'
+        'Balas tepat dengan objek JSON: '
+        '{"translation":"...","pinyin":"...","tokens":[{"hanzi":"...","pinyin":"...","meaning":"...","hsk":1}]} '
+        'Kosongkan pinyin jika bukan output Mandarin. tokens boleh kosong kalau tidak relevan.';
+
+    final reply = await _llm.chat(
+      [
+        {'role': 'user', 'content': prompt},
+      ],
+      track: track,
+      level: 'translation',
+      systemOverride: system,
+      temperature: 0.2,
+      maxTokens: 700,
+    );
+    if (reply == null || reply.trim().isEmpty) {
+      if (_llm.lastError != null) lastError = 'Direct LLM: ${_llm.lastError}';
+      return null;
+    }
+    final data = _decodeJsonObject(reply);
+    final parsed = data == null ? null : _parseLlmTranslation(data);
+    if (parsed != null) {
+      lastError = null;
+      return parsed;
+    }
+    lastError = 'Direct LLM: format respons tidak valid';
     return null;
+  }
+
+  Map<String, dynamic>? _decodeJsonObject(String raw) {
+    var text = raw.trim();
+    if (text.startsWith('```')) {
+      text = text
+          .replaceFirst(RegExp(r'^```(?:json)?\s*', caseSensitive: false), '')
+          .replaceFirst(RegExp(r'\s*```$'), '')
+          .trim();
+    }
+    final start = text.indexOf('{');
+    final end = text.lastIndexOf('}');
+    if (start < 0 || end <= start) return null;
+    try {
+      final decoded = jsonDecode(text.substring(start, end + 1));
+      return decoded is Map ? Map<String, dynamic>.from(decoded) : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  TranslationResult? _parseLlmTranslation(Map data) {
+    final trans = (data['translation'] as String?)?.trim();
+    if (trans == null || trans.isEmpty) return null;
+    final tokens = (data['tokens'] as List? ?? []).map((e) {
+      if (e is Map) {
+        return TranslateToken.fromJson(Map<String, dynamic>.from(e));
+      }
+      return TranslateToken(hanzi: e.toString());
+    }).toList();
+    return TranslationResult(
+      translation: trans,
+      pinyin: (data['pinyin'] as String?)?.trim().isNotEmpty == true
+          ? data['pinyin'] as String
+          : null,
+      alternatives: (data['alternatives'] as List? ?? [])
+          .whereType<Map>()
+          .map((e) => TranslateToken.fromJson(Map<String, dynamic>.from(e)))
+          .toList(),
+      tokens: tokens.map(_enrich).toList(),
+    );
   }
 
   // === Dictionary fallback (offline) ===

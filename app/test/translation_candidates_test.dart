@@ -1,7 +1,29 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zhongwen_shu/services/llm_service.dart';
 import 'package:zhongwen_shu/services/translation_service.dart';
 
 void main() {
+  test(
+    'AI translate falls back to direct LLM JSON when proxy is unavailable',
+    () async {
+      final service = TranslationService(
+        llm: _FakeLlmService('''```json
+{"translation":"你好","pinyin":"ni3 hao3","tokens":[{"hanzi":"你好","pinyin":"ni3 hao3","meaning":"halo","hsk":1}]}
+```'''),
+      );
+
+      final result = await service.translate('halo', from: 'id', to: 'zh');
+
+      expect(result, isNotNull);
+      expect(result!.translation, '你好');
+      expect(result.pinyin, 'ni3 hao3');
+      expect(result.tokens.single.hanzi, '你好');
+      expect(result.tokens.single.meaning, 'halo');
+      expect(result.tokens.single.hsk, 1);
+      expect(service.lastError, isNull);
+    },
+  );
+
   test(
     'Indonesian halo prefers the common greeting before phone hello',
     () async {
@@ -193,4 +215,23 @@ void main() {
       expect(service.lastError, contains('Hanzi'));
     },
   );
+}
+
+class _FakeLlmService extends LlmService {
+  final String? reply;
+  _FakeLlmService(this.reply);
+
+  @override
+  Future<String?> chat(
+    List<Map<String, String>> messages, {
+    required String track,
+    String level = 'HSK 1-2',
+    String? systemOverride,
+    double temperature = 0.8,
+    int maxTokens = 800,
+  }) async {
+    expect(level, 'translation');
+    expect(systemOverride, isNotNull);
+    return reply;
+  }
 }
