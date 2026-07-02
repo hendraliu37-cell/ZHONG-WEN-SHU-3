@@ -158,6 +158,12 @@ class DeckIoService {
   List<List<String>> readDelimitedForTest(String text) => _readDelimited(text);
 
   @visibleForTesting
+  List<List<String>> readExcelForTest(List<int> bytes) => _readExcel(bytes);
+
+  @visibleForTesting
+  List<int> buildExcelForTest(Iterable<VocabEntry> cards) => _buildExcel(cards);
+
+  @visibleForTesting
   List<VocabEntry> rowsToCardsForTest(List<List<String>> rows) =>
       _rowsToCards(rows);
 
@@ -256,6 +262,14 @@ class DeckIoService {
       'mandarin',
       'zh',
       'zhongwen',
+      'expression',
+      'expressions',
+      'characters',
+      'character',
+      'vocab',
+      'vocabulary',
+      'headword',
+      'headwords',
       'word',
       'term',
       'question',
@@ -276,8 +290,12 @@ class DeckIoService {
       'translation',
       'translations',
       'translation_english',
+      'translation_indonesian',
+      'indonesian_translation',
       'definitions',
       'english_definition',
+      'gloss',
+      'glosses',
       'english',
       'indonesian',
       'indonesia',
@@ -298,7 +316,7 @@ class DeckIoService {
     return VocabEntry.fromJson({
       's': simplified,
       't': traditional.isEmpty ? simplified : traditional,
-      'py': get(row, ['pinyin', 'py', 'reading']),
+      'py': get(row, ['pinyin', 'py', 'reading', 'pronunciation']),
       'zy': get(row, ['zhuyin', 'zy', 'bopomofo']),
       'm': VocabEntry.splitMeanings(meaning).join(' / '),
       'exs': get(row, ['example_s', 'examples', 'example']),
@@ -404,14 +422,26 @@ class DeckIoService {
     'mandarin',
     'zh',
     'zhongwen',
+    'expression',
+    'expressions',
+    'characters',
+    'character',
+    'vocab',
+    'vocabulary',
+    'headword',
+    'headwords',
     'word',
     'term',
     'definition',
     'translation',
     'translation_english',
+    'translation_indonesian',
+    'indonesian_translation',
     'translations',
     'definitions',
     'english_definition',
+    'gloss',
+    'glosses',
     'english',
     'indonesian',
     'indonesia',
@@ -420,6 +450,7 @@ class DeckIoService {
     'pinyin',
     'py',
     'reading',
+    'pronunciation',
     'zhuyin',
     'zy',
     'bopomofo',

@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zhongwen_shu/models/vocab.dart';
 import 'package:zhongwen_shu/services/deck_io_service.dart';
 
 void main() {
@@ -58,6 +59,36 @@ void main() {
     expect(cards.first.meaning, 'makan');
     expect(cards.last.simplified, '喝');
     expect(cards.last.meaning, 'minum');
+  });
+
+  test('imports common Anki Mandarin expression headers', () {
+    final service = DeckIoService();
+    final rows = service.readDelimitedForTest(
+      'Expression,Reading,Meaning\n学习,xue2 xi2,belajar\n吃饭,chi1 fan4,makan',
+    );
+    final cards = service.rowsToCardsForTest(rows);
+
+    expect(cards, hasLength(2));
+    expect(cards.first.simplified, '学习');
+    expect(cards.first.pinyin, 'xue2 xi2');
+    expect(cards.first.meaning, 'belajar');
+    expect(cards.last.simplified, '吃饭');
+    expect(cards.last.meaning, 'makan');
+  });
+
+  test('imports character pronunciation gloss headers', () {
+    final service = DeckIoService();
+    final rows = service.readDelimitedForTest(
+      'Characters,Pronunciation,Gloss\n水,shui3,air\n老师,lao3 shi1,guru',
+    );
+    final cards = service.rowsToCardsForTest(rows);
+
+    expect(cards, hasLength(2));
+    expect(cards.first.simplified, '水');
+    expect(cards.first.pinyin, 'shui3');
+    expect(cards.first.meaning, 'air');
+    expect(cards.last.simplified, '老师');
+    expect(cards.last.meaning, 'guru');
   });
 
   test('imports common Simplified Chinese header names', () {
@@ -171,5 +202,42 @@ void main() {
     expect(cards.last.simplified, '你好');
     expect(cards.last.pinyin, 'nǐ hǎo');
     expect(cards.last.meaning, 'halo');
+  });
+
+  test('roundtrips exported Excel rows back into cards', () {
+    final service = DeckIoService();
+    final bytes = service.buildExcelForTest([
+      const VocabEntry(
+        simplified: '学习',
+        traditional: '學習',
+        pinyin: 'xue2 xi2',
+        zhuyin: 'ㄒㄩㄝˊ ㄒㄧˊ',
+        meaning: 'belajar / studi',
+        exampleS: '我学习中文。',
+        exampleT: '我學習中文。',
+        exampleId: 'Saya belajar Mandarin.',
+        tone: 2,
+        hskLevel: 1,
+        tocflLevel: 2,
+      ),
+    ]);
+
+    final rows = service.readExcelForTest(bytes);
+    final cards = service.rowsToCardsForTest(rows);
+
+    expect(rows.first.take(5), [
+      'simplified',
+      'traditional',
+      'pinyin',
+      'zhuyin',
+      'meaning',
+    ]);
+    expect(cards, hasLength(1));
+    expect(cards.single.simplified, '学习');
+    expect(cards.single.traditional, '學習');
+    expect(cards.single.pinyin, 'xue2 xi2');
+    expect(cards.single.meaning, 'belajar / studi');
+    expect(cards.single.hskLevel, 1);
+    expect(cards.single.tocflLevel, 2);
   });
 }
