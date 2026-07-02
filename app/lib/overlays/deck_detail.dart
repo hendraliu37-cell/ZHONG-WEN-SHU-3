@@ -499,6 +499,9 @@ class _InlineCardDetail extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = ZwsTheme.of(context);
     final hanzi = controller.primaryHanzi(card);
+    final example = controller.usesTraditionalHanzi && card.exampleT.isNotEmpty
+        ? card.exampleT
+        : card.exampleS;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(58, 0, 12, 12),
@@ -524,22 +527,23 @@ class _InlineCardDetail extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Text(
+                  child: SelectableText(
                     card.meanings.join(' / '),
                     style: ZwsFonts.sans(size: 13, color: t.ink, height: 1.35),
                   ),
                 ),
               ],
             ),
-            if (card.exampleS.isNotEmpty || card.exampleId.isNotEmpty) ...[
+            if (example.isNotEmpty || card.exampleId.isNotEmpty) ...[
               const SizedBox(height: 9),
-              if (card.exampleS.isNotEmpty)
-                Han(card.exampleS, size: 17, color: t.ink, height: 1.32),
+              if (example.isNotEmpty)
+                SelectableText(
+                  example,
+                  style: ZwsFonts.han(size: 17, color: t.ink, height: 1.32),
+                ),
               if (card.exampleId.isNotEmpty)
-                Text(
+                SelectableText(
                   card.exampleId,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                   style: ZwsFonts.sans(size: 12, color: t.ink2, height: 1.35),
                 ),
             ],

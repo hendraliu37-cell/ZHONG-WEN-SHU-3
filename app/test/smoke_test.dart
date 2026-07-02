@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:zhongwen_shu/config.dart';
@@ -12,8 +13,9 @@ void main() {
     zwsSupabaseReady = false; // force offline guest mode for tests
   });
 
-  testWidgets('app boots, onboards, navigates all tabs and a review flow',
-      (tester) async {
+  testWidgets('app boots, onboards, navigates all tabs and a review flow', (
+    tester,
+  ) async {
     SharedPreferences.setMockInitialValues({});
     await tester.pumpWidget(const ProviderScope(child: ZwsApp()));
     // Wait for app to load onboarding
@@ -56,6 +58,14 @@ void main() {
     await tester.tap(find.text('Sapaan & Sopan Santun'));
     await tester.pumpAndSettle();
     expect(find.text('Review'), findsWidgets);
+    await tester.tap(find.text('halo').first);
+    await tester.pumpAndSettle();
+    expect(
+      find.byWidgetPredicate(
+        (w) => w is SelectableText && w.data == 'halo / apa kabar',
+      ),
+      findsOneWidget,
+    );
 
     await tester.tap(find.text('Review').first);
     await tester.pumpAndSettle();
