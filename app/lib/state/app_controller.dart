@@ -1525,10 +1525,20 @@ class AppController extends ChangeNotifier {
 
   /// Removes a deck. If it was an installed pack, frees it for re-download.
   void deleteDeck(String id) {
+    Deck? removed;
+    for (final deck in decks) {
+      if (deck.id == id) {
+        removed = deck;
+        break;
+      }
+    }
     decks.removeWhere((d) => d.id == id);
     if (openDeckId == id) openDeckId = null;
     if (sub == 'deck') sub = null;
     if (id.startsWith('pack_')) installedPacks.remove(id.substring(5));
+    if (removed != null) {
+      _removeCardsIfUnreferenced(removed.cardIds, exceptDeckId: id);
+    }
     notifyListeners();
     _save();
   }

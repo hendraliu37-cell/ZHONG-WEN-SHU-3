@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zhongwen_shu/models/deck.dart';
 import 'package:zhongwen_shu/models/room.dart';
 import 'package:zhongwen_shu/models/vocab.dart';
+import 'package:zhongwen_shu/srs/fsrs.dart';
 import 'package:zhongwen_shu/state/app_controller.dart';
 
 VocabEntry _vocab(int i) => VocabEntry(
@@ -334,6 +335,31 @@ void main() {
     c.startTone();
     expect(c.sessionCards, containsAll([2, 1]));
   });
+
+  test(
+    'deleting a deck removes only unreferenced cards from practice pool',
+    () {
+      final c = AppController();
+      for (var i = 0; i < 3; i++) {
+        c.cards[i] = _vocab(i);
+        c.srs[i] = SrsState();
+      }
+      c.decks.addAll([
+        Deck(id: 'a', displayIdx: '01', name: 'A', cardIds: [0, 1]),
+        Deck(id: 'b', displayIdx: '02', name: 'B', cardIds: [1, 2]),
+      ]);
+
+      c.deleteDeck('a');
+
+      expect(c.decks.map((d) => d.id), ['b']);
+      expect(c.cards.containsKey(0), isFalse);
+      expect(c.srs.containsKey(0), isFalse);
+      expect(c.cards.containsKey(1), isTrue);
+      expect(c.srs.containsKey(1), isTrue);
+      expect(c.smartPracticeBase(), isNot(contains(0)));
+      expect(c.smartPracticeBase(), containsAll([1, 2]));
+    },
+  );
 
   test('back handler closes leaderboard and active group room', () {
     final c = AppController();
