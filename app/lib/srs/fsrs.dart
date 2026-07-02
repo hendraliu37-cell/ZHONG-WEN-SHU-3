@@ -45,24 +45,66 @@ class SrsState {
   bool isDue(DateTime now) => !isNew && !due.isAfter(now);
 
   Map<String, dynamic> toJson() => {
-        's': stability,
-        'd': difficulty,
-        'due': due.toIso8601String(),
-        'last': lastReview?.toIso8601String(),
-        'reps': reps,
-        'lapses': lapses,
-        'new': isNew,
-      };
+    's': stability,
+    'd': difficulty,
+    'due': due.toIso8601String(),
+    'last': lastReview?.toIso8601String(),
+    'reps': reps,
+    'lapses': lapses,
+    'new': isNew,
+  };
 
   factory SrsState.fromJson(Map<String, dynamic> j) => SrsState(
-        stability: (j['s'] as num).toDouble(),
-        difficulty: (j['d'] as num).toDouble(),
-        due: DateTime.parse(j['due'] as String),
-        lastReview: j['last'] == null ? null : DateTime.parse(j['last'] as String),
-        reps: j['reps'] as int,
-        lapses: j['lapses'] as int,
-        isNew: (j['new'] ?? false) as bool,
-      );
+    stability: _doubleOf(j['s'], min: 0),
+    difficulty: _doubleOf(j['d'], min: 0),
+    due: _dateOf(j['due']) ?? DateTime.now(),
+    lastReview: _dateOf(j['last']),
+    reps: _intOf(j['reps'], min: 0),
+    lapses: _intOf(j['lapses'], min: 0),
+    isNew: _boolOf(j['new'], fallback: false),
+  );
+}
+
+double _doubleOf(Object? value, {double min = double.negativeInfinity}) {
+  double? parsed;
+  if (value is num) {
+    parsed = value.toDouble();
+  } else if (value is String) {
+    parsed = double.tryParse(value.trim());
+  }
+  if (parsed == null || parsed.isNaN || parsed.isInfinite) return min;
+  return parsed < min ? min : parsed;
+}
+
+int _intOf(Object? value, {int min = -0x7fffffffffffffff}) {
+  int? parsed;
+  if (value is int) {
+    parsed = value;
+  } else if (value is num) {
+    parsed = value.toInt();
+  } else if (value is String) {
+    final text = value.trim();
+    parsed = int.tryParse(text) ?? double.tryParse(text)?.toInt();
+  }
+  if (parsed == null) return min;
+  return parsed < min ? min : parsed;
+}
+
+bool _boolOf(Object? value, {required bool fallback}) {
+  if (value is bool) return value;
+  if (value is num) return value != 0;
+  if (value is String) {
+    final text = value.trim().toLowerCase();
+    if (text == 'true' || text == '1') return true;
+    if (text == 'false' || text == '0') return false;
+  }
+  return fallback;
+}
+
+DateTime? _dateOf(Object? value) {
+  if (value is DateTime) return value;
+  if (value is! String) return null;
+  return DateTime.tryParse(value.trim());
 }
 
 /// FSRS-4.5 scheduler (pure Dart, offline). Implements the canonical
@@ -84,8 +126,7 @@ class Fsrs {
 
   double _clampD(double d) => d.clamp(1.0, 10.0);
 
-  double _initDifficulty(int g) =>
-      _clampD(w[4] - math.exp(w[5] * (g - 1)) + 1);
+  double _initDifficulty(int g) => _clampD(w[4] - math.exp(w[5] * (g - 1)) + 1);
 
   double _initStability(int g) => math.max(w[g - 1], 0.1);
 
@@ -104,7 +145,8 @@ class Fsrs {
   double _nextStabilityRecall(double d, double s, double r, int g) {
     final hardPenalty = g == Grade.hard.value ? w[15] : 1.0;
     final easyBonus = g == Grade.easy.value ? w[16] : 1.0;
-    final inc = math.exp(w[8]) *
+    final inc =
+        math.exp(w[8]) *
         (11 - d) *
         math.pow(s, -w[9]) *
         (math.exp(w[10] * (1 - r)) - 1) *
@@ -121,8 +163,8 @@ class Fsrs {
   }
 
   double _intervalDays(double stability) {
-    final ivl = (stability / factor) *
-        (math.pow(requestRetention, 1 / decay) - 1);
+    final ivl =
+        (stability / factor) * (math.pow(requestRetention, 1 / decay) - 1);
     return ivl.clamp(1.0, maximumIntervalDays);
   }
 
@@ -151,10 +193,18 @@ class Fsrs {
       next.difficulty = _nextDifficulty(prev.difficulty, g);
       if (g == Grade.again.value) {
         next.lapses = prev.lapses + 1;
-        next.stability = _nextStabilityForget(prev.difficulty, prev.stability, r);
+        next.stability = _nextStabilityForget(
+          prev.difficulty,
+          prev.stability,
+          r,
+        );
       } else {
-        next.stability =
-            _nextStabilityRecall(prev.difficulty, prev.stability, r, g);
+        next.stability = _nextStabilityRecall(
+          prev.difficulty,
+          prev.stability,
+          r,
+          g,
+        );
       }
     }
 

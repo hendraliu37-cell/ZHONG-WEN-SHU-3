@@ -353,4 +353,48 @@ void main() {
     expect(c.testHistory, isEmpty);
     expect(c.aiFocusCardIds, isEmpty);
   });
+
+  test('restore tolerates malformed SRS rows without dropping cards', () {
+    final c = AppController();
+
+    expect(
+      () => c.restoreForTest({
+        'cards': {
+          '1': {'s': '\u5403', 't': '\u5403', 'py': 'chi1', 'm': 'makan'},
+          '2': {'s': '\u559d', 't': '\u559d', 'py': 'he1', 'm': 'minum'},
+        },
+        'srs': {
+          '1': {
+            's': '9.5',
+            'd': '2.25',
+            'due': 'bad-date',
+            'last': 99,
+            'reps': '4',
+            'lapses': -3,
+            'new': 'false',
+          },
+          '2': {
+            's': null,
+            'd': null,
+            'due': null,
+            'reps': null,
+            'lapses': null,
+            'new': 'true',
+          },
+        },
+      }),
+      returnsNormally,
+    );
+
+    expect(c.cards.keys.toList()..sort(), [1, 2]);
+    expect(c.srs[1]!.stability, 9.5);
+    expect(c.srs[1]!.difficulty, 2.25);
+    expect(c.srs[1]!.reps, 4);
+    expect(c.srs[1]!.lapses, 0);
+    expect(c.srs[1]!.isNew, isFalse);
+    expect(c.srs[2]!.stability, 0);
+    expect(c.srs[2]!.difficulty, 0);
+    expect(c.srs[2]!.reps, 0);
+    expect(c.srs[2]!.isNew, isTrue);
+  });
 }
