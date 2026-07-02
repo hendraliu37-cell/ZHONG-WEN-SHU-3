@@ -158,15 +158,16 @@ class TranslationService {
   /// Load the full combined dictionary (13K+ entries) from assets.
   void loadFromCards(Iterable<Map<String, dynamic>> cards) {
     for (final c in cards) {
-      final s = (c['s'] ?? '') as String;
-      final t = VocabEntry.normalizeModernTraditional((c['t'] ?? s) as String);
+      final s = _stringish(c['s']);
       if (s.isEmpty) continue;
+      final rawT = _stringish(c['t']);
+      final t = VocabEntry.normalizeModernTraditional(rawT.isEmpty ? s : rawT);
       final entry = _DictEntry(
         simplified: s,
         traditional: t,
-        pinyin: (c['py'] ?? '') as String,
-        meaning: (c['m'] ?? '') as String,
-        hsk: c['hsk'] is int ? c['hsk'] as int : null,
+        pinyin: _stringish(c['py']),
+        meaning: _stringish(c['m']),
+        hsk: _intish(c['hsk']),
       );
       _dict[s] = entry;
       if (t != s) _dict[t] = entry;
@@ -180,7 +181,7 @@ class TranslationService {
       final raw = await rootBundle.loadString('assets/packs/dictionary.json');
       final list = jsonDecode(raw) as List;
       loadFromCards(
-        list.map((e) => Map<String, dynamic>.from(e as Map)).toList(),
+        list.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList(),
       );
     } catch (e) {
       if (kDebugMode) debugPrint('[dict] dictionary.json load failed: $e');

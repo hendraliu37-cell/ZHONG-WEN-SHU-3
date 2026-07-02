@@ -246,6 +246,26 @@ void main() {
     expect(result.tokens.first.meaning, 'makan');
   });
 
+  test('dictionary loader accepts loose card field values', () async {
+    final service = TranslationService();
+    service.loadFromCards([
+      {'s': '\u559d', 't': null, 'py': 123, 'm': 456, 'hsk': '2.0'},
+      {'s': '', 't': '\u58de', 'py': 'huai4', 'm': 'rusak'},
+    ]);
+
+    final result = await service.translate(
+      '\u559d',
+      from: 'zh',
+      to: 'id',
+      engine: 'dict',
+    );
+
+    expect(result, isNotNull);
+    expect(result!.translation, 'minum');
+    expect(result.pinyin, '123');
+    expect(result.tokens.single.hsk, 2);
+  });
+
   test('Chinese fallback ignores punctuation and latin runs', () async {
     final service = TranslationService();
     service.loadFromCards([
