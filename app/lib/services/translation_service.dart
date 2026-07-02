@@ -31,12 +31,12 @@ class TranslateToken {
   ];
 
   factory TranslateToken.fromJson(Map j) {
-    final m = (j['meaning'] ?? j['m'] ?? '').toString();
+    final m = _stringish(j['meaning'] ?? j['m']);
     final split = VocabEntry.splitMeanings(m);
-    final alts = (j['altMeanings'] ?? j['alts'] ?? []) as List;
+    final alts = _stringListish(j['altMeanings'] ?? j['alts']);
     return TranslateToken(
-      hanzi: (j['hanzi'] ?? j['h'] ?? j['z'] ?? '').toString(),
-      pinyin: (j['pinyin'] ?? j['py'] ?? '').toString(),
+      hanzi: _stringish(j['hanzi'] ?? j['h'] ?? j['z']),
+      pinyin: _stringish(j['pinyin'] ?? j['py']),
       meaning: split.isEmpty ? m : split.first,
       hsk: _intish(j['hsk']),
       altMeanings: [
@@ -58,6 +58,17 @@ class TranslateToken {
     hsk: hsk ?? this.hsk,
     altMeanings: altMeanings ?? this.altMeanings,
   );
+}
+
+String _stringish(Object? value) => value?.toString().trim() ?? '';
+
+List<String> _stringListish(Object? value) {
+  if (value is List) {
+    return value.map(_stringish).where((text) => text.isNotEmpty).toList();
+  }
+  final text = _stringish(value);
+  if (text.isEmpty) return const [];
+  return VocabEntry.splitMeanings(text);
 }
 
 int? _intish(Object? value) {
@@ -263,12 +274,7 @@ class TranslationService {
         } else if (data['translation'] is String) {
           final trans = (data['translation'] as String).trim();
           if (trans.isNotEmpty) {
-            final tokens = (data['tokens'] as List? ?? []).map((e) {
-              if (e is Map) {
-                return TranslateToken.fromJson(Map<String, dynamic>.from(e));
-              }
-              return TranslateToken(hanzi: e.toString());
-            }).toList();
+            final tokens = _tokensFromJson(data['tokens']);
             final enriched = tokens.map(_enrich).toList();
             return TranslationResult(
               translation: trans,
@@ -355,23 +361,29 @@ class TranslationService {
   TranslationResult? _parseLlmTranslation(Map data) {
     final trans = (data['translation'] as String?)?.trim();
     if (trans == null || trans.isEmpty) return null;
-    final tokens = (data['tokens'] as List? ?? []).map((e) {
-      if (e is Map) {
-        return TranslateToken.fromJson(Map<String, dynamic>.from(e));
-      }
-      return TranslateToken(hanzi: e.toString());
-    }).toList();
+    final tokens = _tokensFromJson(data['tokens']);
     return TranslationResult(
       translation: trans,
       pinyin: (data['pinyin'] as String?)?.trim().isNotEmpty == true
           ? data['pinyin'] as String
           : null,
-      alternatives: (data['alternatives'] as List? ?? [])
-          .whereType<Map>()
-          .map((e) => TranslateToken.fromJson(Map<String, dynamic>.from(e)))
-          .toList(),
+      alternatives: _tokensFromJson(data['alternatives']),
       tokens: tokens.map(_enrich).toList(),
     );
+  }
+
+  List<TranslateToken> _tokensFromJson(Object? value) {
+    if (value is! List) return const [];
+    return value
+        .map((e) {
+          if (e is Map) {
+            return TranslateToken.fromJson(Map<String, dynamic>.from(e));
+          }
+          final hanzi = _stringish(e);
+          return hanzi.isEmpty ? null : TranslateToken(hanzi: hanzi);
+        })
+        .nonNulls
+        .toList();
   }
 
   // === Dictionary fallback (offline) ===

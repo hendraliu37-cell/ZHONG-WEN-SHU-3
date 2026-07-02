@@ -56,6 +56,46 @@ void main() {
     expect(result!.tokens.single.hsk, 1);
   });
 
+  test('AI translate accepts loose token alternatives from JSON', () async {
+    final service = TranslationService(
+      llm: _FakeLlmService(
+        '{"translation":"\\u5403","tokens":[{"hanzi":"\\u5403","meaning":"makan / makan nasi","alts":"bersantap / konsumsi"}],"alternatives":"ignored"}',
+      ),
+    );
+
+    final result = await service.translate('makan', from: 'id', to: 'zh');
+
+    expect(result, isNotNull);
+    expect(result!.translation, '\u5403');
+    expect(result.tokens.single.meaning, 'makan');
+    expect(result.tokens.single.altMeanings, [
+      'makan nasi',
+      'bersantap',
+      'konsumsi',
+    ]);
+    expect(result.alternatives, isEmpty);
+  });
+
+  test(
+    'AI translate ignores malformed token container without failing',
+    () async {
+      final service = TranslationService(
+        llm: _FakeLlmService('{"translation":"halo","tokens":"not-a-list"}'),
+      );
+
+      final result = await service.translate(
+        '\u4f60\u597d',
+        from: 'zh',
+        to: 'id',
+      );
+
+      expect(result, isNotNull);
+      expect(result!.translation, 'halo');
+      expect(result.tokens, isEmpty);
+      expect(service.lastError, isNull);
+    },
+  );
+
   test(
     'Indonesian halo prefers the common greeting before phone hello',
     () async {
