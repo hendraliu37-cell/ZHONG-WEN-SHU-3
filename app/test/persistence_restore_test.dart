@@ -271,4 +271,40 @@ void main() {
     expect(c.aiFocusCardIds, [2, 1]);
     expect(c.smartPracticeBase(limit: 2), [2, 1]);
   });
+
+  test('restore normalizes invalid preference values', () {
+    final c = AppController();
+
+    c.restoreForTest({
+      'themeMode': 'neon',
+      'track': 'trad',
+      'primary': 'classic',
+    });
+
+    expect(c.themeMode, 'system');
+    expect(c.track, 'both');
+    expect(c.primary, 'simplified');
+  });
+
+  test('restore keeps primary aligned when track is not both', () {
+    final simplified = AppController();
+    simplified.restoreForTest({
+      'track': 'simplified',
+      'primary': 'traditional',
+    });
+
+    expect(simplified.track, 'simplified');
+    expect(simplified.primary, 'simplified');
+    expect(simplified.usesTraditionalHanzi, isFalse);
+
+    final traditional = AppController();
+    traditional.restoreForTest({
+      'track': 'traditional',
+      'primary': 'simplified',
+    });
+
+    expect(traditional.track, 'traditional');
+    expect(traditional.primary, 'traditional');
+    expect(traditional.usesTraditionalHanzi, isTrue);
+  });
 }

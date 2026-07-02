@@ -1174,9 +1174,22 @@ class AppController extends ChangeNotifier {
 
   void _restore(Map<String, dynamic> j) {
     onboarded = j['onboarded'] as bool? ?? false;
-    themeMode = j['themeMode'] as String? ?? 'system';
-    track = j['track'] as String? ?? 'both';
-    primary = j['primary'] as String? ?? 'simplified';
+    themeMode = _oneOf(j['themeMode'], const {
+      'system',
+      'light',
+      'dark',
+    }, fallback: 'system');
+    track = _oneOf(j['track'], const {
+      'simplified',
+      'traditional',
+      'both',
+    }, fallback: 'both');
+    primary = track == 'both'
+        ? _oneOf(j['primary'], const {
+            'simplified',
+            'traditional',
+          }, fallback: 'simplified')
+        : track;
     zhuyin = j['zhuyin'] as bool? ?? true;
     xp = j['xp'] as int? ?? 0;
     streak = j['streak'] as int? ?? 0;
@@ -1256,6 +1269,15 @@ class AppController extends ChangeNotifier {
     if (key is int) return key;
     if (key is num) return key.toInt();
     return int.tryParse(key?.toString() ?? '');
+  }
+
+  String _oneOf(
+    Object? value,
+    Set<String> allowed, {
+    required String fallback,
+  }) {
+    final text = value?.toString();
+    return text != null && allowed.contains(text) ? text : fallback;
   }
 
   List<ChatMsg> _latestChatMessages(List<ChatMsg> items) {
