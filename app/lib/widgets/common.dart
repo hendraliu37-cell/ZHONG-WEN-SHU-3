@@ -193,20 +193,27 @@ class _SquareButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = ZwsTheme.of(context);
-    return Material(
-      color: t.surface,
-      borderRadius: BorderRadius.circular(10),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
+    return Tooltip(
+      message: 'Kembali',
+      child: Semantics(
+        button: true,
+        label: 'Kembali',
+        child: Material(
+          color: t.surface,
+          borderRadius: BorderRadius.circular(10),
+          child: InkWell(
+            onTap: onTap,
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: t.line),
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: t.line),
+              ),
+              child: Icon(icon, size: 20, color: t.ink2),
+            ),
           ),
-          child: Icon(icon, size: 20, color: t.ink2),
         ),
       ),
     );

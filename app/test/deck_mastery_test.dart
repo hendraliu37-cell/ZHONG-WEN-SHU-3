@@ -381,6 +381,21 @@ void main() {
     expect(c.sessionCards, containsAll([2, 1]));
   });
 
+  test('daily tests prefer recent AI learning over stale deck base cards', () {
+    final c = AppController();
+    for (var i = 0; i < 5; i++) {
+      c.cards[i] = _vocab(i);
+    }
+    c.baseCards = [0, 3, 4];
+    c.aiFocusCardIds = [2, 1];
+    c.qCount = 2;
+
+    c.goDailyTest();
+
+    expect(c.baseCards.take(2), [2, 1]);
+    expect(c.currentQuestionMax, 5);
+  });
+
   test(
     'deleting a deck removes only unreferenced cards from practice pool',
     () {

@@ -285,6 +285,66 @@ final Map<String, String> _tradToSimp = {
   for (final e in _simpToTrad.entries) e.value: e.key,
 };
 
+const Map<String, String> _extraSimpToTrad = {
+  '\u53d1': '\u767c',
+  '\u590d': '\u5fa9',
+  '\u4e60': '\u7fd2',
+  '\u5e08': '\u5e2b',
+  '\u4f53': '\u9ad4',
+  '\u96be': '\u96e3',
+  '\u7b80': '\u7c21',
+  '\u8fb9': '\u908a',
+  '\u8fbe': '\u9054',
+  '\u8fdc': '\u9060',
+  '\u8fd1': '\u8fd1',
+  '\u9009': '\u9078',
+  '\u8fd9': '\u9019',
+  '\u8fdb': '\u9032',
+  '\u8fde': '\u9023',
+  '\u8fd0': '\u904b',
+  '\u8fd8': '\u9084',
+  '\u90a3': '\u90a3',
+  '\u4e48': '\u9ebc',
+  '\u56fe': '\u5716',
+  '\u5904': '\u8655',
+  '\u5e94': '\u61c9',
+  '\u5f53': '\u7576',
+  '\u60f3': '\u60f3',
+  '\u610f': '\u610f',
+  '\u4e49': '\u7fa9',
+  '\u5f00': '\u958b',
+  '\u4e1a': '\u696d',
+  '\u4e1c': '\u6771',
+  '\u4e24': '\u5169',
+  '\u5e38': '\u5e38',
+  '\u89c1': '\u898b',
+  '\u8ba4': '\u8a8d',
+  '\u8ba9': '\u8b93',
+  '\u8bb0': '\u8a18',
+  '\u8bb2': '\u8b1b',
+  '\u8bfe': '\u8ab2',
+  '\u8c03': '\u8abf',
+  '\u8bed': '\u8a9e',
+  '\u8bd5': '\u8a66',
+  '\u9519': '\u932f',
+  '\u957f': '\u9577',
+};
+
+final Map<String, String> _extraTradToSimp = {
+  for (final e in _extraSimpToTrad.entries) e.value: e.key,
+};
+
+const Map<String, String> _extraSimpPhraseToTrad = {
+  '\u590d\u4e60': '\u8907\u7fd2',
+  '\u590d\u6742': '\u8907\u96dc',
+  '\u56de\u590d': '\u56de\u8986',
+  '\u6062\u590d': '\u6062\u5fa9',
+};
+
+final Map<String, String> _extraTradPhraseToSimp = {
+  for (final e in _extraSimpPhraseToTrad.entries) e.value: e.key,
+};
+
 String formatTutorReplyForDisplay(
   String text, {
   required String track,
@@ -315,15 +375,7 @@ String _formatTutorReply(String raw) {
       .toList();
   final lines = <String>[];
   for (final line in rawLines) {
-    final chunks = line
-        .split(
-          RegExp(
-            r'\s+(?=(Ringkas|Contoh|Catatan|Latihan)\b\s*:?)',
-            caseSensitive: false,
-          ),
-        )
-        .map((part) => part.trim())
-        .where((part) => part.isNotEmpty);
+    final chunks = _splitTutorChunks(line);
     lines.addAll(chunks);
   }
 
@@ -401,13 +453,28 @@ Iterable<String> _expandTutorLine(String line) sync* {
     if (joined.isNotEmpty) yield joined;
     return;
   }
-  cleaned = cleaned.replaceFirst(RegExp(r'^\s*[-*]\s+'), '').trim();
+  cleaned = cleaned
+      .replaceFirst(RegExp(r'^\s*[-*\u2022]\s+'), '')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
   yield cleaned;
+}
+
+Iterable<String> _splitTutorChunks(String line) {
+  return line
+      .split(
+        RegExp(
+          r'\s+(?=(Ringkas|Penjelasan|Arti|Contoh(?: kalimat)?|Catatan|Tips?|Latihan|PR)\b\s*[:：\-]?)',
+          caseSensitive: false,
+        ),
+      )
+      .map((part) => part.trim())
+      .where((part) => part.isNotEmpty);
 }
 
 ({String label, String body})? _splitTutorLabel(String line) {
   final match = RegExp(
-    r'^(ringkas|contoh|catatan|latihan)\b\s*:?\s*',
+    r'^(ringkas|penjelasan|arti|contoh(?: kalimat)?|catatan|tips?|latihan|pr)\b\s*[:：\-]?\s*',
     caseSensitive: false,
   ).firstMatch(line.trim());
   if (match == null) return null;
@@ -417,12 +484,18 @@ Iterable<String> _expandTutorLine(String line) sync* {
 }
 
 String? _canonicalTutorLabel(String raw) {
-  final value = raw.replaceAll(RegExp(r'[*_`:#|]'), '').trim().toLowerCase();
+  final value = raw.replaceAll(RegExp(r'[*_`:#|：-]'), '').trim().toLowerCase();
   return switch (value) {
     'ringkas' => 'Ringkas:',
+    'penjelasan' => 'Ringkas:',
+    'arti' => 'Ringkas:',
     'contoh' => 'Contoh:',
+    'contoh kalimat' => 'Contoh:',
     'catatan' => 'Catatan:',
+    'tip' => 'Catatan:',
+    'tips' => 'Catatan:',
     'latihan' => 'Latihan:',
+    'pr' => 'Latihan:',
     _ => null,
   };
 }
@@ -452,9 +525,16 @@ String _convertHanziForTrack(
   final toTraditional =
       track == 'traditional' || (track == 'both' && primary == 'traditional');
   final map = _hanziVariantMap(toTraditional: toTraditional, cards: cards);
-  if (map.isEmpty) return text;
+  final phrases = toTraditional
+      ? _extraSimpPhraseToTrad
+      : _extraTradPhraseToSimp;
+  var source = text;
+  for (final entry in phrases.entries) {
+    source = source.replaceAll(entry.key, entry.value);
+  }
+  if (map.isEmpty) return source;
   final buf = StringBuffer();
-  for (final r in text.runes) {
+  for (final r in source.runes) {
     final ch = String.fromCharCode(r);
     buf.write(map[ch] ?? ch);
   }
@@ -476,6 +556,7 @@ Map<String, String> _hanziVariantMap({
     }
   }
   final fallback = toTraditional ? _simpToTrad : _tradToSimp;
+  map.addAll(toTraditional ? _extraSimpToTrad : _extraTradToSimp);
   map.addAll(fallback);
   return map;
 }
@@ -1314,13 +1395,22 @@ class AppController extends ChangeNotifier {
         }
       }
     }
-    if (contextDeck != null) addAll(contextDeck.cardIds);
-    if (limit != null && out.length >= limit) return out;
-    addAll(baseCards);
-    if (limit != null && out.length >= limit) return out;
-
     final mat = dailyMaterial;
-    if (mat != null) addAll(_matchingCardIds(_dailyMaterialSearchText(mat)));
+    final materialIds = mat == null
+        ? const <int>[]
+        : _matchingCardIds(_dailyMaterialSearchText(mat));
+
+    if (contextDeck != null) {
+      addAll(contextDeck.cardIds);
+    } else {
+      addAll(materialIds);
+      if (limit != null && out.length >= limit) return out;
+      addAll(aiFocusCardIds);
+      if (limit != null && out.length >= limit) return out;
+      addAll(baseCards);
+    }
+    if (limit != null && out.length >= limit) return out;
+    if (contextDeck != null) addAll(materialIds);
     if (limit != null && out.length >= limit) return out;
 
     addAll(aiFocusCardIds);

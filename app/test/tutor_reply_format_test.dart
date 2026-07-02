@@ -87,6 +87,36 @@ Latihan Coba tulis satu kalimat.
     ]);
   });
 
+  test('Guru display text normalizes messy mixed labels', () {
+    final text = formatTutorReplyForDisplay(
+      '''
+**Penjelasan** - 想 berarti ingin. Tips: jangan campur 想 dan 要 sembarangan.
+PR：Buat satu kalimat.
+''',
+      track: 'traditional',
+      primary: 'traditional',
+    );
+
+    expect(text.split('\n'), [
+      'Ringkas: 想 berarti ingin.',
+      'Catatan: jangan campur 想 dan 要 sembarangan.',
+      'Latihan: Buat satu kalimat.',
+    ]);
+  });
+
+  test('Guru Hanzi conversion covers common profile-traditional words', () {
+    final text = formatTutorReplyForDisplay(
+      'Ringkas: 老师说复习语法，记住这课很重要。',
+      track: 'both',
+      primary: 'traditional',
+    );
+
+    expect(text, contains('老師說複習語法'));
+    expect(text, contains('記住這課'));
+    expect(text, isNot(contains('老师')));
+    expect(text, isNot(contains('这课')));
+  });
+
   test('App display uses traditional primary when track is both', () {
     final c = AppController()
       ..track = 'both'

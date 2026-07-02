@@ -418,13 +418,20 @@ class _RoomViewState extends State<_RoomView> {
               Material(
                 color: t.surface2,
                 borderRadius: BorderRadius.circular(10),
-                child: InkWell(
-                  onTap: () => c.closeRoomChannel(),
-                  borderRadius: BorderRadius.circular(10),
-                  child: SizedBox(
-                    width: 40,
-                    height: 40,
-                    child: Icon(ZwsIcons.back, size: 20, color: t.ink2),
+                child: Tooltip(
+                  message: 'Kembali',
+                  child: Semantics(
+                    button: true,
+                    label: 'Kembali ke daftar ruang',
+                    child: InkWell(
+                      onTap: () => c.closeRoomChannel(),
+                      borderRadius: BorderRadius.circular(10),
+                      child: SizedBox(
+                        width: 44,
+                        height: 44,
+                        child: Icon(ZwsIcons.back, size: 20, color: t.ink2),
+                      ),
+                    ),
                   ),
                 ),
               ),

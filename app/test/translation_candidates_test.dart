@@ -39,6 +39,23 @@ void main() {
     expect(service.lastError, isNull);
   });
 
+  test('AI translate keeps numeric-string HSK levels from token JSON', () async {
+    final service = TranslationService(
+      llm: _FakeLlmService(
+        '{"translation":"谢谢","tokens":[{"hanzi":"谢谢","pinyin":"xie4 xie5","meaning":"terima kasih","hsk":"1.0"}]}',
+      ),
+    );
+
+    final result = await service.translate(
+      'terima kasih',
+      from: 'id',
+      to: 'zh',
+    );
+
+    expect(result, isNotNull);
+    expect(result!.tokens.single.hsk, 1);
+  });
+
   test(
     'Indonesian halo prefers the common greeting before phone hello',
     () async {

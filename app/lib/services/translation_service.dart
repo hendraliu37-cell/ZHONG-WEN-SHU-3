@@ -38,7 +38,7 @@ class TranslateToken {
       hanzi: (j['hanzi'] ?? j['h'] ?? j['z'] ?? '').toString(),
       pinyin: (j['pinyin'] ?? j['py'] ?? '').toString(),
       meaning: split.isEmpty ? m : split.first,
-      hsk: j['hsk'] is int ? j['hsk'] as int : null,
+      hsk: _intish(j['hsk']),
       altMeanings: [
         if (split.length > 1) ...split.sublist(1),
         ...alts.map((e) => e.toString()),
@@ -58,6 +58,15 @@ class TranslateToken {
     hsk: hsk ?? this.hsk,
     altMeanings: altMeanings ?? this.altMeanings,
   );
+}
+
+int? _intish(Object? value) {
+  if (value == null) return null;
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  final text = value.toString().trim();
+  if (text.isEmpty) return null;
+  return int.tryParse(text) ?? double.tryParse(text)?.toInt();
 }
 
 class TranslationResult {
