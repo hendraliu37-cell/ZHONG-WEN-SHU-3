@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zhongwen_shu/state/app_controller.dart';
 
 void main() {
@@ -7,6 +8,7 @@ void main() {
   const recordChannel = MethodChannel('com.llfbandit.record/messages');
 
   setUp(() {
+    SharedPreferences.setMockInitialValues({});
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
           recordChannel,
@@ -56,6 +58,51 @@ void main() {
       expect(c.decks.single.cardIds, [1]);
     },
   );
+
+  test('restore replaces stale card state and repairs next id', () {
+    final c = AppController();
+
+    c.restoreForTest({
+      'cards': {
+        '1': {'s': '旧', 't': '舊', 'py': 'jiu4', 'm': 'lama'},
+      },
+      'decks': [
+        {
+          'id': 'old',
+          'idx': '00',
+          'name': 'Old',
+          'cardIds': [1],
+        },
+      ],
+      'installedPacks': ['hsk1', 12, '', null],
+      'nextId': 2,
+    });
+
+    c.restoreForTest({
+      'cards': {
+        '5': {'s': '新', 't': '新', 'py': 'xin1', 'm': 'baru'},
+      },
+      'decks': [
+        {
+          'id': 'fresh',
+          'idx': '01',
+          'name': 'Fresh',
+          'cardIds': [5],
+        },
+      ],
+      'installedPacks': ['tocfl_a1', 99],
+      'nextId': 0,
+    });
+    c
+      ..writeDeck = 0
+      ..saveWrite('学', 'xue2', 'belajar');
+
+    expect(c.cards.keys.toList()..sort(), [5, 6]);
+    expect(c.cards.containsKey(1), isFalse);
+    expect(c.srs.keys.toList()..sort(), [5, 6]);
+    expect(c.decks.single.cardIds, [5, 6]);
+    expect(c.installedPacks, {'tocfl_a1'});
+  });
 
   test('restore tolerates legacy string card ids in test history', () {
     final c = AppController();

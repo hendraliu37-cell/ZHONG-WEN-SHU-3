@@ -1073,12 +1073,18 @@ class AppController extends ChangeNotifier {
     _nextId = j['nextId'] as int? ?? 0;
     installedPacks
       ..clear()
-      ..addAll((j['installedPacks'] as List? ?? []).map((e) => e as String));
+      ..addAll(
+        (j['installedPacks'] as List? ?? []).whereType<String>().where(
+          (id) => id.trim().isNotEmpty,
+        ),
+      );
+    cards.clear();
     (j['cards'] as Map? ?? {}).forEach((k, v) {
       final id = _parseStoredIntKey(k);
       if (id == null || v is! Map) return;
       cards[id] = VocabEntry.fromJson(Map<String, dynamic>.from(v));
     });
+    srs.clear();
     (j['srs'] as Map? ?? {}).forEach((k, v) {
       final id = _parseStoredIntKey(k);
       if (id == null || v is! Map) return;
@@ -1120,6 +1126,10 @@ class AppController extends ChangeNotifier {
     // safety: ensure every card has an srs row
     for (final id in cards.keys) {
       srs.putIfAbsent(id, () => SrsState());
+    }
+    if (cards.isNotEmpty) {
+      final minNextId = cards.keys.reduce(math.max) + 1;
+      if (_nextId < minNextId) _nextId = minNextId;
     }
   }
 
