@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zhongwen_shu/models/deck.dart';
 import 'package:zhongwen_shu/models/room.dart';
 import 'package:zhongwen_shu/models/vocab.dart';
+import 'package:zhongwen_shu/services/room_service.dart';
 import 'package:zhongwen_shu/srs/fsrs.dart';
 import 'package:zhongwen_shu/state/app_controller.dart';
 
@@ -547,6 +548,22 @@ void main() {
     expect(c.roomMsgs, isEmpty);
   });
 
+  test('successful group Guru call clears local typing state', () async {
+    final rooms = _SuccessfulGuruRoomService();
+    final c = AppController(rooms: rooms)
+      ..currentRoom = const Room(id: 'r1', code: 'ZWS-ABCDE', name: 'Kelas')
+      ..profileName = 'Hendra'
+      ..profileHandle = '#1234';
+
+    c.setRoomInput('@Guru bantu jelaskan');
+    await c.sendRoom();
+
+    expect(rooms.sentMessages, 1);
+    expect(rooms.guruCalls, 1);
+    expect(c.roomGuruBusy, isFalse);
+    expect(c.roomInput, isEmpty);
+  });
+
   test(
     'delayed match feedback does not notify after controller dispose',
     () async {
@@ -569,4 +586,26 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 800));
     },
   );
+}
+
+class _SuccessfulGuruRoomService extends RoomService {
+  int sentMessages = 0;
+  int guruCalls = 0;
+
+  @override
+  Future<bool> sendMessage(
+    String roomId, {
+    required String body,
+    required String authorName,
+    required String authorHandle,
+  }) async {
+    sentMessages += 1;
+    return true;
+  }
+
+  @override
+  Future<String?> callGuru(String roomId, {String track = 'simplified'}) async {
+    guruCalls += 1;
+    return null;
+  }
 }

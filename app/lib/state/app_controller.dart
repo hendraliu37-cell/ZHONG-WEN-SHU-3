@@ -636,10 +636,15 @@ List<Map<String, String>> buildGroundedHistory(
 /// all state and every action, and notifies listeners on change (the UI
 /// re-renders wholesale, exactly like the prototype's setState).
 class AppController extends ChangeNotifier {
-  AppController({Persistence? store, SpeechService? speech, LlmService? llm})
-    : _store = store ?? Persistence(),
-      speech = speech ?? SpeechService(),
-      llm = llm ?? LlmService();
+  AppController({
+    Persistence? store,
+    SpeechService? speech,
+    LlmService? llm,
+    RoomService? rooms,
+  }) : _store = store ?? Persistence(),
+       speech = speech ?? SpeechService(),
+       llm = llm ?? LlmService(),
+       rooms = rooms ?? RoomService();
 
   final Persistence _store;
   final SpeechService speech;
@@ -798,7 +803,7 @@ class AppController extends ChangeNotifier {
   static const int _maxChatHistory = 120;
 
   // ---- grup (realtime rooms) ----
-  final RoomService rooms = RoomService();
+  final RoomService rooms;
   List<Room> myRooms = [];
   Room? currentRoom;
   List<RoomMessage> roomMsgs = [];
@@ -3410,6 +3415,9 @@ class AppController extends ChangeNotifier {
           ...roomMsgs,
           _localRoomStatusMessage(roomGuruFailureMessage(err), isGuru: true),
         ];
+        roomGuruBusy = false;
+        notifyListeners();
+      } else {
         roomGuruBusy = false;
         notifyListeners();
       }
