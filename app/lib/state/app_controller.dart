@@ -663,6 +663,7 @@ class AppController extends ChangeNotifier {
   int streak = 0;
   int lastTestPct = 0;
   int lastUjianAkhirPct = 0;
+  bool ujianAkhirInProgress = false;
   String? lastActiveDate; // 'yyyy-mm-dd' of the last active day (drives streak)
 
   // ---- card store ----
@@ -1634,6 +1635,7 @@ class AppController extends ChangeNotifier {
     if (hasActiveTestInProgress) {
       abandonActiveTestToHistory();
     }
+    ujianAkhirInProgress = false;
     if (_deckCtx != null && sub != 'deck') {
       sub = 'deck';
       flipped = false;
@@ -3421,6 +3423,7 @@ class AppController extends ChangeNotifier {
 
   /// Start the comprehensive final exam overlay.
   void startUjianAkhir() {
+    ujianAkhirInProgress = false;
     sub = 'ujian_akhir';
     notifyListeners();
   }
@@ -3428,12 +3431,14 @@ class AppController extends ChangeNotifier {
   /// Feeds each final-exam answer back into the same mastery engine as deck
   /// tests/games, without double-counting exam XP.
   void recordUjianAkhirAnswer(int cardId, bool correct) {
+    ujianAkhirInProgress = true;
     _recordPractice(cardId, correct, xpCorrect: 0, xpWrong: 0);
     unawaited(_save());
   }
 
   /// Called when the ujian akhir overlay finishes.
   void finishUjianAkhir(int score, int total) {
+    ujianAkhirInProgress = false;
     lastUjianAkhirPct = total > 0 ? (score * 100 / total).round() : 0;
     xp += score * 2;
     _save();

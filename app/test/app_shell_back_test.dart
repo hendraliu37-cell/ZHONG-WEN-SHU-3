@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zhongwen_shu/app_shell.dart';
+import 'package:zhongwen_shu/models/vocab.dart';
 import 'package:zhongwen_shu/state/app_controller.dart';
 import 'package:zhongwen_shu/theme/tokens.dart';
 import 'package:zhongwen_shu/theme/zws_theme.dart';
@@ -31,5 +32,43 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(c.leaderOpen, isFalse);
+  });
+
+  testWidgets('system back confirms while final exam is in progress', (
+    tester,
+  ) async {
+    final c = AppController()
+      ..sub = 'ujian_akhir'
+      ..ujianAkhirInProgress = true;
+    c.cards[1] = const VocabEntry(
+      simplified: '吃',
+      traditional: '吃',
+      pinyin: 'chi1',
+      meaning: 'makan',
+      tone: 1,
+    );
+
+    await tester.pumpWidget(
+      ZwsTheme(
+        tokens: ZwsTokens.light,
+        child: MaterialApp(
+          home: Scaffold(body: AppShell(controller: c)),
+        ),
+      ),
+    );
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.text('Keluar dari ujian?'), findsOneWidget);
+
+    await tester.tap(find.text('Batal'));
+    await tester.pumpAndSettle();
+    expect(c.sub, 'ujian_akhir');
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Keluar'));
+    await tester.pumpAndSettle();
+    expect(c.sub, isNull);
   });
 }

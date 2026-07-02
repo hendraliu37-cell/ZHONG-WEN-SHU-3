@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../state/app_controller.dart';
 import '../theme/tokens.dart';
 import '../theme/zws_theme.dart';
+import '../utils/test_exit_guard.dart';
 import '../widgets/common.dart';
 
 /// Comprehensive final exam drawn from the same smart practice pool as daily
@@ -114,43 +115,11 @@ class _UjianAkhirOverlayState extends State<UjianAkhirOverlay> {
   }
 
   Future<void> _backFromQuestion() async {
-    if (_done || _idx == 0) {
+    if (_done) {
       widget.controller.closeSub();
       return;
     }
-    final t = ZwsTheme.of(context);
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: t.surface,
-        title: Text(
-          'Keluar dari ujian?',
-          style: ZwsFonts.sans(size: 17, weight: FontWeight.w800, color: t.ink),
-        ),
-        content: Text(
-          'Progress Ujian Akhir belum bisa dilanjutkan nanti. Nilai hanya disimpan kalau ujian selesai.',
-          style: ZwsFonts.sans(size: 13, color: t.ink2, height: 1.45),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Batal', style: ZwsFonts.sans(size: 13, color: t.ink2)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(
-              'Keluar',
-              style: ZwsFonts.sans(
-                size: 13,
-                weight: FontWeight.w700,
-                color: t.seal,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-    if (ok == true) widget.controller.closeSub();
+    await closeUjianAkhirWithGuard(context, widget.controller);
   }
 
   Widget _buildQuestion(ZwsTokens t) {
