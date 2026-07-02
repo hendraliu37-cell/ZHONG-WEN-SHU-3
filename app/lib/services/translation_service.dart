@@ -204,7 +204,12 @@ class TranslationService {
 
     // 2. Fallback: dictionary-based (offline)
     if (from == 'zh' && to == 'id') {
-      return _dictTranslateZhToId(trimmed, track);
+      final result = _dictTranslateZhToId(trimmed, track);
+      if (result.translation.trim().isEmpty && result.tokens.isEmpty) {
+        lastError = 'Tidak ada Hanzi yang bisa diterjemahkan.';
+        return null;
+      }
+      return result;
     } else if (from == 'id' && to == 'zh') {
       return _dictTranslateIdToZh(trimmed, track);
     }

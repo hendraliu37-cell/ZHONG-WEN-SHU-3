@@ -148,4 +148,20 @@ void main() {
     expect(result!.translation, 'saya suka bahasa Mandarin');
     expect(result.tokens.map((t) => t.hanzi), ['我', '喜欢', '中文']);
   });
+  test(
+    'Chinese fallback rejects latin-only input instead of blank success',
+    () async {
+      final service = TranslationService();
+
+      final result = await service.translate(
+        'ok, hello!',
+        from: 'zh',
+        to: 'id',
+        engine: 'dict',
+      );
+
+      expect(result, isNull);
+      expect(service.lastError, contains('Hanzi'));
+    },
+  );
 }
