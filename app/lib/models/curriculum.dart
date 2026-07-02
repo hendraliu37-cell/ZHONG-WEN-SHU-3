@@ -13,13 +13,19 @@ class DailyMaterial {
   });
 
   factory DailyMaterial.fromJson(Map<String, dynamic> j) => DailyMaterial(
-        topic: (j['topic'] ?? '') as String,
-        vocab: ((j['vocab'] ?? []) as List)
-            .map((v) => VocabItem.fromJson(v as Map<String, dynamic>))
-            .toList(),
-        sentences: ((j['sentences'] ?? []) as List).map((s) => s.toString()).toList(),
-        exercise: (j['exercise'] ?? '') as String,
-      );
+    topic: _string(j['topic']),
+    vocab: _list(j['vocab'])
+        .whereType<Map>()
+        .map((v) => VocabItem.fromJson(Map<String, dynamic>.from(v)))
+        .where((v) => v.hanzi.isNotEmpty || v.meaning.isNotEmpty)
+        .toList(),
+    sentences: _list(j['sentences'])
+        .where((s) => s != null)
+        .map((s) => s.toString().trim())
+        .where((s) => s.isNotEmpty)
+        .toList(),
+    exercise: _string(j['exercise']),
+  );
 
   String get summary {
     if (vocab.isEmpty) return topic;
@@ -40,8 +46,12 @@ class VocabItem {
   });
 
   factory VocabItem.fromJson(Map<String, dynamic> j) => VocabItem(
-        hanzi: (j['hanzi'] ?? '') as String,
-        pinyin: (j['pinyin'] ?? '') as String,
-        meaning: (j['meaning'] ?? '') as String,
-      );
+    hanzi: _string(j['hanzi']),
+    pinyin: _string(j['pinyin']),
+    meaning: _string(j['meaning']),
+  );
 }
+
+String _string(Object? value) => value?.toString().trim() ?? '';
+
+List<Object?> _list(Object? value) => value is List ? value : const <Object?>[];
