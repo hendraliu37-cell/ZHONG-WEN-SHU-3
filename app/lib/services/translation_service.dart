@@ -499,7 +499,7 @@ class TranslationService {
     );
   }
 
-  TranslationResult _dictTranslateIdToZh(String text, String track) {
+  TranslationResult? _dictTranslateIdToZh(String text, String track) {
     final lower = _normalizeIdText(text);
 
     final common = _commonIdCandidates[lower];
@@ -552,6 +552,7 @@ class TranslationService {
     final tokens = <TranslateToken>[];
     final results = <String>[];
     final alternatives = <TranslateToken>[];
+    var translatedAny = false;
     var i = 0;
 
     while (i < words.length) {
@@ -574,6 +575,7 @@ class TranslationService {
           ),
         );
         results.add(display);
+        translatedAny = true;
         i += matchedPhrase.split(RegExp(r'\s+')).length;
         continue;
       }
@@ -594,6 +596,7 @@ class TranslationService {
           TranslateToken(hanzi: hanzi, pinyin: primary.pinyin, meaning: w),
         );
         results.add(hanzi);
+        translatedAny = true;
         if (words.length == 1) {
           alternatives.addAll(
             commonWord.skip(1).map((candidate) {
@@ -626,11 +629,16 @@ class TranslationService {
         final hanzi = _displayHanzi(best, track);
         tokens.add(_entryToken(best, track));
         results.add(hanzi);
+        translatedAny = true;
       } else {
         tokens.add(TranslateToken(hanzi: word, meaning: word));
         results.add(word);
       }
       i++;
+    }
+    if (!translatedAny) {
+      lastError = 'Tidak ada kata Indonesia yang cocok di kamus offline.';
+      return null;
     }
     return TranslationResult(
       translation: results.join(),

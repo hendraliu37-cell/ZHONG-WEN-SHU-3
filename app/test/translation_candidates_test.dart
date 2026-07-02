@@ -123,6 +123,35 @@ void main() {
     expect(result.pinyin, 'wǒ xǐhuān shíwù');
   });
 
+  test('Indonesian fallback rejects unknown-only text', () async {
+    final service = TranslationService();
+
+    final result = await service.translate(
+      'foobar bazqux',
+      from: 'id',
+      to: 'zh',
+      engine: 'dict',
+    );
+
+    expect(result, isNull);
+    expect(service.lastError, contains('kamus offline'));
+  });
+
+  test('Indonesian fallback keeps partial known words', () async {
+    final service = TranslationService();
+
+    final result = await service.translate(
+      'makan foobar',
+      from: 'id',
+      to: 'zh',
+      engine: 'dict',
+    );
+
+    expect(result, isNotNull);
+    expect(result!.translation, startsWith('\u5403'));
+    expect(result.tokens.first.meaning, 'makan');
+  });
+
   test('Chinese fallback ignores punctuation and latin runs', () async {
     final service = TranslationService();
     service.loadFromCards([
