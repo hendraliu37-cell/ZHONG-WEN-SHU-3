@@ -18,12 +18,18 @@ class SttService {
   bool get enabled => zwsSupabaseReady;
   SupabaseClient get _sb => Supabase.instance.client;
 
+  @visibleForTesting
+  void setRecordingPathForTest(String path) {
+    _path = path;
+  }
+
   /// Begin recording. Returns false if there's no mic permission/device.
   Future<bool> start() async {
     try {
       if (!await _rec.hasPermission()) return false;
       final dir = await getTemporaryDirectory();
-      _path = '${dir.path}/zws_stt_${DateTime.now().millisecondsSinceEpoch}.wav';
+      _path =
+          '${dir.path}/zws_stt_${DateTime.now().millisecondsSinceEpoch}.wav';
       await _rec.start(
         const RecordConfig(
           encoder: AudioEncoder.wav,
@@ -48,11 +54,10 @@ class SttService {
       final bytes = await File(path).readAsBytes();
       final b64 = base64Encode(bytes);
       if (!enabled) return null;
-      final res = await _sb.functions.invoke('stt', body: {
-        'audio': b64,
-        'format': 'wav',
-        'lang': lang,
-      });
+      final res = await _sb.functions.invoke(
+        'stt',
+        body: {'audio': b64, 'format': 'wav', 'lang': lang},
+      );
       final data = res.data;
       if (data is Map && data['text'] is String) {
         return (data['text'] as String).trim();
@@ -62,17 +67,25 @@ class SttService {
       if (kDebugMode) debugPrint('[stt] transcribe failed: $e');
       return null;
     } finally {
-      if (path != null) {
-        try {
-          await File(path).delete();
-        } catch (_) {}
-      }
+      _path = null;
+      await _deleteTempRecording(path);
     }
   }
 
   Future<void> cancel() async {
+    String? path;
     try {
-      await _rec.stop();
+      path = await _rec.stop() ?? _path;
+    } catch (_) {}
+    path ??= _path;
+    _path = null;
+    await _deleteTempRecording(path);
+  }
+
+  Future<void> _deleteTempRecording(String? path) async {
+    if (path == null) return;
+    try {
+      await File(path).delete();
     } catch (_) {}
   }
 }

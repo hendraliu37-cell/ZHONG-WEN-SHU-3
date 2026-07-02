@@ -56,6 +56,11 @@ class PronunciationService {
   bool get enabled => zwsSupabaseReady;
   SupabaseClient get _sb => Supabase.instance.client;
 
+  @visibleForTesting
+  void setRecordingPathForTest(String path) {
+    _path = path;
+  }
+
   Future<bool> start({InputDevice? device}) async {
     lastError = null;
     try {
@@ -129,17 +134,25 @@ class PronunciationService {
       if (kDebugMode) debugPrint('[pron] scoring failed: $e');
       return null;
     } finally {
-      if (path != null) {
-        try {
-          await File(path).delete();
-        } catch (_) {}
-      }
+      _path = null;
+      await _deleteTempRecording(path);
     }
   }
 
   Future<void> cancel() async {
+    String? path;
     try {
-      await _rec.stop();
+      path = await _rec.stop() ?? _path;
+    } catch (_) {}
+    path ??= _path;
+    _path = null;
+    await _deleteTempRecording(path);
+  }
+
+  Future<void> _deleteTempRecording(String? path) async {
+    if (path == null) return;
+    try {
+      await File(path).delete();
     } catch (_) {}
   }
 }
