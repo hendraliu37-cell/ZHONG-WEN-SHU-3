@@ -107,6 +107,35 @@ void main() {
       expect(m.body, '456');
       expect(m.createdAt, isA<DateTime>());
     });
+
+    test('accepts numeric created_at timestamps', () {
+      final epochMs = DateTime.utc(2026, 7, 2, 10).millisecondsSinceEpoch;
+      final epochSeconds =
+          DateTime.utc(2026, 7, 2, 11).millisecondsSinceEpoch ~/ 1000;
+
+      final fromMs = RoomMessage.fromJson({
+        'id': 45,
+        'body': 'epoch ms',
+        'created_at': epochMs,
+      });
+      final fromSeconds = RoomMessage.fromJson({
+        'id': 46,
+        'body': 'epoch seconds',
+        'created_at': '$epochSeconds',
+      });
+
+      expect(
+        fromMs.createdAt,
+        DateTime.fromMillisecondsSinceEpoch(epochMs, isUtc: true).toLocal(),
+      );
+      expect(
+        fromSeconds.createdAt,
+        DateTime.fromMillisecondsSinceEpoch(
+          epochSeconds * 1000,
+          isUtc: true,
+        ).toLocal(),
+      );
+    });
   });
 
   group('RoomService backend parsers', () {
@@ -164,6 +193,9 @@ void main() {
     });
 
     test('history parser skips bad rows and restores chronological order', () {
+      final epochMs = DateTime.utc(2026, 7, 2, 01).millisecondsSinceEpoch;
+      final epochSeconds =
+          DateTime.utc(2026, 7, 2, 03).millisecondsSinceEpoch ~/ 1000;
       final history = parseRoomHistoryRowsForTest([
         {
           'id': 2,
@@ -172,6 +204,12 @@ void main() {
           'body': 'baik',
           'created_at': '2026-07-02T02:00:00Z',
         },
+        {
+          'id': 4,
+          'author_name': 'Ani',
+          'body': 'paling akhir',
+          'created_at': '$epochSeconds',
+        },
         'bad-row',
         {'id': 3, 'body': '  ', 'created_at': '2026-07-02T03:00:00Z'},
         {'id': 0, 'body': 'optimistic stale'},
@@ -179,12 +217,12 @@ void main() {
           'id': 1,
           'author_name': 'Hendra',
           'body': 'halo',
-          'created_at': '2026-07-02T01:00:00Z',
+          'created_at': epochMs,
         },
       ]);
 
-      expect(history.map((m) => m.id), [1, 2]);
-      expect(history.last.isGuru, isTrue);
+      expect(history.map((m) => m.id), [1, 2, 4]);
+      expect(history[1].isGuru, isTrue);
     });
 
     test('Guru call parser accepts loose ok and error payloads', () {

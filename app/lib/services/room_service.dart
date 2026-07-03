@@ -223,7 +223,8 @@ List<RoomMessage> _parseRoomHistoryRows(Object? rows) {
       .map(RoomMessage.fromJson)
       .where(_isUsableServerMessage)
       .toList();
-  return list.reversed.toList();
+  list.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+  return list;
 }
 
 bool _isUsableRoom(Room room) =>

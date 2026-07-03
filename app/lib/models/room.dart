@@ -67,9 +67,7 @@ class RoomMessage {
     authorHandle: _stringish(j['author_handle']),
     isGuru: _boolish(j['is_guru']),
     body: _stringish(j['body']),
-    createdAt:
-        DateTime.tryParse(_stringish(j['created_at']))?.toLocal() ??
-        DateTime.now(),
+    createdAt: _dateish(j['created_at']),
   );
 
   /// True when this message was sent by [uid] (the local user).
@@ -96,6 +94,19 @@ bool _boolish(Object? value) {
   if (value is num) return value != 0;
   final text = _stringish(value).toLowerCase();
   return text == 'true' || text == '1' || text == 'yes';
+}
+
+DateTime _dateish(Object? value) {
+  final text = _stringish(value);
+  final numeric = value is num
+      ? value
+      : (RegExp(r'^-?\d+(\.\d+)?$').hasMatch(text) ? num.tryParse(text) : null);
+  if (numeric == null) {
+    return DateTime.tryParse(text)?.toLocal() ?? DateTime.now();
+  }
+  final raw = numeric.toInt();
+  final ms = raw.abs() >= 100000000000 ? raw : raw * 1000;
+  return DateTime.fromMillisecondsSinceEpoch(ms, isUtc: true).toLocal();
 }
 
 /// True if [text] calls the tutor with an `@Guru` mention (case-insensitive),
