@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math' as math;
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/services.dart' show rootBundle;
 import '../models/idiom.dart';
 import '../utils/cjk.dart';
@@ -36,15 +37,7 @@ class IdiomBank {
     if (_loaded) return;
     try {
       final raw = await rootBundle.loadString('assets/packs/idioms.json');
-      final data = jsonDecode(raw) as Map<String, dynamic>;
-      final cards = data['cards'];
-      if (cards is List) {
-        _ingest(
-          cards.whereType<Map>().map(
-            (e) => Idiom.fromJson(Map<String, dynamic>.from(e)),
-          ),
-        );
-      }
+      _ingest(_parseIdiomPayload(raw));
     } catch (_) {
       // aset belum ada / gagal → bank kosong, fitur lain tetap jalan.
     }
@@ -115,3 +108,31 @@ class IdiomBank {
         .join('\n');
   }
 }
+
+Iterable<Idiom> _parseIdiomPayload(Object? payload) {
+  final decoded = _jsonValue(payload);
+  final cards = _jsonValue(
+    decoded is Map ? (decoded['cards'] ?? decoded['data']) : decoded,
+  );
+  final list = cards is List ? cards : const [];
+  return list.whereType<Map>().map(
+    (e) => Idiom.fromJson(Map<String, dynamic>.from(e)),
+  );
+}
+
+Object? _jsonValue(Object? payload) {
+  if (payload is String) {
+    final text = payload.trim();
+    if (!text.startsWith('{') && !text.startsWith('[')) return payload;
+    try {
+      return jsonDecode(text);
+    } catch (_) {
+      return payload;
+    }
+  }
+  return payload;
+}
+
+@visibleForTesting
+List<Idiom> parseIdiomPayloadForTest(Object? payload) =>
+    _parseIdiomPayload(payload).toList();

@@ -73,6 +73,30 @@ void main() {
     expect(it.tone, 4);
   });
 
+  test('payload parser accepts wrapped, string, and list card containers', () {
+    final wrapped = parseIdiomPayloadForTest({
+      'cards': [
+        {
+          's': '熟能生巧',
+          'py': 'shu neng sheng qiao',
+          'm': 'latihan membuat mahir',
+        },
+      ],
+    });
+    final stringCards = parseIdiomPayloadForTest({
+      'cards':
+          '[{"s":"半途而废","py":"ban tu er fei","m":"berhenti di tengah jalan"}]',
+    });
+    final directList = parseIdiomPayloadForTest(
+      '[{"s":"入乡随俗","t":"入鄉隨俗","m":"ikut adat setempat","cat":"suyu"}]',
+    );
+
+    expect(wrapped.single.simplified, '熟能生巧');
+    expect(stringCards.single.meaning, 'berhenti di tengah jalan');
+    expect(directList.single.traditional, '入鄉隨俗');
+    expect(parseIdiomPayloadForTest('not-json'), isEmpty);
+  });
+
   test('randomForTeaching respects category filter', () {
     final bank = IdiomBank.fromCards(fixture);
     final it = bank.randomForTeaching(cat: 'suyu');
