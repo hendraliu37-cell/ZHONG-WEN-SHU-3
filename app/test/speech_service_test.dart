@@ -20,5 +20,13 @@ void main() {
       expect(speech.enabledForTest, isFalse);
       expect(speech.disposedForTest, isTrue);
     });
+
+    test('neural response parser accepts common audio payload shapes', () {
+      expect(parseTtsAudioResponseForTest({'audio': 'AQID'}), [1, 2, 3]);
+      expect(parseTtsAudioResponseForTest('{"audio":"BAU="}'), [4, 5]);
+      expect(parseTtsAudioResponseForTest({'audio_base64': 'Bgc='}), [6, 7]);
+      expect(parseTtsAudioResponseForTest('CAk='), [8, 9]);
+      expect(parseTtsAudioResponseForTest({'audio': 'not-base64'}), isEmpty);
+    });
   });
 }

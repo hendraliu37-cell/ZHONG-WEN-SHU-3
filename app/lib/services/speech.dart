@@ -67,9 +67,7 @@ class SpeechService {
             'track': traditional ? 'traditional' : 'simplified',
           },
         );
-        final data = res.data;
-        if (data is! Map || data['audio'] is! String) return false;
-        final bytes = base64Decode(data['audio'] as String);
+        final bytes = _audioBytes(res.data);
         if (bytes.isEmpty) return false;
         path = await _writeCache(key, bytes);
         _cache[key] = path;
@@ -173,3 +171,38 @@ class SpeechService {
     }
   }
 }
+
+Uint8List _audioBytes(Object? data) {
+  final raw = _audioPayload(data);
+  if (raw == null || raw.isEmpty) return Uint8List(0);
+  try {
+    return base64Decode(raw);
+  } catch (_) {
+    return Uint8List(0);
+  }
+}
+
+String? _audioPayload(Object? data) {
+  if (data is String) {
+    final text = data.trim();
+    if (text.isEmpty) return null;
+    if (text.startsWith('{')) {
+      try {
+        return _audioPayload(jsonDecode(text));
+      } catch (_) {
+        // Fall through and treat it as a raw base64 payload.
+      }
+    }
+    return text;
+  }
+  if (data is Map) {
+    for (final key in const ['audio', 'audio_base64', 'base64']) {
+      final text = data[key]?.toString().trim() ?? '';
+      if (text.isNotEmpty) return text;
+    }
+  }
+  return null;
+}
+
+@visibleForTesting
+Uint8List parseTtsAudioResponseForTest(Object? data) => _audioBytes(data);
