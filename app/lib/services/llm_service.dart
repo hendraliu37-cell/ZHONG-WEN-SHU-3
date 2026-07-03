@@ -53,7 +53,7 @@ class LlmService {
         final res = await sb.functions
             .invoke('llm-proxy', body: proxyBody)
             .timeout(const Duration(seconds: 30));
-        final data = res.data;
+        final data = _jsonObject(res.data);
         if (data is Map && data['reply'] is String) {
           final reply = (data['reply'] as String).trim();
           if (reply.isNotEmpty) {
@@ -205,6 +205,28 @@ String? _contentText(Object? content) {
     return text.isEmpty ? null : text;
   }
   return null;
+}
+
+Map<dynamic, dynamic>? _jsonObject(Object? data) {
+  if (data is Map) return data;
+  if (data is String) {
+    final text = data.trim();
+    if (!text.startsWith('{')) return null;
+    try {
+      final decoded = jsonDecode(text);
+      return decoded is Map ? decoded : null;
+    } catch (_) {
+      return null;
+    }
+  }
+  return null;
+}
+
+@visibleForTesting
+String? parseLlmProxyReplyForTest(Object? data) {
+  final map = _jsonObject(data);
+  final reply = map?['reply'];
+  return reply is String && reply.trim().isNotEmpty ? reply.trim() : null;
 }
 
 @visibleForTesting

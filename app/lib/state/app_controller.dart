@@ -429,20 +429,26 @@ String _formatTutorReply(String raw) {
 
   final labelled = <String, String>{};
   final loose = <String>[];
+  String? pendingLabel;
   const labels = ['Ringkas:', 'Contoh:', 'Catatan:', 'Latihan:'];
   for (final line in lines) {
     var cleaned = line.replaceFirst(RegExp(r'^\d+[.)]\s*'), '').trim();
     if (RegExp(
-      r'^(jawaban|guru|respons?)$',
+      r'^(jawaban|guru|respons?|answer)$',
       caseSensitive: false,
     ).hasMatch(cleaned)) {
       continue;
     }
     final split = _splitTutorLabel(cleaned);
     if (split != null) {
+      pendingLabel = split.label;
       if (split.body.isNotEmpty) {
         labelled[split.label] = _appendBlock(labelled[split.label], split.body);
       }
+      cleaned = '';
+    }
+    if (cleaned.isNotEmpty && pendingLabel != null) {
+      labelled[pendingLabel] = _appendBlock(labelled[pendingLabel], cleaned);
       cleaned = '';
     }
     if (cleaned.isNotEmpty) loose.add(cleaned);
@@ -512,7 +518,7 @@ Iterable<String> _splitTutorChunks(String line) {
   return line
       .split(
         RegExp(
-          r'\s+(?=(Ringkas|Penjelasan|Arti|Contoh(?: kalimat)?|Catatan|Tips?|Latihan|PR)\b\s*[:：\-]?)',
+          r'\s+(?=(Ringkas|Penjelasan|Arti|Jawaban|Respons?|Guru|Summary|Explanation|Meaning|Answer|Translation|Translate|Contoh(?: kalimat)?|Examples?|Sentence|Catatan|Notes?|Tips?|Latihan|Soal|PR|Practice|Exercises?|Homework)\b\s*[:：\-]?)',
           caseSensitive: false,
         ),
       )
@@ -522,7 +528,7 @@ Iterable<String> _splitTutorChunks(String line) {
 
 ({String label, String body})? _splitTutorLabel(String line) {
   final match = RegExp(
-    r'^(ringkas|penjelasan|arti|contoh(?: kalimat)?|catatan|tips?|latihan|pr)\b\s*[:：\-]?\s*',
+    r'^(ringkas|penjelasan|arti|jawaban|respons?|guru|summary|explanation|meaning|answer|translation|translate|contoh(?: kalimat)?|examples?|sentence|catatan|notes?|tips?|latihan|soal|pr|practice|exercises?|homework)\b\s*[:：\-]?\s*',
     caseSensitive: false,
   ).firstMatch(line.trim());
   if (match == null) return null;
@@ -537,13 +543,33 @@ String? _canonicalTutorLabel(String raw) {
     'ringkas' => 'Ringkas:',
     'penjelasan' => 'Ringkas:',
     'arti' => 'Ringkas:',
+    'jawaban' => 'Ringkas:',
+    'respon' => 'Ringkas:',
+    'respons' => 'Ringkas:',
+    'guru' => 'Ringkas:',
+    'summary' => 'Ringkas:',
+    'explanation' => 'Ringkas:',
+    'meaning' => 'Ringkas:',
+    'answer' => 'Ringkas:',
+    'translation' => 'Ringkas:',
+    'translate' => 'Ringkas:',
     'contoh' => 'Contoh:',
     'contoh kalimat' => 'Contoh:',
+    'example' => 'Contoh:',
+    'examples' => 'Contoh:',
+    'sentence' => 'Contoh:',
     'catatan' => 'Catatan:',
+    'note' => 'Catatan:',
+    'notes' => 'Catatan:',
     'tip' => 'Catatan:',
     'tips' => 'Catatan:',
     'latihan' => 'Latihan:',
+    'soal' => 'Latihan:',
     'pr' => 'Latihan:',
+    'practice' => 'Latihan:',
+    'exercise' => 'Latihan:',
+    'exercises' => 'Latihan:',
+    'homework' => 'Latihan:',
     _ => null,
   };
 }

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -213,12 +215,28 @@ List<RoomMessage> _parseRoomHistoryRows(Object? rows) {
 }
 
 String? _parseGuruCallError(Object? data) {
-  if (data is Map) {
-    if (_boolish(data['ok'])) return null;
-    final error = data['error']?.toString().trim();
+  final map = _jsonObject(data);
+  if (map != null) {
+    if (_boolish(map['ok'])) return null;
+    final error = map['error']?.toString().trim();
     if (error != null && error.isNotEmpty) return error;
   }
   return 'failed';
+}
+
+Map<dynamic, dynamic>? _jsonObject(Object? data) {
+  if (data is Map) return data;
+  if (data is String) {
+    final text = data.trim();
+    if (!text.startsWith('{')) return null;
+    try {
+      final decoded = jsonDecode(text);
+      return decoded is Map ? decoded : null;
+    } catch (_) {
+      return null;
+    }
+  }
+  return null;
 }
 
 int _parseMemberCount(Object? value) {

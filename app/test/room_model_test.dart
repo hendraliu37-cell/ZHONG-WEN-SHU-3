@@ -174,6 +174,8 @@ void main() {
     test('Guru call parser accepts loose ok and error payloads', () {
       expect(parseGuruCallErrorForTest({'ok': 'true'}), isNull);
       expect(parseGuruCallErrorForTest({'ok': 1}), isNull);
+      expect(parseGuruCallErrorForTest('{"ok":true}'), isNull);
+      expect(parseGuruCallErrorForTest('{"error":"llm_failed"}'), 'llm_failed');
       expect(parseGuruCallErrorForTest({'error': 123}), '123');
       expect(parseGuruCallErrorForTest({'error': '  '}), 'failed');
       expect(parseGuruCallErrorForTest('bad'), 'failed');

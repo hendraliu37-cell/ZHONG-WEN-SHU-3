@@ -104,6 +104,31 @@ PR：Buat satu kalimat.
     ]);
   });
 
+  test('Guru display text normalizes English section labels', () {
+    final text = formatTutorReplyForDisplay(
+      '''
+Summary:
+喜欢 means suka.
+Example:
+我喜欢这本书。
+Note: pakai 喜欢 untuk benda atau aktivitas.
+Exercise:
+Buat satu kalimat pakai 喜欢.
+''',
+      track: 'traditional',
+      primary: 'traditional',
+    );
+
+    expect(text.split('\n'), [
+      'Ringkas: 喜歡 means suka.',
+      'Contoh: 我喜歡這本書。',
+      'Catatan: pakai 喜歡 untuk benda atau aktivitas.',
+      'Latihan: Buat satu kalimat pakai 喜歡.',
+    ]);
+    expect(text, isNot(contains('喜欢')));
+    expect(text, isNot(contains('这本书')));
+  });
+
   test('Guru Hanzi conversion covers common profile-traditional words', () {
     final text = formatTutorReplyForDisplay(
       'Ringkas: 老师说复习语法，记住这课很重要。',

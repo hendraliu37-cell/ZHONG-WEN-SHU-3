@@ -33,6 +33,15 @@ void main() {
     expect(text, 'Ringkas: 你好 = halo');
   });
 
+  test('LLM proxy parser accepts raw JSON string responses', () {
+    expect(
+      parseLlmProxyReplyForTest('{"reply":"  Ringkas: 你好 = halo  "}'),
+      'Ringkas: 你好 = halo',
+    );
+    expect(parseLlmProxyReplyForTest('not-json'), isNull);
+    expect(parseLlmProxyReplyForTest({'reply': '   '}), isNull);
+  });
+
   test('OpenAI-compatible parser accepts content block lists', () {
     final text = parseOpenAiChatTextForTest({
       'choices': [
