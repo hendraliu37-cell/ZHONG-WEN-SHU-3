@@ -56,6 +56,19 @@ void main() {
     expect(result!.tokens.single.hsk, 1);
   });
 
+  test('AI translate accepts loose scalar response fields', () async {
+    final service = TranslationService(
+      llm: _FakeLlmService('{"translation":123,"pinyin":456,"tokens":[7]}'),
+    );
+
+    final result = await service.translate('tes', from: 'id', to: 'zh');
+
+    expect(result, isNotNull);
+    expect(result!.translation, '123');
+    expect(result.pinyin, '456');
+    expect(result.tokens.single.hanzi, '7');
+  });
+
   test('AI translate accepts loose token alternatives from JSON', () async {
     final service = TranslationService(
       llm: _FakeLlmService(

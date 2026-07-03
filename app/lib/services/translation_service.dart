@@ -272,18 +272,11 @@ class TranslationService {
         // Error response dari edge function
         if (data['error'] is String) {
           lastError = 'Server: ${data['error']}';
-        } else if (data['translation'] is String) {
-          final trans = (data['translation'] as String).trim();
-          if (trans.isNotEmpty) {
-            final tokens = _tokensFromJson(data['tokens']);
-            final enriched = tokens.map(_enrich).toList();
-            return TranslationResult(
-              translation: trans,
-              pinyin: (data['pinyin'] as String?)?.trim().isNotEmpty == true
-                  ? data['pinyin'] as String
-                  : null,
-              tokens: enriched,
-            );
+        } else {
+          final parsed = _parseLlmTranslation(data);
+          if (parsed != null) {
+            lastError = null;
+            return parsed;
           }
         }
       }
@@ -360,14 +353,13 @@ class TranslationService {
   }
 
   TranslationResult? _parseLlmTranslation(Map data) {
-    final trans = (data['translation'] as String?)?.trim();
-    if (trans == null || trans.isEmpty) return null;
+    final trans = _stringish(data['translation']);
+    if (trans.isEmpty) return null;
     final tokens = _tokensFromJson(data['tokens']);
+    final pinyin = _stringish(data['pinyin']);
     return TranslationResult(
       translation: trans,
-      pinyin: (data['pinyin'] as String?)?.trim().isNotEmpty == true
-          ? data['pinyin'] as String
-          : null,
+      pinyin: pinyin.isEmpty ? null : pinyin,
       alternatives: _tokensFromJson(data['alternatives']),
       tokens: tokens.map(_enrich).toList(),
     );
