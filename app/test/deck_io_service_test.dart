@@ -61,6 +61,18 @@ void main() {
     expect(cards.last.meaning, 'minum');
   });
 
+  test('ignores Excel sep directive before localized headers', () {
+    final service = DeckIoService();
+    final rows = service.readDelimitedForTest(
+      'sep=;\n汉字;拼音;释义\n吃;chi1;makan\n喝;he1;minum',
+    );
+    final cards = service.rowsToCardsForTest(rows);
+
+    expect(cards, hasLength(2));
+    expect(cards.map((c) => c.simplified), ['吃', '喝']);
+    expect(cards.first.meaning, 'makan');
+  });
+
   test('imports common Anki Mandarin expression headers', () {
     final service = DeckIoService();
     final rows = service.readDelimitedForTest(

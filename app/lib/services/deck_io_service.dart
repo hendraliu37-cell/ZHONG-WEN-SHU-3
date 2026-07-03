@@ -225,11 +225,15 @@ class DeckIoService {
   }
 
   List<VocabEntry> _rowsToCards(List<List<String>> rows) {
-    if (rows.isEmpty) return const [];
-    final first = rows.first.map(_normalizeHeader).toList();
+    final dataRows = rows.where((row) => !_isDelimiterDirective(row)).toList();
+    if (dataRows.isEmpty) return const [];
+    final first = dataRows.first.map(_normalizeHeader).toList();
     final hasHeader = first.any(_isKnownHeader);
     if (!hasHeader) {
-      return rows.map(_headerlessRowToCard).whereType<VocabEntry>().toList();
+      return dataRows
+          .map(_headerlessRowToCard)
+          .whereType<VocabEntry>()
+          .toList();
     }
 
     final header = first;
@@ -241,11 +245,18 @@ class DeckIoService {
       return '';
     }
 
-    return rows
+    return dataRows
         .skip(1)
         .map((row) => _rowToCard(row, get))
         .whereType<VocabEntry>()
         .toList();
+  }
+
+  bool _isDelimiterDirective(List<String> row) {
+    if (row.isEmpty) return false;
+    final first = row.first.trim().toLowerCase();
+    return first.startsWith('sep=') &&
+        row.skip(1).every((cell) => cell.trim().isEmpty);
   }
 
   VocabEntry? _rowToCard(
