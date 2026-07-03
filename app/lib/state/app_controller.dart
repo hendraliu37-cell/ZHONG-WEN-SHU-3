@@ -3468,7 +3468,8 @@ class AppController extends ChangeNotifier {
     final it = idiomBank.randomForTeaching(cat: cat);
     if (it == null) return;
     final block = idiomBank.contextBlock([it]);
-    messages = [...messages, ChatMsg('me', 'Ajari aku idiom ${it.simplified}')];
+    final displayIdiom = usesTraditionalHanzi ? it.traditional : it.simplified;
+    messages = [...messages, ChatMsg('me', 'Ajari aku idiom $displayIdiom')];
     _rememberLearningFromText(
       '${it.simplified} ${it.traditional} ${it.meaning}',
     );
@@ -3495,7 +3496,7 @@ class AppController extends ChangeNotifier {
       }
     }
     reply ??=
-        'Idiom ${it.simplified} (${it.pinyin}) — ${it.meaning}.'
+        'Idiom $displayIdiom (${it.pinyin}) — ${it.meaning}.'
         '${it.literal.isNotEmpty ? ' Harfiah: ${it.literal}.' : ''}';
     tutorTyping = false;
     reply = displayTutorText(reply);

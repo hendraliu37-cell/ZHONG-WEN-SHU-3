@@ -168,6 +168,14 @@ Buat satu kalimat pakai 喜欢.
     expect(llm.called, isTrue);
     expect(llm.track, 'traditional');
     expect(c.tutorTyping, isFalse);
+    expect(c.messages.first.who, 'me');
+    final taughtIdiom = c.messages.first.text.replaceFirst(
+      'Ajari aku idiom ',
+      '',
+    );
+    final entry = c.idiomBank.lookup(taughtIdiom);
+    expect(entry, isNotNull);
+    expect(taughtIdiom, entry!.traditional);
     expect(c.messages.last.who, 't');
     expect(c.messages.last.text, contains('\u559c\u6b61'));
     expect(c.messages.last.text, contains('\u98ef'));
