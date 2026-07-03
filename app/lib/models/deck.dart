@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 /// A deck (group of cards). Mirrors the prototype `DECKS` plus the backend
 /// handoff `decks` table shape.
 class Deck {
@@ -36,7 +38,7 @@ class Deck {
     standard: j['standard']?.toString() ?? 'mixed',
     levelTag: j['levelTag']?.toString() ?? '',
     isPack: _boolish(j['isPack']),
-    cardIds: ((j['cardIds'] as List?) ?? []).map(_jsonInt).nonNulls.toList(),
+    cardIds: _jsonIntList(j['cardIds'] ?? j['card_ids']),
   );
 }
 
@@ -44,6 +46,21 @@ int? _jsonInt(Object? value) {
   if (value is int) return value;
   if (value is num) return value.toInt();
   return int.tryParse(value?.toString() ?? '');
+}
+
+List<int> _jsonIntList(Object? value) {
+  Object? list = value;
+  if (list is String) {
+    final text = list.trim();
+    if (!text.startsWith('[')) return const [];
+    try {
+      list = jsonDecode(text);
+    } catch (_) {
+      return const [];
+    }
+  }
+  if (list is! List) return const [];
+  return list.map(_jsonInt).nonNulls.toList();
 }
 
 bool _boolish(Object? value) {

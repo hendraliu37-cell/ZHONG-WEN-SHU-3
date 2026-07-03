@@ -44,6 +44,12 @@ void main() {
             'cardIds': ['1', 2.0, 'bad-id'],
           },
           {
+            'id': 'cloud',
+            'idx': '02',
+            'name': 'Cloud',
+            'card_ids': '["1",2,"bad-id"]',
+          },
+          {
             'id': '',
             'idx': '99',
             'name': 'Broken',
@@ -56,8 +62,10 @@ void main() {
       expect(c.cards[1]!.simplified, '吃');
       expect(c.srs.containsKey(1), isTrue);
       expect(c.srs.length, 1);
-      expect(c.decks.single.cardIds, [1]);
-      expect(c.decks.single.isPack, isTrue);
+      expect(c.decks.map((d) => d.id), ['custom', 'cloud']);
+      expect(c.decks.first.cardIds, [1]);
+      expect(c.decks.first.isPack, isTrue);
+      expect(c.decks.last.cardIds, [1]);
     },
   );
 
