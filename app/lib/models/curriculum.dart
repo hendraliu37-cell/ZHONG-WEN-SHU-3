@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 /// Satu topik materi harian dari Guru.
 class DailyMaterial {
   final String topic;
@@ -54,4 +56,17 @@ class VocabItem {
 
 String _string(Object? value) => value?.toString().trim() ?? '';
 
-List<Object?> _list(Object? value) => value is List ? value : const <Object?>[];
+List<Object?> _list(Object? value) {
+  if (value is List) return value;
+  if (value is String) {
+    final text = value.trim();
+    if (!text.startsWith('[')) return const <Object?>[];
+    try {
+      final decoded = jsonDecode(text);
+      return decoded is List ? decoded : const <Object?>[];
+    } catch (_) {
+      return const <Object?>[];
+    }
+  }
+  return const <Object?>[];
+}

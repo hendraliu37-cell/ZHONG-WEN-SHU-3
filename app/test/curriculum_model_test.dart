@@ -40,6 +40,19 @@ void main() {
     expect(material.summary, 'Kosong');
   });
 
+  test('DailyMaterial parser accepts JSON string list fields', () {
+    final material = DailyMaterial.fromJson({
+      'topic': 'Belanja',
+      'vocab': '[{"hanzi":"买","pinyin":"mai3","meaning":"membeli"},"bad-row"]',
+      'sentences': '[" 我买水果。 ", "", null]',
+      'exercise': 'Buat kalimat.',
+    });
+
+    expect(material.vocab, hasLength(1));
+    expect(material.vocab.single.hanzi, '买');
+    expect(material.sentences, ['我买水果。']);
+  });
+
   test('curriculum response parser picks the first usable material', () {
     final material = parseCurriculumResponse({
       'cached': true,
@@ -61,6 +74,19 @@ void main() {
     expect(material!.topic, 'Makan');
     expect(material.vocab.single.hanzi, '\u5403');
   });
+
+  test(
+    'curriculum response parser accepts raw JSON string and singular material',
+    () {
+      final material = parseCurriculumResponse(
+        '{"material":{"topic":"Minum","vocab":[{"hanzi":"喝","pinyin":"he1","meaning":"minum"}]}}',
+      );
+
+      expect(material, isNotNull);
+      expect(material!.topic, 'Minum');
+      expect(material.vocab.single.hanzi, '喝');
+    },
+  );
 
   test('curriculum response parser tolerates missing material list', () {
     expect(parseCurriculumResponse({'materials': 'bad'}), isNull);

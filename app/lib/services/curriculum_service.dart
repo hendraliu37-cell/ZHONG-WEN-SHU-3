@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../config.dart';
@@ -34,9 +36,15 @@ class CurriculumService {
 }
 
 DailyMaterial? parseCurriculumResponse(Object? data) {
-  final materials = data is Map ? data['materials'] : null;
-  if (materials is! List) return null;
-  for (final item in materials) {
+  final decoded = _jsonValue(data);
+  final materials = decoded is Map
+      ? (decoded['materials'] ?? decoded['material'] ?? decoded['data'])
+      : decoded;
+  final list = materials is List
+      ? materials
+      : (materials == null ? null : [materials]);
+  if (list == null) return null;
+  for (final item in list) {
     if (item is! Map) continue;
     final material = DailyMaterial.fromJson(Map<String, dynamic>.from(item));
     if (material.topic.isNotEmpty ||
@@ -47,4 +55,17 @@ DailyMaterial? parseCurriculumResponse(Object? data) {
     }
   }
   return null;
+}
+
+Object? _jsonValue(Object? data) {
+  if (data is String) {
+    final text = data.trim();
+    if (!text.startsWith('{') && !text.startsWith('[')) return data;
+    try {
+      return jsonDecode(text);
+    } catch (_) {
+      return data;
+    }
+  }
+  return data;
 }
