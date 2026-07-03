@@ -50,6 +50,32 @@ void main() {
     expect(text.split('\n'), ['Ringkas: halo.', 'Contoh: 你好 (ni hao) = halo.']);
   });
 
+  test('Guru display text unwraps JSON-shaped LLM replies', () {
+    final direct = formatTutorReplyForDisplay(
+      '{"reply":"Ringkas: halo.\\nContoh: \\u4f60\\u597d (ni hao) = halo."}',
+      track: 'simplified',
+      primary: 'simplified',
+    );
+    expect(direct.split('\n'), [
+      'Ringkas: halo.',
+      'Contoh: \u4f60\u597d (ni hao) = halo.',
+    ]);
+
+    final contentBlocks = formatTutorReplyForDisplay(
+      '{"content":[{"type":"text","text":"Ringkas: "},{"text":"\\u559c\\u6b22 = suka"}]}',
+      track: 'traditional',
+      primary: 'traditional',
+    );
+    expect(contentBlocks, 'Ringkas: \u559c\u6b61 = suka');
+
+    final choices = formatTutorReplyForDisplay(
+      '{"choices":[{"message":{"content":"Contoh: \\u6211\\u559c\\u6b22\\u5403\\u996d\\u3002"}}]}',
+      track: 'traditional',
+      primary: 'traditional',
+    );
+    expect(choices, 'Contoh: \u6211\u559c\u6b61\u5403\u98ef\u3002');
+  });
+
   test('Guru display text gives unlabeled replies a tidy structure', () {
     final text = formatTutorReplyForDisplay(
       '''Xiang berarti ingin atau mau.

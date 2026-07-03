@@ -415,7 +415,12 @@ String formatTutorReplyForDisplay(
   required String primary,
   Iterable<VocabEntry> cards = const [],
 }) => _formatTutorReply(
-  _convertHanziForTrack(text, track: track, primary: primary, cards: cards),
+  _convertHanziForTrack(
+    _unwrapTutorPayload(text),
+    track: track,
+    primary: primary,
+    cards: cards,
+  ),
 );
 
 String _formatTutorReply(String raw) {
@@ -496,6 +501,54 @@ String _formatTutorReply(String raw) {
       .map((label) => '$label ${labelled[label]!.trim()}')
       .take(4)
       .join('\n');
+}
+
+String _unwrapTutorPayload(String raw) {
+  final trimmed = raw.trim();
+  if (!(trimmed.startsWith('{') || trimmed.startsWith('['))) return raw;
+  try {
+    final decoded = jsonDecode(trimmed);
+    return _tutorPayloadText(decoded) ?? raw;
+  } catch (_) {
+    return raw;
+  }
+}
+
+String? _tutorPayloadText(Object? value) {
+  if (value is String) {
+    final text = value.trim();
+    return text.isEmpty ? null : text;
+  }
+  if (value is List) {
+    final parts = value
+        .map(_tutorPayloadText)
+        .whereType<String>()
+        .where((part) => part.trim().isNotEmpty)
+        .toList();
+    if (parts.isEmpty) return null;
+    return parts.join('\n');
+  }
+  if (value is Map) {
+    for (final key in const [
+      'reply',
+      'answer',
+      'message',
+      'text',
+      'content',
+      'translation',
+    ]) {
+      final text = _tutorPayloadText(value[key]);
+      if (text != null) return text;
+    }
+    final choices = value['choices'];
+    if (choices is List && choices.isNotEmpty) {
+      for (final choice in choices) {
+        final text = _tutorPayloadText(choice);
+        if (text != null) return text;
+      }
+    }
+  }
+  return null;
 }
 
 Iterable<String> _expandTutorLine(String line) sync* {
