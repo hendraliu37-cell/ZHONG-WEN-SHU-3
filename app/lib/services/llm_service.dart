@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -145,7 +146,7 @@ class LlmService {
             final data = jsonDecode(resp.body);
             final reply = openModel
                 ? _openModelText(data)
-                : data['choices']?[0]?['message']?['content'] as String?;
+                : _openAiChatText(data);
             if (reply != null && reply.trim().isNotEmpty) {
               lastError = null;
               return reply.trim();
@@ -175,19 +176,41 @@ class LlmService {
 
   String? _openModelText(dynamic data) {
     final content = data is Map ? data['content'] : null;
-    if (content is String) return content;
-    if (content is List) {
-      final out = StringBuffer();
-      for (final part in content) {
-        if (part is String) {
-          out.write(part);
-        } else if (part is Map && part['text'] is String) {
-          out.write(part['text'] as String);
-        }
-      }
-      final text = out.toString().trim();
-      return text.isEmpty ? null : text;
-    }
-    return null;
+    return _contentText(content);
+  }
+
+  String? _openAiChatText(dynamic data) {
+    final choices = data is Map ? data['choices'] : null;
+    if (choices is! List || choices.isEmpty) return null;
+    final first = choices.first;
+    final message = first is Map ? first['message'] : null;
+    if (message is! Map) return null;
+    return _contentText(message['content']);
   }
 }
+
+String? _contentText(Object? content) {
+  if (content is String) return content;
+  if (content is List) {
+    final out = StringBuffer();
+    for (final part in content) {
+      if (part is String) {
+        out.write(part);
+      } else if (part is Map) {
+        final text = part['text'] ?? part['content'];
+        if (text is String) out.write(text);
+      }
+    }
+    final text = out.toString().trim();
+    return text.isEmpty ? null : text;
+  }
+  return null;
+}
+
+@visibleForTesting
+String? parseOpenModelTextForTest(Object? data) =>
+    LlmService()._openModelText(data);
+
+@visibleForTesting
+String? parseOpenAiChatTextForTest(Object? data) =>
+    LlmService()._openAiChatText(data);

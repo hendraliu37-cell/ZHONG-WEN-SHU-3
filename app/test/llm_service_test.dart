@@ -21,4 +21,32 @@ void main() {
     expect(reply, isNull);
     expect(llm.lastError, isNull);
   });
+
+  test('OpenModel text parser accepts content block lists', () {
+    final text = parseOpenModelTextForTest({
+      'content': [
+        {'type': 'text', 'text': 'Ringkas: '},
+        {'type': 'text', 'text': '你好 = halo'},
+      ],
+    });
+
+    expect(text, 'Ringkas: 你好 = halo');
+  });
+
+  test('OpenAI-compatible parser accepts content block lists', () {
+    final text = parseOpenAiChatTextForTest({
+      'choices': [
+        {
+          'message': {
+            'content': [
+              {'type': 'text', 'text': 'Contoh: '},
+              {'content': '我喜欢中文。'},
+            ],
+          },
+        },
+      ],
+    });
+
+    expect(text, 'Contoh: 我喜欢中文。');
+  });
 }
