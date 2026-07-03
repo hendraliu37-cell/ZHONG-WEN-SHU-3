@@ -35,7 +35,7 @@ class Deck {
     name: j['name']?.toString() ?? 'Deck',
     standard: j['standard']?.toString() ?? 'mixed',
     levelTag: j['levelTag']?.toString() ?? '',
-    isPack: (j['isPack'] as bool?) ?? false,
+    isPack: _boolish(j['isPack']),
     cardIds: ((j['cardIds'] as List?) ?? []).map(_jsonInt).nonNulls.toList(),
   );
 }
@@ -44,4 +44,11 @@ int? _jsonInt(Object? value) {
   if (value is int) return value;
   if (value is num) return value.toInt();
   return int.tryParse(value?.toString() ?? '');
+}
+
+bool _boolish(Object? value) {
+  if (value is bool) return value;
+  if (value is num) return value != 0;
+  final text = value?.toString().trim().toLowerCase() ?? '';
+  return text == 'true' || text == '1' || text == 'yes';
 }

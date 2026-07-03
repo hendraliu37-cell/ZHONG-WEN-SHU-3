@@ -40,6 +40,7 @@ void main() {
             'id': 'custom',
             'idx': '01',
             'name': 'Custom',
+            'isPack': 'true',
             'cardIds': ['1', 2.0, 'bad-id'],
           },
           {
@@ -56,6 +57,7 @@ void main() {
       expect(c.srs.containsKey(1), isTrue);
       expect(c.srs.length, 1);
       expect(c.decks.single.cardIds, [1]);
+      expect(c.decks.single.isPack, isTrue);
     },
   );
 
