@@ -216,12 +216,32 @@ class DeckIoService {
     final firstLine = text
         .split(RegExp(r'\r?\n'))
         .firstWhere((line) => line.trim().isNotEmpty, orElse: () => '');
+    final directive = _delimiterDirective(firstLine);
+    if (directive != null) return directive;
     final counts = {
       '\t': '\t'.allMatches(firstLine).length,
       ',': ','.allMatches(firstLine).length,
       ';': ';'.allMatches(firstLine).length,
     };
     return counts.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
+  }
+
+  String? _delimiterDirective(String line) {
+    final text = line.trim().toLowerCase();
+    if (text.startsWith('sep=') && text.length >= 5) {
+      final value = text.substring(4).trim();
+      if (value == r'\t' || value == 'tab') return '\t';
+      if (value.startsWith(';')) return ';';
+      if (value.startsWith(',')) return ',';
+    }
+    if (!text.startsWith('#separator:')) return null;
+    final value = text.substring('#separator:'.length).trim();
+    return switch (value) {
+      r'\t' || 'tab' || 'tabs' => '\t',
+      ';' || 'semicolon' || 'semi-colon' => ';',
+      ',' || 'comma' => ',',
+      _ => null,
+    };
   }
 
   List<VocabEntry> _rowsToCards(List<List<String>> rows) {

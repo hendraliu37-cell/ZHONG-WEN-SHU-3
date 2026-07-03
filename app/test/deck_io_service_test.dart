@@ -266,6 +266,25 @@ void main() {
     expect(cards.last.meaning, 'belajar');
   });
 
+  test('imports Anki semicolon separator directive', () {
+    final service = DeckIoService();
+    final rows = service.readDelimitedForTest(
+      '#separator:semicolon\n'
+      '#html:false\n'
+      'Expression;Reading;Meaning\n'
+      '\u5403;chi1;makan\n'
+      '\u559d;he1;minum',
+    );
+    final cards = service.rowsToCardsForTest(rows);
+
+    expect(cards, hasLength(2));
+    expect(cards.first.simplified, '\u5403');
+    expect(cards.first.pinyin, 'chi1');
+    expect(cards.first.meaning, 'makan');
+    expect(cards.last.simplified, '\u559d');
+    expect(cards.last.meaning, 'minum');
+  });
+
   test('roundtrips exported Excel rows back into cards', () {
     final service = DeckIoService();
     final bytes = service.buildExcelForTest([
