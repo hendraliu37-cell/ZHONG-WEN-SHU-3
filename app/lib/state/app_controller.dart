@@ -91,7 +91,7 @@ class TranslateHistoryItem {
         to: _langCode(j['to'], fallback: 'id'),
         engine: _stringValue(j['engine'], fallback: 'dict'),
         pinyin: _nullableStringValue(j['pinyin']),
-        at: DateTime.tryParse(_stringValue(j['at'])) ?? DateTime.now(),
+        at: _dateValue(j['at']),
       );
 
   Map<String, dynamic> toJson() => {
@@ -291,8 +291,18 @@ bool _boolValue(Object? value, {bool fallback = false}) {
   return fallback;
 }
 
-DateTime _dateValue(Object? value) =>
-    DateTime.tryParse(_stringValue(value)) ?? DateTime.now();
+DateTime _dateValue(Object? value) {
+  final text = _stringValue(value);
+  final numeric = value is num
+      ? value
+      : (RegExp(r'^-?\d+(\.\d+)?$').hasMatch(text) ? num.tryParse(text) : null);
+  if (numeric == null) {
+    return DateTime.tryParse(text) ?? DateTime.now();
+  }
+  final raw = numeric.toInt();
+  final ms = raw.abs() >= 100000000000 ? raw : raw * 1000;
+  return DateTime.fromMillisecondsSinceEpoch(ms, isUtc: true).toLocal();
+}
 
 const Map<String, String> _simpToTrad = {
   '这': '這',

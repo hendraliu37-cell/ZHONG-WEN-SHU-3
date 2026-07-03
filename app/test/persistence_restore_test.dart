@@ -320,6 +320,55 @@ void main() {
     expect(c.testHistory.single.score, 1);
   });
 
+  test('restore accepts numeric timestamps in local history', () {
+    final c = AppController();
+    final epochMs = DateTime.utc(2026, 7, 1, 10).millisecondsSinceEpoch;
+    final epochSeconds =
+        DateTime.utc(2026, 7, 1, 11).millisecondsSinceEpoch ~/ 1000;
+
+    c.restoreForTest({
+      'cards': {
+        '1': {'s': '\u5403', 't': '\u5403', 'py': 'chi1', 'm': 'makan'},
+      },
+      'translateHistory': [
+        {
+          'source': '\u5403',
+          'translation': 'makan',
+          'from': 'zh',
+          'to': 'id',
+          'at': epochMs,
+        },
+      ],
+      'testHistory': [
+        {
+          'id': 'numeric-time',
+          'mode': 'mc',
+          'title': 'Tes timestamp',
+          'direction': 'zh2id',
+          'cardIds': [1],
+          'startedAt': epochSeconds,
+          'updatedAt': '$epochMs',
+        },
+      ],
+    });
+
+    expect(
+      c.trHistory.single.at,
+      DateTime.fromMillisecondsSinceEpoch(epochMs, isUtc: true).toLocal(),
+    );
+    expect(
+      c.testHistory.single.startedAt,
+      DateTime.fromMillisecondsSinceEpoch(
+        epochSeconds * 1000,
+        isUtc: true,
+      ).toLocal(),
+    );
+    expect(
+      c.testHistory.single.updatedAt,
+      DateTime.fromMillisecondsSinceEpoch(epochMs, isUtc: true).toLocal(),
+    );
+  });
+
   test('restore accepts legacy string ids for AI-focused learning cards', () {
     final c = AppController();
 
