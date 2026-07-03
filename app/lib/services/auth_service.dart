@@ -338,6 +338,7 @@ List<Map<String, dynamic>> _parseTestHistoryRows(Object? rows) {
     if (row is! Map) continue;
     final payload = _jsonObject(row['payload']);
     if (payload == null) continue;
+    if (_stringish(payload['id']).isEmpty) continue;
     out.add(Map<String, dynamic>.from(payload));
   }
   return out;

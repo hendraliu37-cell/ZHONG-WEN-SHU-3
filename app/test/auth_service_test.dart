@@ -70,6 +70,13 @@ void main() {
           'payload':
               '{"id":"ok-3","card_ids":["3",4],"updatedAt":"2026-07-03T00:00:00.000"}',
         },
+        {
+          'payload': {
+            'cardIds': [99],
+          },
+        },
+        {'payload': '{"cardIds":[100]}'},
+        {'payload': '{"id":"   ","cardIds":[101]}'},
       ]);
 
       expect(parsed, hasLength(3));
