@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:zhongwen_shu/models/curriculum.dart';
 import 'package:zhongwen_shu/state/app_controller.dart';
 
 void main() {
@@ -186,7 +187,17 @@ void main() {
   });
 
   test('restore respects daily material snooze windows', () {
+    final empty = AppController();
+    empty.restoreForTest({
+      'dailyMaterialHiddenUntil': DateTime.now()
+          .subtract(const Duration(minutes: 1))
+          .toIso8601String(),
+    });
+
+    expect(empty.showDailyMaterialBanner, isFalse);
+
     final hidden = AppController();
+    hidden.dailyMaterial = _dailyMaterial();
     hidden.restoreForTest({
       'dailyMaterialHiddenUntil': DateTime.now()
           .add(const Duration(hours: 1))
@@ -196,6 +207,7 @@ void main() {
     expect(hidden.showDailyMaterialBanner, isFalse);
 
     final visible = AppController();
+    visible.dailyMaterial = _dailyMaterial();
     visible.restoreForTest({
       'dailyMaterialHiddenUntil': DateTime.now()
           .subtract(const Duration(minutes: 1))
@@ -449,3 +461,10 @@ void main() {
     expect(c.srs[2]!.isNew, isTrue);
   });
 }
+
+DailyMaterial _dailyMaterial() => const DailyMaterial(
+  topic: 'Latihan sapaan',
+  vocab: [VocabItem(hanzi: '你好', pinyin: 'nǐ hǎo', meaning: 'halo')],
+  sentences: ['你好，老师！'],
+  exercise: 'Buat satu kalimat sapaan.',
+);

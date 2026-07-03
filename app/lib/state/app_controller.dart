@@ -1545,8 +1545,9 @@ class AppController extends ChangeNotifier {
   );
 
   bool get showDailyMaterialBanner =>
-      dailyMaterialHiddenUntil == null ||
-      DateTime.now().isAfter(dailyMaterialHiddenUntil!);
+      dailyMaterial != null &&
+      (dailyMaterialHiddenUntil == null ||
+          DateTime.now().isAfter(dailyMaterialHiddenUntil!));
 
   Future<void> snoozeDailyMaterial() async {
     dailyMaterialHiddenUntil = DateTime.now().add(const Duration(hours: 2));
