@@ -57,8 +57,16 @@ String? _recognizedText(Object? data) {
     return text;
   }
   if (data is Map) {
-    final text = data['text']?.toString().trim() ?? '';
-    return text.isEmpty ? null : text;
+    for (final key in const [
+      'text',
+      'recognized_text',
+      'recognizedText',
+      'transcript',
+      'result',
+    ]) {
+      final text = data[key]?.toString().trim() ?? '';
+      if (text.isNotEmpty) return text;
+    }
   }
   return null;
 }

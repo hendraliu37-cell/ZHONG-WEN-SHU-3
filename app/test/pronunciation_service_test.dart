@@ -65,6 +65,12 @@ void main() {
   test('STT parser accepts raw JSON strings and loose text values', () {
     expect(parseSttTextResponseForTest({'text': 123}), '123');
     expect(parseSttTextResponseForTest('{"text":"你好"}'), '你好');
+    expect(parseSttTextResponseForTest({'transcript': '我喜欢中文'}), '我喜欢中文');
+    expect(
+      parseSttTextResponseForTest({'recognized_text': 'terima kasih'}),
+      'terima kasih',
+    );
+    expect(parseSttTextResponseForTest({'result': 'halo'}), 'halo');
     expect(parseSttTextResponseForTest('  halo  '), 'halo');
     expect(parseSttTextResponseForTest({'text': '  '}), isNull);
   });
@@ -72,6 +78,9 @@ void main() {
   test('OCR parser accepts raw JSON strings and loose text values', () {
     expect(parseOcrTextResponseForTest({'text': 456}), '456');
     expect(parseOcrTextResponseForTest('{"text":"中文"}'), '中文');
+    expect(parseOcrTextResponseForTest({'recognized_text': '菜单'}), '菜单');
+    expect(parseOcrTextResponseForTest({'recognizedText': '学习'}), '学习');
+    expect(parseOcrTextResponseForTest({'result': '你好'}), '你好');
     expect(parseOcrTextResponseForTest('  你好  '), '你好');
     expect(parseOcrTextResponseForTest(null), isNull);
   });
