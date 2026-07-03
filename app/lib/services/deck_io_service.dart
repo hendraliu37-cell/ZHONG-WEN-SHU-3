@@ -150,7 +150,7 @@ class DeckIoService {
     final table = excel.tables.values.first;
     return [
       for (final row in table.rows)
-        [for (final cell in row) cell?.value?.toString().trim() ?? ''],
+        _cleanRow([for (final cell in row) cell?.value?.toString() ?? '']),
     ].where((row) => row.any((cell) => cell.isNotEmpty)).toList();
   }
 
@@ -216,7 +216,31 @@ class DeckIoService {
 
   List<String> _cleanRow(List<String> row) {
     if (row.isEmpty) return row;
-    return [row.first.replaceFirst('\uFEFF', ''), ...row.skip(1)];
+    return [
+      for (var i = 0; i < row.length; i++)
+        _cleanImportCell(row[i], first: i == 0),
+    ];
+  }
+
+  String _cleanImportCell(String value, {bool first = false}) {
+    var text = first ? value.replaceFirst('\uFEFF', '') : value;
+    text = text
+        .replaceAll(RegExp(r'<\s*br\s*/?\s*>', caseSensitive: false), '\n')
+        .replaceAll(
+          RegExp(r'</\s*(?:div|p|li|tr|td|th)\s*>', caseSensitive: false),
+          '\n',
+        )
+        .replaceAll(RegExp(r'<[^>]+>'), '')
+        .replaceAll('&nbsp;', ' ')
+        .replaceAll('&amp;', '&')
+        .replaceAll('&lt;', '<')
+        .replaceAll('&gt;', '>')
+        .replaceAll('&quot;', '"')
+        .replaceAll('&#39;', "'")
+        .replaceAll(RegExp(r'[ \t]+\n'), '\n')
+        .replaceAll(RegExp(r'\n[ \t]+'), '\n')
+        .trim();
+    return text;
   }
 
   String _detectDelimiter(String text) {

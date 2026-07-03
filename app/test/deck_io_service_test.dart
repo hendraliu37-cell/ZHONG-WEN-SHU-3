@@ -310,6 +310,24 @@ void main() {
     expect(cards.last.meaning, 'minum');
   });
 
+  test('imports Anki HTML fields without keeping markup', () {
+    final service = DeckIoService();
+    final rows = service.readDelimitedForTest(
+      '#separator:tab\n'
+      '#html:true\n'
+      'Expression\tReading\tMeaning\tExtra\n'
+      '<b>\u5403</b>\t<span>chi1</span>\tmakan<br>eat\t'
+      '<div>kata&nbsp;kerja &amp; umum</div>',
+    );
+    final cards = service.rowsToCardsForTest(rows);
+
+    expect(cards, hasLength(1));
+    expect(cards.single.simplified, '\u5403');
+    expect(cards.single.pinyin, 'chi1');
+    expect(cards.single.meaning, 'makan / eat');
+    expect(cards.single.exampleId, 'kata kerja & umum');
+  });
+
   test('roundtrips exported Excel rows back into cards', () {
     final service = DeckIoService();
     final bytes = service.buildExcelForTest([
