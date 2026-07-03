@@ -328,6 +328,24 @@ void main() {
     expect(cards.single.exampleId, 'kata kerja & umum');
   });
 
+  test('imports Anki HTML numeric entities as Hanzi', () {
+    final service = DeckIoService();
+    final rows = service.readDelimitedForTest(
+      '#separator:tab\n'
+      '#html:true\n'
+      'Expression\tReading\tMeaning\tExtra\n'
+      '<b>&#20320;&#22909;</b>\tni3 hao3\thalo\t'
+      '&#x4F60;&#x597D; &apos;umum&apos;',
+    );
+    final cards = service.rowsToCardsForTest(rows);
+
+    expect(cards, hasLength(1));
+    expect(cards.single.simplified, '\u4f60\u597d');
+    expect(cards.single.pinyin, 'ni3 hao3');
+    expect(cards.single.meaning, 'halo');
+    expect(cards.single.exampleId, "\u4f60\u597d 'umum'");
+  });
+
   test('roundtrips exported Excel rows back into cards', () {
     final service = DeckIoService();
     final bytes = service.buildExcelForTest([

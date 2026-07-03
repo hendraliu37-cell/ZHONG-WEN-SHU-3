@@ -240,7 +240,30 @@ class DeckIoService {
         .replaceAll(RegExp(r'[ \t]+\n'), '\n')
         .replaceAll(RegExp(r'\n[ \t]+'), '\n')
         .trim();
-    return text;
+    return _decodeHtmlEntities(text);
+  }
+
+  String _decodeHtmlEntities(String value) {
+    return value.replaceAllMapped(RegExp(r'&(#x?[0-9a-fA-F]+|\w+);'), (m) {
+      final entity = m.group(1) ?? '';
+      if (entity.startsWith('#x') || entity.startsWith('#X')) {
+        final code = int.tryParse(entity.substring(2), radix: 16);
+        return code == null ? m.group(0)! : String.fromCharCode(code);
+      }
+      if (entity.startsWith('#')) {
+        final code = int.tryParse(entity.substring(1));
+        return code == null ? m.group(0)! : String.fromCharCode(code);
+      }
+      return switch (entity.toLowerCase()) {
+        'nbsp' => ' ',
+        'amp' => '&',
+        'lt' => '<',
+        'gt' => '>',
+        'quot' => '"',
+        'apos' => "'",
+        _ => m.group(0)!,
+      };
+    });
   }
 
   String _detectDelimiter(String text) {
