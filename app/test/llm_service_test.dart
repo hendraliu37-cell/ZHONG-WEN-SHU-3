@@ -58,4 +58,25 @@ void main() {
 
     expect(text, 'Contoh: 我喜欢中文。');
   });
+
+  test('direct fallback distinguishes bad model from bad API key', () {
+    expect(
+      looksLikeModelSelectionErrorForTest(
+        '{"error":{"type":"ModelError","message":"model not found"}}',
+      ),
+      isTrue,
+    );
+    expect(
+      looksLikeModelSelectionErrorForTest(
+        '{"error":"invalid model: deepseek-v4-flash"}',
+      ),
+      isTrue,
+    );
+    expect(
+      looksLikeModelSelectionErrorForTest(
+        '{"error":{"type":"AuthError","message":"invalid api key"}}',
+      ),
+      isFalse,
+    );
+  });
 }

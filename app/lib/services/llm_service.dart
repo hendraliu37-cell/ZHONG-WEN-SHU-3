@@ -157,7 +157,7 @@ class LlmService {
         } else if (resp.statusCode == 401 || resp.statusCode == 403) {
           lastError =
               'Auth(${resp.statusCode}) for $model: ${_snippet(resp.body, 100)}';
-          break;
+          if (!_isModelSelectionError(resp.body)) break;
         } else {
           lastError =
               'HTTP ${resp.statusCode} for $model: ${_snippet(resp.body, 80)}';
@@ -173,6 +173,9 @@ class LlmService {
 
   String _snippet(String text, int max) =>
       text.length <= max ? text : text.substring(0, max);
+
+  bool _isModelSelectionError(String body) =>
+      _looksLikeModelSelectionError(body);
 
   String? _openModelText(dynamic data) {
     final content = data is Map ? data['content'] : null;
@@ -236,3 +239,16 @@ String? parseOpenModelTextForTest(Object? data) =>
 @visibleForTesting
 String? parseOpenAiChatTextForTest(Object? data) =>
     LlmService()._openAiChatText(data);
+
+@visibleForTesting
+bool looksLikeModelSelectionErrorForTest(String body) =>
+    _looksLikeModelSelectionError(body);
+
+bool _looksLikeModelSelectionError(String body) {
+  final text = body.toLowerCase();
+  return text.contains('modelerror') ||
+      text.contains('model_not_found') ||
+      text.contains('model not found') ||
+      text.contains('invalid model') ||
+      text.contains('unknown model');
+}
