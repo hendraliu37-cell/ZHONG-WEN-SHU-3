@@ -17,7 +17,7 @@ class PronunciationWordScore {
   factory PronunciationWordScore.fromJson(Map<dynamic, dynamic> json) =>
       PronunciationWordScore(
         word: (json['word'] ?? '').toString(),
-        confidence: (json['confidence'] as num?)?.round(),
+        confidence: _intish(json['confidence']),
       );
 }
 
@@ -36,7 +36,7 @@ class PronunciationResult {
     final rows = json['words'];
     return PronunciationResult(
       transcript: (json['transcript'] ?? '').toString().trim(),
-      score: ((json['score'] as num?) ?? 0).round().clamp(0, 100),
+      score: (_intish(json['score']) ?? 0).clamp(0, 100),
       words: rows is List
           ? rows
                 .whereType<Map>()
@@ -118,12 +118,12 @@ class PronunciationService {
           'lang': lang,
         },
       );
-      final data = res.data;
-      if (data is Map && data['score'] != null) {
+      final data = _responseMap(res.data);
+      if (data != null && data['score'] != null) {
         lastError = null;
         return PronunciationResult.fromJson(data);
       }
-      if (data is Map && data['error'] != null) {
+      if (data != null && data['error'] != null) {
         lastError = data['detail']?.toString() ?? data['error'].toString();
       } else {
         lastError = 'Skor tidak tersedia.';
@@ -155,4 +155,34 @@ class PronunciationService {
       await File(path).delete();
     } catch (_) {}
   }
+}
+
+int? _intish(Object? value) {
+  if (value is int) return value;
+  if (value is num) return value.round();
+  final text = value?.toString().trim() ?? '';
+  if (text.isEmpty) return null;
+  return int.tryParse(text) ?? double.tryParse(text)?.round();
+}
+
+Map<dynamic, dynamic>? _responseMap(Object? data) {
+  if (data is Map) return data;
+  if (data is String) {
+    final text = data.trim();
+    if (!text.startsWith('{')) return null;
+    try {
+      final decoded = jsonDecode(text);
+      return decoded is Map ? decoded : null;
+    } catch (_) {
+      return null;
+    }
+  }
+  return null;
+}
+
+@visibleForTesting
+PronunciationResult? parsePronunciationResponseForTest(Object? data) {
+  final map = _responseMap(data);
+  if (map == null || map['score'] == null) return null;
+  return PronunciationResult.fromJson(map);
 }

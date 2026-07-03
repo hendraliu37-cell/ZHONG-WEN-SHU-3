@@ -27,6 +27,17 @@ void main() {
     expect(PronunciationResult.fromJson({'score': -5}).score, 0);
   });
 
+  test('parses loose pronunciation scoring response values', () {
+    final result = parsePronunciationResponseForTest(
+      '{"transcript":"你好","score":"87.6","words":[{"word":"你","confidence":"91.2"}]}',
+    );
+
+    expect(result, isNotNull);
+    expect(result!.score, 88);
+    expect(result.words.single.confidence, 91);
+    expect(parsePronunciationResponseForTest('not-json'), isNull);
+  });
+
   test('pronunciation cancel removes temporary recording file', () async {
     final dir = await Directory.systemTemp.createTemp('zws_pron_test_');
     final file = File('${dir.path}/recording.wav');
