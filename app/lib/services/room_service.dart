@@ -197,22 +197,40 @@ class RoomService {
 
 List<Room> _parseRoomRows(Object? rows) {
   if (rows is! List) return const [];
-  return rows.whereType<Map>().map((j) {
-    return Room.fromJson(j, memberCount: _parseMemberCount(j['room_members']));
-  }).toList();
+  return rows
+      .whereType<Map>()
+      .map((j) {
+        return Room.fromJson(
+          j,
+          memberCount: _parseMemberCount(j['room_members']),
+        );
+      })
+      .where(_isUsableRoom)
+      .toList();
 }
 
 Room? _parseRoomRpcRow(Object? row, {int memberCount = 0}) {
   final payload = row is List ? (row.isEmpty ? null : row.first) : row;
   if (payload is! Map) return null;
-  return Room.fromJson(payload, memberCount: memberCount);
+  final room = Room.fromJson(payload, memberCount: memberCount);
+  return _isUsableRoom(room) ? room : null;
 }
 
 List<RoomMessage> _parseRoomHistoryRows(Object? rows) {
   if (rows is! List) return const [];
-  final list = rows.whereType<Map>().map(RoomMessage.fromJson).toList();
+  final list = rows
+      .whereType<Map>()
+      .map(RoomMessage.fromJson)
+      .where(_isUsableServerMessage)
+      .toList();
   return list.reversed.toList();
 }
+
+bool _isUsableRoom(Room room) =>
+    room.id.trim().isNotEmpty && room.code.trim().isNotEmpty;
+
+bool _isUsableServerMessage(RoomMessage message) =>
+    message.id > 0 && message.body.trim().isNotEmpty;
 
 String? _parseGuruCallError(Object? data) {
   final map = _jsonObject(data);

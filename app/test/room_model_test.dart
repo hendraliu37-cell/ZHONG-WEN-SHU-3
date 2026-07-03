@@ -128,6 +128,18 @@ void main() {
           'name': 'Kelas B',
           'room_members': {'count': 2},
         },
+        {
+          'id': '',
+          'code': 'ZWS-BAD01',
+          'name': 'Kosong',
+          'room_members': {'count': 9},
+        },
+        {
+          'id': 'r3',
+          'code': '',
+          'name': 'Tanpa kode',
+          'room_members': {'count': 1},
+        },
         'bad-row',
       ]);
 
@@ -139,6 +151,8 @@ void main() {
     test('RPC row parser rejects empty or malformed payloads', () {
       expect(parseRoomRpcRowForTest([]), isNull);
       expect(parseRoomRpcRowForTest('bad'), isNull);
+      expect(parseRoomRpcRowForTest({'id': '', 'code': 'ZWS-ABCDE'}), isNull);
+      expect(parseRoomRpcRowForTest({'id': 'r1', 'code': ''}), isNull);
 
       final room = parseRoomRpcRowForTest([
         {'id': 'r1', 'code': 'ZWS-ABCDE', 'name': 'Kelas'},
@@ -159,6 +173,8 @@ void main() {
           'created_at': '2026-07-02T02:00:00Z',
         },
         'bad-row',
+        {'id': 3, 'body': '  ', 'created_at': '2026-07-02T03:00:00Z'},
+        {'id': 0, 'body': 'optimistic stale'},
         {
           'id': 1,
           'author_name': 'Hendra',
