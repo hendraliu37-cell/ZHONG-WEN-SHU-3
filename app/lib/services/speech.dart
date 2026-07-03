@@ -193,12 +193,16 @@ String? _audioPayload(Object? data) {
         // Fall through and treat it as a raw base64 payload.
       }
     }
+    final comma = text.indexOf(',');
+    if (text.toLowerCase().startsWith('data:audio/') && comma >= 0) {
+      return text.substring(comma + 1).trim();
+    }
     return text;
   }
   if (data is Map) {
     for (final key in const ['audio', 'audio_base64', 'base64']) {
       final text = data[key]?.toString().trim() ?? '';
-      if (text.isNotEmpty) return text;
+      if (text.isNotEmpty) return _audioPayload(text);
     }
   }
   return null;

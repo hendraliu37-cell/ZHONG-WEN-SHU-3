@@ -26,6 +26,14 @@ void main() {
       expect(parseTtsAudioResponseForTest('{"audio":"BAU="}'), [4, 5]);
       expect(parseTtsAudioResponseForTest({'audio_base64': 'Bgc='}), [6, 7]);
       expect(parseTtsAudioResponseForTest('CAk='), [8, 9]);
+      expect(parseTtsAudioResponseForTest('data:audio/mpeg;base64,Cgs='), [
+        10,
+        11,
+      ]);
+      expect(
+        parseTtsAudioResponseForTest({'audio': 'data:audio/mp3;base64,DA0='}),
+        [12, 13],
+      );
       expect(parseTtsAudioResponseForTest({'audio': 'not-base64'}), isEmpty);
     });
   });
