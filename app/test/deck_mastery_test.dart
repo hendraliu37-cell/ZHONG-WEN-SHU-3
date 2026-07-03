@@ -574,18 +574,36 @@ void main() {
     expect(c.roomMsgs, isEmpty);
   });
 
+  test('failed room send does not update AI learning focus', () async {
+    final c = AppController()
+      ..currentRoom = const Room(id: 'r1', code: 'ZWS-ABCDE', name: 'Kelas')
+      ..profileName = 'Hendra'
+      ..profileHandle = '#1234';
+    c.cards[1] = _vocab(1);
+
+    c.setRoomInput('aku mau latihan arti 1');
+    await c.sendRoom();
+
+    expect(c.roomInput, 'aku mau latihan arti 1');
+    expect(c.aiFocusCardIds, isEmpty);
+    expect(c.smartPracticeBase(limit: 1), [1]);
+  });
+
   test('successful group Guru call clears local typing state', () async {
     final rooms = _SuccessfulGuruRoomService();
     final c = AppController(rooms: rooms)
       ..currentRoom = const Room(id: 'r1', code: 'ZWS-ABCDE', name: 'Kelas')
       ..profileName = 'Hendra'
-      ..profileHandle = '#1234';
+      ..profileHandle = '#1234'
+      ..track = 'both'
+      ..primary = 'traditional';
 
     c.setRoomInput('@Guru bantu jelaskan');
     await c.sendRoom();
 
     expect(rooms.sentMessages, 1);
     expect(rooms.guruCalls, 1);
+    expect(rooms.track, 'traditional');
     expect(c.roomGuruBusy, isFalse);
     expect(c.roomInput, isEmpty);
   });
@@ -617,6 +635,7 @@ void main() {
 class _SuccessfulGuruRoomService extends RoomService {
   int sentMessages = 0;
   int guruCalls = 0;
+  String? track;
 
   @override
   Future<bool> sendMessage(
@@ -632,6 +651,7 @@ class _SuccessfulGuruRoomService extends RoomService {
   @override
   Future<String?> callGuru(String roomId, {String track = 'simplified'}) async {
     guruCalls += 1;
+    this.track = track;
     return null;
   }
 }

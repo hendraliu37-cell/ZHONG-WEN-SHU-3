@@ -3609,7 +3609,6 @@ class AppController extends ChangeNotifier {
         createdAt: DateTime.now(),
       ),
     ];
-    final learned = _rememberLearningFromText(txt);
     final callGuru = mentionsGuru(txt);
     if (callGuru) roomGuruBusy = true;
     notifyListeners();
@@ -3634,6 +3633,7 @@ class AppController extends ChangeNotifier {
       notifyListeners();
       return;
     }
+    final learned = _rememberLearningFromText(txt);
     if (callGuru) {
       final err = await rooms.callGuru(r.id, track: _zhTrack);
       if (currentRoom?.id != r.id) return;
