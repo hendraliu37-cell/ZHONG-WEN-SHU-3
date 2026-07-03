@@ -324,6 +324,27 @@ void main() {
     expect(c.quizIdx, idxAfterFinish);
   });
 
+  test('spelling finish stays stable on repeated next taps', () {
+    final c = AppController();
+    c.cards[0] = _vocab(0);
+
+    c.goTestPick(base: [0]);
+    c.qCount = 1;
+    c.startSpell();
+    c.setSpellInput(c.card(0).pinyin);
+    c.checkSpell();
+    c.nextSpell();
+    final idxAfterFinish = c.spellIdx;
+    final historyAfterFinish = c.testHistory.single;
+
+    c.nextSpell();
+
+    expect(c.spellIdx, idxAfterFinish);
+    expect(c.testHistory.single.index, historyAfterFinish.index);
+    expect(c.testHistory.single.completed, isTrue);
+    expect(c.testHistory.single.score, 1);
+  });
+
   test('games stay on hub when no cards are available', () {
     final c = AppController();
 
@@ -358,10 +379,15 @@ void main() {
     expect(() => c.nextListen(), returnsNormally);
     expect(() => c.pickTone(1), returnsNormally);
     expect(() => c.nextTone(), returnsNormally);
+    expect(() => c.checkSpell(), returnsNormally);
+    expect(() => c.nextSpell(), returnsNormally);
+    expect(() => c.restartSpell(), returnsNormally);
 
     expect(c.xp, 0);
     expect(c.quizIdx, 0);
     expect(c.toneIdx, 0);
+    expect(c.spellIdx, 0);
+    expect(c.testHistory, isEmpty);
   });
 
   test('daily tests and games use AI-focused learning cards', () {

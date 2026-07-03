@@ -2524,6 +2524,7 @@ class AppController extends ChangeNotifier {
   }
 
   void checkSpell() {
+    if (sessionCards.isEmpty || spellIdx >= sessionCards.length) return;
     if (spellChecked) return;
     final c = card(spellCardId);
     final input = spellInput.trim();
@@ -2539,6 +2540,7 @@ class AppController extends ChangeNotifier {
   }
 
   void nextSpell() {
+    if (sessionCards.isEmpty || spellIdx >= sessionCards.length) return;
     spellIdx++;
     spellInput = '';
     spellChecked = false;
@@ -2554,6 +2556,15 @@ class AppController extends ChangeNotifier {
   }
 
   void restartSpell() {
+    if (sessionCards.isEmpty) {
+      spellIdx = 0;
+      spellInput = '';
+      spellChecked = false;
+      spellCorrect = false;
+      spellScore = 0;
+      notifyListeners();
+      return;
+    }
     spellIdx = 0;
     spellInput = '';
     spellChecked = false;
