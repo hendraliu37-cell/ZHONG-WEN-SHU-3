@@ -73,6 +73,31 @@ void main() {
     expect(cards.first.meaning, 'makan');
   });
 
+  test('imports UTF-8 BOM files with Excel separator directive', () {
+    final service = DeckIoService();
+    final rows = service.readDelimitedForTest(
+      '\uFEFFsep=;\n汉字;拼音;释义\n吃;chi1;makan\n喝;he1;minum',
+    );
+    final cards = service.rowsToCardsForTest(rows);
+
+    expect(cards, hasLength(2));
+    expect(cards.map((c) => c.simplified), ['吃', '喝']);
+    expect(cards.last.meaning, 'minum');
+  });
+
+  test('imports UTF-8 BOM files with normal headers', () {
+    final service = DeckIoService();
+    final rows = service.readDelimitedForTest(
+      '\uFEFFChinese,Pinyin,English\n吃,chi1,makan\n喝,he1,minum',
+    );
+    final cards = service.rowsToCardsForTest(rows);
+
+    expect(cards, hasLength(2));
+    expect(cards.first.simplified, '吃');
+    expect(cards.first.pinyin, 'chi1');
+    expect(cards.first.meaning, 'makan');
+  });
+
   test('imports common Anki Mandarin expression headers', () {
     final service = DeckIoService();
     final rows = service.readDelimitedForTest(

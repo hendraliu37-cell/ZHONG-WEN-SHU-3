@@ -199,7 +199,9 @@ class DeckIoService {
       } else if ((ch == '\n' || ch == '\r') && !inQuotes) {
         if (ch == '\r' && next == '\n') i++;
         row.add(cell.toString());
-        if (row.any((value) => value.trim().isNotEmpty)) rows.add(row);
+        if (row.any((value) => value.trim().isNotEmpty)) {
+          rows.add(_cleanRow(row));
+        }
         row = <String>[];
         cell.clear();
       } else {
@@ -208,8 +210,13 @@ class DeckIoService {
     }
 
     row.add(cell.toString());
-    if (row.any((value) => value.trim().isNotEmpty)) rows.add(row);
+    if (row.any((value) => value.trim().isNotEmpty)) rows.add(_cleanRow(row));
     return rows;
+  }
+
+  List<String> _cleanRow(List<String> row) {
+    if (row.isEmpty) return row;
+    return [row.first.replaceFirst('\uFEFF', ''), ...row.skip(1)];
   }
 
   String _detectDelimiter(String text) {
@@ -227,7 +234,7 @@ class DeckIoService {
   }
 
   String? _delimiterDirective(String line) {
-    final text = line.trim().toLowerCase();
+    final text = line.replaceFirst('\uFEFF', '').trim().toLowerCase();
     if (text.startsWith('sep=') && text.length >= 5) {
       final value = text.substring(4).trim();
       if (value == r'\t' || value == 'tab') return '\t';
@@ -462,7 +469,8 @@ class DeckIoService {
   }
 
   String _normalizeHeader(String value) {
-    final compact = value.toLowerCase().trim().replaceAll(RegExp(r'\s+'), '');
+    final cleaned = value.replaceFirst('\uFEFF', '');
+    final compact = cleaned.toLowerCase().trim().replaceAll(RegExp(r'\s+'), '');
     const localized = {
       '汉字': 'hanzi',
       '漢字': 'hanzi',
@@ -507,7 +515,7 @@ class DeckIoService {
     };
     final mapped = localized[compact];
     if (mapped != null) return mapped;
-    return value
+    return cleaned
         .toLowerCase()
         .trim()
         .replaceAll(RegExp(r'\s+'), '_')
