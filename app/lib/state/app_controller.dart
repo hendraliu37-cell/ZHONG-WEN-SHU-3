@@ -211,9 +211,9 @@ class TestHistoryItem {
     id: _stringValue(j['id']),
     mode: _stringValue(j['mode'], fallback: 'mc'),
     title: _stringValue(j['title'], fallback: 'Tes'),
-    deckId: _nullableStringValue(j['deckId']),
+    deckId: _nullableStringValue(j['deckId'] ?? j['deck_id']),
     direction: _stringValue(j['direction'], fallback: 'zh2id'),
-    cardIds: ((j['cardIds'] as List?) ?? []).map(_jsonInt).nonNulls.toList(),
+    cardIds: _jsonIntList(j['cardIds'] ?? j['card_ids']),
     index: _jsonInt(j['index']) ?? 0,
     score: _jsonInt(j['score']) ?? 0,
     picked: _nullableStringValue(j['picked']),
@@ -252,6 +252,22 @@ int? _jsonInt(Object? value) {
   if (value is int) return value;
   if (value is num) return value.toInt();
   return int.tryParse(value?.toString() ?? '');
+}
+
+List<int> _jsonIntList(Object? value) {
+  Object? list = value;
+  if (list is String) {
+    final text = list.trim();
+    if (text.startsWith('[')) {
+      try {
+        list = jsonDecode(text);
+      } catch (_) {
+        return const [];
+      }
+    }
+  }
+  if (list is! List) return const [];
+  return list.map(_jsonInt).nonNulls.toList();
 }
 
 String _chatWho(Object? value) => _stringValue(value) == 'me' ? 'me' : 't';

@@ -66,11 +66,16 @@ void main() {
             'cardIds': ['2'],
           },
         },
+        {
+          'payload':
+              '{"id":"ok-3","card_ids":["3",4],"updatedAt":"2026-07-03T00:00:00.000"}',
+        },
       ]);
 
-      expect(parsed, hasLength(2));
+      expect(parsed, hasLength(3));
       expect(parsed.first['id'], 'ok');
-      expect(parsed.last['id'], 'ok-2');
+      expect(parsed.last['id'], 'ok-3');
+      expect(parsed.last['card_ids'], ['3', 4]);
     });
   });
 

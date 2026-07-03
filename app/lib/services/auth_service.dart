@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -334,11 +336,26 @@ List<Map<String, dynamic>> _parseTestHistoryRows(Object? rows) {
   if (rows is! List) return out;
   for (final row in rows) {
     if (row is! Map) continue;
-    final payload = row['payload'];
-    if (payload is! Map) continue;
+    final payload = _jsonObject(row['payload']);
+    if (payload == null) continue;
     out.add(Map<String, dynamic>.from(payload));
   }
   return out;
+}
+
+Map<dynamic, dynamic>? _jsonObject(Object? data) {
+  if (data is Map) return data;
+  if (data is String) {
+    final text = data.trim();
+    if (!text.startsWith('{')) return null;
+    try {
+      final decoded = jsonDecode(text);
+      return decoded is Map ? decoded : null;
+    } catch (_) {
+      return null;
+    }
+  }
+  return null;
 }
 
 String _stringish(Object? value) => value?.toString().trim() ?? '';

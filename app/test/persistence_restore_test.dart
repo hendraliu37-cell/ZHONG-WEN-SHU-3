@@ -269,6 +269,37 @@ void main() {
     expect(c.testHistory.last.picked, '7');
   });
 
+  test('restore accepts cloud-shaped test history payloads', () {
+    final c = AppController();
+
+    c.restoreForTest({
+      'cards': {
+        '1': {'s': '吃', 't': '吃', 'py': 'chi1', 'm': 'makan'},
+        '2': {'s': '喝', 't': '喝', 'py': 'he1', 'm': 'minum'},
+      },
+      'testHistory': [
+        {
+          'id': 'cloud',
+          'mode': 'mc',
+          'title': 'Tes cloud',
+          'deck_id': 'deck-a',
+          'direction': 'zh2id',
+          'card_ids': '["1",2,99]',
+          'index': '1',
+          'score': '1',
+          'startedAt': '2026-07-03T00:00:00.000',
+          'updatedAt': '2026-07-03T00:01:00.000',
+        },
+      ],
+    });
+
+    expect(c.testHistory, hasLength(1));
+    expect(c.testHistory.single.deckId, 'deck-a');
+    expect(c.testHistory.single.cardIds, [1, 2]);
+    expect(c.testHistory.single.index, 1);
+    expect(c.testHistory.single.score, 1);
+  });
+
   test('restore accepts legacy string ids for AI-focused learning cards', () {
     final c = AppController();
 
