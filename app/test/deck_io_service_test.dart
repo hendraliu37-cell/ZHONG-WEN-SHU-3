@@ -245,6 +245,27 @@ void main() {
     expect(cards.single.exampleId, 'kata kerja umum');
   });
 
+  test('imports Anki exports with metadata directives and columns', () {
+    final service = DeckIoService();
+    final rows = service.readDelimitedForTest(
+      '#separator:tab\n'
+      '#html:false\n'
+      '#notetype column:1\n'
+      '#deck column:2\n'
+      '#tags column:6\n'
+      'Basic\tMandarin\t\u4f60\u597d\tn\u01d0 h\u01ceo\thalo\tgreeting\n'
+      'Basic\tMandarin\t\u5b66\u4e60\txu\u00e9x\u00ed\tbelajar\tverb',
+    );
+    final cards = service.rowsToCardsForTest(rows);
+
+    expect(cards, hasLength(2));
+    expect(cards.first.simplified, '\u4f60\u597d');
+    expect(cards.first.pinyin, 'n\u01d0 h\u01ceo');
+    expect(cards.first.meaning, 'halo');
+    expect(cards.last.simplified, '\u5b66\u4e60');
+    expect(cards.last.meaning, 'belajar');
+  });
+
   test('roundtrips exported Excel rows back into cards', () {
     final service = DeckIoService();
     final bytes = service.buildExcelForTest([

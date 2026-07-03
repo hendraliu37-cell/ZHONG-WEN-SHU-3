@@ -225,10 +225,10 @@ class DeckIoService {
   }
 
   List<VocabEntry> _rowsToCards(List<List<String>> rows) {
-    final dataRows = rows.where((row) => !_isDelimiterDirective(row)).toList();
+    final dataRows = rows.where((row) => !_isImportDirective(row)).toList();
     if (dataRows.isEmpty) return const [];
     final first = dataRows.first.map(_normalizeHeader).toList();
-    final hasHeader = first.any(_isKnownHeader);
+    final hasHeader = _looksLikeHeaderRow(dataRows.first, first);
     if (!hasHeader) {
       return dataRows
           .map(_headerlessRowToCard)
@@ -257,6 +257,27 @@ class DeckIoService {
     final first = row.first.trim().toLowerCase();
     return first.startsWith('sep=') &&
         row.skip(1).every((cell) => cell.trim().isEmpty);
+  }
+
+  bool _isImportDirective(List<String> row) {
+    if (_isDelimiterDirective(row)) return true;
+    if (row.isEmpty || row.skip(1).any((cell) => cell.trim().isNotEmpty)) {
+      return false;
+    }
+    final first = row.first.trim().toLowerCase();
+    return first.startsWith('#separator:') ||
+        first.startsWith('#html:') ||
+        first.startsWith('#notetype column:') ||
+        first.startsWith('#deck column:') ||
+        first.startsWith('#tags column:') ||
+        first.startsWith('#columns:');
+  }
+
+  bool _looksLikeHeaderRow(List<String> row, List<String> normalized) {
+    final knownCount = normalized.where(_isKnownHeader).length;
+    if (knownCount == 0) return false;
+    if (knownCount >= 2) return true;
+    return !row.any(_hasCjk);
   }
 
   VocabEntry? _rowToCard(
@@ -350,24 +371,42 @@ class DeckIoService {
 
   VocabEntry? _headerlessRowToCard(List<String> row) {
     final cells = row.map((cell) => cell.trim()).toList();
-    if (cells.length < 2 || cells[0].isEmpty || cells[1].isEmpty) return null;
-    var front = cells[0];
-    var back = cells[1];
-    var pinyin = cells.length > 2 ? cells[2] : '';
-    var traditional = cells.length > 3 && _hasCjk(cells[3]) ? cells[3] : '';
-    if (_hasCjk(front) &&
-        cells.length > 2 &&
-        _looksLikePinyin(cells[1]) &&
-        cells[2].isNotEmpty) {
-      pinyin = cells[1];
-      back = cells[2];
-      traditional = cells.length > 3 && _hasCjk(cells[3]) ? cells[3] : '';
+    if (cells.length < 2 || cells.every((cell) => cell.isEmpty)) return null;
+    final frontIndex = cells.indexWhere(_hasCjk);
+    if (frontIndex < 0) return null;
+
+    final front = cells[frontIndex];
+    final before = cells.take(frontIndex).toList();
+    final after = cells.skip(frontIndex + 1).toList();
+    var back = '';
+    var pinyin = '';
+    var traditional = _firstCjkCell(after, except: front);
+
+    if (frontIndex == 0) {
+      if (after.isNotEmpty && _looksLikePinyin(after.first)) {
+        pinyin = after.first;
+        back = _firstMeaningCell(after.skip(1));
+      } else {
+        back = _firstMeaningCell(after);
+        pinyin = _firstPinyinCell(after.skip(1));
+      }
+    } else {
+      if (after.isNotEmpty && _looksLikePinyin(after.first)) {
+        pinyin = after.first;
+        back = _firstMeaningCell(after.skip(1));
+      } else {
+        back = _firstMeaningCell(after);
+        pinyin = _firstPinyinCell(after);
+      }
+      if (back.isEmpty && frontIndex == 1) {
+        back = _firstMeaningCell(before);
+      }
     }
-    if (!_hasCjk(front) && _hasCjk(back)) {
-      final tmp = front;
-      front = back;
-      back = tmp;
+
+    if (traditional.isEmpty && cells.length > 3 && _hasCjk(cells[3])) {
+      traditional = cells[3];
     }
+    if (back.isEmpty) return null;
     if (!_hasCjk(front)) return null;
     return VocabEntry.fromJson({
       's': front,
@@ -375,6 +414,31 @@ class DeckIoService {
       'py': pinyin,
       'm': VocabEntry.splitMeanings(back).join(' / '),
     });
+  }
+
+  String _firstMeaningCell(Iterable<String> cells) {
+    for (final cell in cells) {
+      final value = cell.trim();
+      if (value.isEmpty || _hasCjk(value) || _looksLikePinyin(value)) continue;
+      return value;
+    }
+    return '';
+  }
+
+  String _firstPinyinCell(Iterable<String> cells) {
+    for (final cell in cells) {
+      final value = cell.trim();
+      if (value.isNotEmpty && _looksLikePinyin(value)) return value;
+    }
+    return '';
+  }
+
+  String _firstCjkCell(Iterable<String> cells, {required String except}) {
+    for (final cell in cells) {
+      final value = cell.trim();
+      if (value.isNotEmpty && value != except && _hasCjk(value)) return value;
+    }
+    return '';
   }
 
   String _normalizeHeader(String value) {
@@ -498,6 +562,9 @@ class DeckIoService {
   bool _looksLikePinyin(String value) {
     final v = value.trim().toLowerCase();
     if (v.isEmpty || _hasCjk(v)) return false;
+    final hasToneCue =
+        RegExp(r'[āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜńňǹḿ]').hasMatch(v) ||
+        RegExp(r'[a-züv]+[1-5]\b').hasMatch(v);
     final normalized = _stripPinyinToneMarks(
       v,
     ).replaceAll('ü', 'v').replaceAll(RegExp(r"[^a-z0-9\s:;,./-]+"), ' ');
@@ -506,7 +573,9 @@ class DeckIoService {
         .where((w) => w.isNotEmpty)
         .toList();
     if (words.isEmpty || words.length > 8) return false;
-    return words.every(_isPinyinSyllable);
+    if (words.every(_isPinyinSyllable)) return true;
+    return hasToneCue &&
+        RegExp(r'^[a-z0-9üāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜńňǹḿ\s:;,./-]+$').hasMatch(v);
   }
 
   String _stripPinyinToneMarks(String value) {
