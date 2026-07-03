@@ -366,8 +366,9 @@ class TranslationService {
   }
 
   List<TranslateToken> _tokensFromJson(Object? value) {
-    if (value is! List) return const [];
-    return value
+    final items = _jsonList(value);
+    if (items.isEmpty) return const [];
+    return items
         .map((e) {
           if (e is Map) {
             return TranslateToken.fromJson(Map<String, dynamic>.from(e));
@@ -377,6 +378,19 @@ class TranslationService {
         })
         .nonNulls
         .toList();
+  }
+
+  List<Object?> _jsonList(Object? value) {
+    if (value is List) return value;
+    if (value is! String) return const [];
+    final text = value.trim();
+    if (!text.startsWith('[')) return const [];
+    try {
+      final decoded = jsonDecode(text);
+      return decoded is List ? decoded : const [];
+    } catch (_) {
+      return const [];
+    }
   }
 
   // === Dictionary fallback (offline) ===

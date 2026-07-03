@@ -89,6 +89,22 @@ void main() {
     expect(result.alternatives, isEmpty);
   });
 
+  test('AI translate accepts token lists encoded as JSON strings', () async {
+    final service = TranslationService(
+      llm: _FakeLlmService(
+        '{"translation":"\\u4f60\\u597d","tokens":"[{\\"hanzi\\":\\"\\u4f60\\u597d\\",\\"pinyin\\":\\"ni3 hao3\\",\\"meaning\\":\\"halo\\",\\"hsk\\":1}]","alternatives":"[{\\"hanzi\\":\\"\\u5582\\",\\"meaning\\":\\"halo di telepon\\"}]"}',
+      ),
+    );
+
+    final result = await service.translate('halo', from: 'id', to: 'zh');
+
+    expect(result, isNotNull);
+    expect(result!.tokens.single.hanzi, '\u4f60\u597d');
+    expect(result.tokens.single.meaning, 'halo');
+    expect(result.tokens.single.hsk, 1);
+    expect(result.alternatives.single.hanzi, '\u5582');
+  });
+
   test(
     'AI translate ignores malformed token container without failing',
     () async {
