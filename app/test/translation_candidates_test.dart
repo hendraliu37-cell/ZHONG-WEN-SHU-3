@@ -69,6 +69,26 @@ void main() {
     expect(result.tokens.single.hanzi, '7');
   });
 
+  test('AI translate accepts common translated-text response aliases', () async {
+    final camel = TranslationService(
+      llm: _FakeLlmService(
+        '{"translatedText":"\\u4f60\\u597d","tokens":[{"hanzi":"\\u4f60\\u597d","meaning":"halo"}]}',
+      ),
+    );
+    final snake = TranslationService(
+      llm: _FakeLlmService('{"target_text":"makan","tokens":[]}'),
+    );
+
+    final camelResult = await camel.translate('halo', from: 'id', to: 'zh');
+    final snakeResult = await snake.translate('\u5403', from: 'zh', to: 'id');
+
+    expect(camelResult, isNotNull);
+    expect(camelResult!.translation, '\u4f60\u597d');
+    expect(camelResult.tokens.single.hanzi, '\u4f60\u597d');
+    expect(snakeResult, isNotNull);
+    expect(snakeResult!.translation, 'makan');
+  });
+
   test('AI translate accepts loose token alternatives from JSON', () async {
     final service = TranslationService(
       llm: _FakeLlmService(

@@ -353,7 +353,7 @@ class TranslationService {
   }
 
   TranslationResult? _parseLlmTranslation(Map data) {
-    final trans = _stringish(data['translation']);
+    final trans = _translationText(data);
     if (trans.isEmpty) return null;
     final tokens = _tokensFromJson(data['tokens']);
     final pinyin = _stringish(data['pinyin']);
@@ -363,6 +363,22 @@ class TranslationService {
       alternatives: _tokensFromJson(data['alternatives']),
       tokens: tokens.map(_enrich).toList(),
     );
+  }
+
+  String _translationText(Map data) {
+    for (final key in const [
+      'translation',
+      'translated_text',
+      'translatedText',
+      'target_text',
+      'targetText',
+      'result',
+      'text',
+    ]) {
+      final text = _stringish(data[key]);
+      if (text.isNotEmpty) return text;
+    }
+    return '';
   }
 
   List<TranslateToken> _tokensFromJson(Object? value) {
