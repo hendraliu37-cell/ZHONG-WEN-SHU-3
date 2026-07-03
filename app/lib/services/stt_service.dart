@@ -58,11 +58,7 @@ class SttService {
         'stt',
         body: {'audio': b64, 'format': 'wav', 'lang': lang},
       );
-      final data = res.data;
-      if (data is Map && data['text'] is String) {
-        return (data['text'] as String).trim();
-      }
-      return null;
+      return _recognizedText(res.data);
     } catch (e) {
       if (kDebugMode) debugPrint('[stt] transcribe failed: $e');
       return null;
@@ -89,3 +85,26 @@ class SttService {
     } catch (_) {}
   }
 }
+
+String? _recognizedText(Object? data) {
+  if (data is String) {
+    final text = data.trim();
+    if (text.isEmpty) return null;
+    if (text.startsWith('{')) {
+      try {
+        return _recognizedText(jsonDecode(text));
+      } catch (_) {
+        // Fall through and treat it as plain recognized text.
+      }
+    }
+    return text;
+  }
+  if (data is Map) {
+    final text = data['text']?.toString().trim() ?? '';
+    return text.isEmpty ? null : text;
+  }
+  return null;
+}
+
+@visibleForTesting
+String? parseSttTextResponseForTest(Object? data) => _recognizedText(data);

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zhongwen_shu/services/ocr_service.dart';
 import 'package:zhongwen_shu/services/pronunciation_service.dart';
 import 'package:zhongwen_shu/services/stt_service.dart';
 
@@ -48,5 +49,19 @@ void main() {
 
     expect(await file.exists(), isFalse);
     await dir.delete(recursive: true);
+  });
+
+  test('STT parser accepts raw JSON strings and loose text values', () {
+    expect(parseSttTextResponseForTest({'text': 123}), '123');
+    expect(parseSttTextResponseForTest('{"text":"你好"}'), '你好');
+    expect(parseSttTextResponseForTest('  halo  '), 'halo');
+    expect(parseSttTextResponseForTest({'text': '  '}), isNull);
+  });
+
+  test('OCR parser accepts raw JSON strings and loose text values', () {
+    expect(parseOcrTextResponseForTest({'text': 456}), '456');
+    expect(parseOcrTextResponseForTest('{"text":"中文"}'), '中文');
+    expect(parseOcrTextResponseForTest('  你好  '), '你好');
+    expect(parseOcrTextResponseForTest(null), isNull);
   });
 }

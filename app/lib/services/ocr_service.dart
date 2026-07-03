@@ -28,21 +28,40 @@ class OcrService {
       final mime = name.endsWith('.png')
           ? 'image/png'
           : name.endsWith('.webp')
-              ? 'image/webp'
-              : 'image/jpeg';
+          ? 'image/webp'
+          : 'image/jpeg';
       if (!enabled) return null;
-      final res = await _sb.functions.invoke('ocr', body: {
-        'image': b64,
-        'mime': mime,
-      });
-      final data = res.data;
-      if (data is Map && data['text'] is String) {
-        return (data['text'] as String).trim();
-      }
-      return null;
+      final res = await _sb.functions.invoke(
+        'ocr',
+        body: {'image': b64, 'mime': mime},
+      );
+      return _recognizedText(res.data);
     } catch (e) {
       if (kDebugMode) debugPrint('[ocr] failed: $e');
       return null;
     }
   }
 }
+
+String? _recognizedText(Object? data) {
+  if (data is String) {
+    final text = data.trim();
+    if (text.isEmpty) return null;
+    if (text.startsWith('{')) {
+      try {
+        return _recognizedText(jsonDecode(text));
+      } catch (_) {
+        // Fall through and treat it as plain OCR text.
+      }
+    }
+    return text;
+  }
+  if (data is Map) {
+    final text = data['text']?.toString().trim() ?? '';
+    return text.isEmpty ? null : text;
+  }
+  return null;
+}
+
+@visibleForTesting
+String? parseOcrTextResponseForTest(Object? data) => _recognizedText(data);
