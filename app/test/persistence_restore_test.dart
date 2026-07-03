@@ -247,6 +247,9 @@ void main() {
           'id': 9,
           'title': 99,
           'cardIds': [1],
+          'completed': 1,
+          'flipped': 'yes',
+          'picked': 7,
         },
       ],
     });
@@ -257,7 +260,11 @@ void main() {
     expect(c.trHistory.map((h) => h.translation), ['makan', 'loose']);
     expect(c.trHistory.last.from, 'zh');
     expect(c.trHistory.last.to, 'id');
-    expect(c.testHistory.single.id, 'ok');
+    expect(c.testHistory.map((h) => h.id), ['ok', '9']);
+    expect(c.testHistory.last.title, '99');
+    expect(c.testHistory.last.completed, isTrue);
+    expect(c.testHistory.last.flipped, isTrue);
+    expect(c.testHistory.last.picked, '7');
   });
 
   test('restore accepts legacy string ids for AI-focused learning cards', () {

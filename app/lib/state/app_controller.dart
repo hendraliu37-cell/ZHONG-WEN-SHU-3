@@ -208,24 +208,22 @@ class TestHistoryItem {
   );
 
   factory TestHistoryItem.fromJson(Map<String, dynamic> j) => TestHistoryItem(
-    id: (j['id'] as String?) ?? '',
-    mode: (j['mode'] as String?) ?? 'mc',
-    title: (j['title'] as String?) ?? 'Tes',
-    deckId: j['deckId'] as String?,
-    direction: (j['direction'] as String?) ?? 'zh2id',
+    id: _stringValue(j['id']),
+    mode: _stringValue(j['mode'], fallback: 'mc'),
+    title: _stringValue(j['title'], fallback: 'Tes'),
+    deckId: _nullableStringValue(j['deckId']),
+    direction: _stringValue(j['direction'], fallback: 'zh2id'),
     cardIds: ((j['cardIds'] as List?) ?? []).map(_jsonInt).nonNulls.toList(),
     index: _jsonInt(j['index']) ?? 0,
     score: _jsonInt(j['score']) ?? 0,
-    picked: j['picked'] as String?,
-    spellInput: (j['spellInput'] as String?) ?? '',
-    spellChecked: (j['spellChecked'] as bool?) ?? false,
-    spellCorrect: (j['spellCorrect'] as bool?) ?? false,
-    flipped: (j['flipped'] as bool?) ?? false,
-    completed: (j['completed'] as bool?) ?? false,
-    startedAt:
-        DateTime.tryParse((j['startedAt'] as String?) ?? '') ?? DateTime.now(),
-    updatedAt:
-        DateTime.tryParse((j['updatedAt'] as String?) ?? '') ?? DateTime.now(),
+    picked: _nullableStringValue(j['picked']),
+    spellInput: _stringValue(j['spellInput']),
+    spellChecked: _boolValue(j['spellChecked']),
+    spellCorrect: _boolValue(j['spellCorrect']),
+    flipped: _boolValue(j['flipped']),
+    completed: _boolValue(j['completed']),
+    startedAt: _dateValue(j['startedAt']),
+    updatedAt: _dateValue(j['updatedAt']),
   );
 
   Map<String, dynamic> toJson() => {
@@ -267,6 +265,18 @@ String _langCode(Object? value, {required String fallback}) {
   final text = _stringValue(value).toLowerCase();
   return text == 'zh' || text == 'id' ? text : fallback;
 }
+
+bool _boolValue(Object? value, {bool fallback = false}) {
+  if (value is bool) return value;
+  if (value is num) return value != 0;
+  final text = _stringValue(value).toLowerCase();
+  if (text == 'true' || text == '1' || text == 'yes') return true;
+  if (text == 'false' || text == '0' || text == 'no') return false;
+  return fallback;
+}
+
+DateTime _dateValue(Object? value) =>
+    DateTime.tryParse(_stringValue(value)) ?? DateTime.now();
 
 const Map<String, String> _simpToTrad = {
   '这': '這',
