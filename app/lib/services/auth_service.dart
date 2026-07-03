@@ -281,16 +281,12 @@ class AuthService {
     final id = uid;
     if (id == null || history.isEmpty) return;
     try {
-      final rows = history.take(80).map((h) {
-        final updatedAt =
-            (h['updatedAt'] as String?) ?? DateTime.now().toIso8601String();
-        return {
-          'id': h['id'],
-          'user_id': id,
-          'payload': h,
-          'updated_at': updatedAt,
-        };
-      }).toList();
+      final rows = _testHistorySyncRows(
+        history,
+        userId: id,
+        fallbackUpdatedAt: DateTime.now().toIso8601String(),
+      );
+      if (rows.isEmpty) return;
       await _sb.from('test_history').upsert(rows, onConflict: 'id,user_id');
     } catch (_) {
       // Best-effort cloud history. Local history remains the source of truth.
@@ -344,6 +340,43 @@ List<Map<String, dynamic>> _parseTestHistoryRows(Object? rows) {
   return out;
 }
 
+List<Map<String, dynamic>> _testHistorySyncRows(
+  List<Map<String, dynamic>> history, {
+  required String userId,
+  required String fallbackUpdatedAt,
+}) {
+  final out = <Map<String, dynamic>>[];
+  for (final h in history.take(80)) {
+    final id = _stringish(h['id']);
+    if (id.isEmpty) continue;
+    out.add({
+      'id': id,
+      'user_id': userId,
+      'payload': h,
+      'updated_at': _isoTimestamp(h['updatedAt'], fallbackUpdatedAt),
+    });
+  }
+  return out;
+}
+
+String _isoTimestamp(Object? value, String fallback) {
+  if (value is DateTime) return value.toIso8601String();
+  final text = _stringish(value);
+  final numeric = value is num
+      ? value
+      : (RegExp(r'^-?\d+(\.\d+)?$').hasMatch(text) ? num.tryParse(text) : null);
+  if (numeric != null) {
+    final raw = numeric.toInt();
+    final ms = raw.abs() >= 100000000000 ? raw : raw * 1000;
+    return DateTime.fromMillisecondsSinceEpoch(
+      ms,
+      isUtc: true,
+    ).toIso8601String();
+  }
+  final parsed = DateTime.tryParse(text);
+  return parsed?.toIso8601String() ?? fallback;
+}
+
 Map<dynamic, dynamic>? _jsonObject(Object? data) {
   if (data is Map) return data;
   if (data is String) {
@@ -389,6 +422,17 @@ String _oneOf(Object? value, Set<String> allowed, {required String fallback}) {
 @visibleForTesting
 List<Map<String, dynamic>> parseTestHistoryRowsForTest(Object? rows) =>
     _parseTestHistoryRows(rows);
+
+@visibleForTesting
+List<Map<String, dynamic>> testHistorySyncRowsForTest(
+  List<Map<String, dynamic>> history, {
+  required String userId,
+  required String fallbackUpdatedAt,
+}) => _testHistorySyncRows(
+  history,
+  userId: userId,
+  fallbackUpdatedAt: fallbackUpdatedAt,
+);
 
 @visibleForTesting
 ZwsProfile parseProfileRowForTest(Map row) => _parseProfileRow(row);

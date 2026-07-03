@@ -84,6 +84,34 @@ void main() {
       expect(parsed.last['id'], 'ok-3');
       expect(parsed.last['card_ids'], ['3', 4]);
     });
+
+    test('sync rows normalize timestamps and skip empty ids', () {
+      final epochMs = DateTime.utc(2026, 7, 3, 10).millisecondsSinceEpoch;
+      final epochSeconds =
+          DateTime.utc(2026, 7, 3, 11).millisecondsSinceEpoch ~/ 1000;
+      final dateTime = DateTime.utc(2026, 7, 3, 12, 30);
+
+      final rows = testHistorySyncRowsForTest(
+        [
+          {'id': 'ms', 'updatedAt': epochMs},
+          {'id': 'seconds', 'updatedAt': '$epochSeconds'},
+          {'id': 'dt', 'updatedAt': dateTime},
+          {'id': 'fallback', 'updatedAt': 'bad-date'},
+          {'id': '  ', 'updatedAt': epochMs},
+          {'updatedAt': epochMs},
+        ],
+        userId: 'user-1',
+        fallbackUpdatedAt: '2026-07-03T00:00:00.000Z',
+      );
+
+      expect(rows.map((r) => r['id']), ['ms', 'seconds', 'dt', 'fallback']);
+      expect(rows.every((r) => r['user_id'] == 'user-1'), isTrue);
+      expect(rows[0]['updated_at'], '2026-07-03T10:00:00.000Z');
+      expect(rows[1]['updated_at'], '2026-07-03T11:00:00.000Z');
+      expect(rows[2]['updated_at'], dateTime.toIso8601String());
+      expect(rows[3]['updated_at'], '2026-07-03T00:00:00.000Z');
+      expect(rows[0]['payload'], containsPair('id', 'ms'));
+    });
   });
 
   group('backend row parsers', () {
