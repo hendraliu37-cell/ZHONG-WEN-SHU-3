@@ -170,6 +170,40 @@ void main() {
     expect(c.sessionCards.length, 6);
   });
 
+  test('resumed multiple-choice test keeps answered question options', () {
+    final c = AppController();
+    final ids = <int>[];
+    for (var i = 0; i < 8; i++) {
+      c.cards[i] = _vocab(i);
+      ids.add(i);
+    }
+
+    c.goTestPick(base: ids);
+    c.qCount = 8;
+    c.startMc();
+    final first = c.currentQuiz!;
+    final wrong = first.options.firstWhere((opt) => opt != first.correct);
+
+    c.pickQuiz(wrong);
+    c.abandonActiveTestToHistory();
+
+    final saved = c.testHistory.first;
+    expect(saved.completed, isFalse);
+    expect(saved.index, 0);
+    expect(saved.picked, wrong);
+    expect(saved.quizOptions, first.options);
+
+    c.closeSub();
+    c.resumeTestHistory(saved);
+
+    expect(c.sub, 'quiz');
+    expect(c.quizIdx, 0);
+    expect(c.quizPicked, wrong);
+    expect(c.currentQuiz!.options, saved.quizOptions);
+    expect(c.currentQuiz!.options, contains(wrong));
+    expect(c.currentQuiz!.options, contains(c.currentQuiz!.correct));
+  });
+
   test('controller back saves unfinished active test history', () {
     final c = AppController();
     final ids = <int>[];

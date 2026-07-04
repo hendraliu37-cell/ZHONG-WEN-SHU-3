@@ -141,6 +141,7 @@ class TestHistoryItem {
   final int index;
   final int score;
   final String? picked;
+  final List<String> quizOptions;
   final String spellInput;
   final bool spellChecked;
   final bool spellCorrect;
@@ -159,6 +160,7 @@ class TestHistoryItem {
     required this.score,
     this.deckId,
     this.picked,
+    this.quizOptions = const [],
     this.spellInput = '',
     this.spellChecked = false,
     this.spellCorrect = false,
@@ -181,6 +183,7 @@ class TestHistoryItem {
     int? index,
     int? score,
     Object? picked = _sentinel,
+    List<String>? quizOptions,
     String? spellInput,
     bool? spellChecked,
     bool? spellCorrect,
@@ -198,6 +201,7 @@ class TestHistoryItem {
     index: index ?? this.index,
     score: score ?? this.score,
     picked: identical(picked, _sentinel) ? this.picked : picked as String?,
+    quizOptions: quizOptions ?? this.quizOptions,
     spellInput: spellInput ?? this.spellInput,
     spellChecked: spellChecked ?? this.spellChecked,
     spellCorrect: spellCorrect ?? this.spellCorrect,
@@ -217,6 +221,7 @@ class TestHistoryItem {
     index: _jsonInt(j['index']) ?? 0,
     score: _jsonInt(j['score']) ?? 0,
     picked: _nullableStringValue(j['picked']),
+    quizOptions: _jsonStringList(j['quizOptions'] ?? j['quiz_options']),
     spellInput: _stringValue(j['spellInput']),
     spellChecked: _boolValue(j['spellChecked']),
     spellCorrect: _boolValue(j['spellCorrect']),
@@ -236,6 +241,7 @@ class TestHistoryItem {
     'index': index,
     'score': score,
     if (picked != null) 'picked': picked,
+    if (quizOptions.isNotEmpty) 'quizOptions': quizOptions,
     'spellInput': spellInput,
     'spellChecked': spellChecked,
     'spellCorrect': spellCorrect,
@@ -268,6 +274,27 @@ List<int> _jsonIntList(Object? value) {
   }
   if (list is! List) return const [];
   return list.map(_jsonInt).nonNulls.toList();
+}
+
+List<String> _jsonStringList(Object? value) {
+  Object? list = value;
+  if (list is String) {
+    final text = list.trim();
+    if (text.startsWith('[')) {
+      try {
+        list = jsonDecode(text);
+      } catch (_) {
+        return const [];
+      }
+    } else {
+      return text.isEmpty ? const [] : [text];
+    }
+  }
+  if (list is! List) return const [];
+  return list
+      .map(_stringValue)
+      .where((text) => text.trim().isNotEmpty)
+      .toList();
 }
 
 String _chatWho(Object? value) => _stringValue(value) == 'me' ? 'me' : 't';
@@ -2359,6 +2386,7 @@ class AppController extends ChangeNotifier {
         index: index,
         score: score,
         picked: mode == 'mc' ? quizPicked : null,
+        quizOptions: mode == 'mc' ? currentQuiz?.options : const [],
         spellInput: spellInput,
         spellChecked: spellChecked,
         spellCorrect: spellCorrect,
@@ -2410,10 +2438,29 @@ class AppController extends ChangeNotifier {
         quizIdx = item.index.clamp(0, ids.length);
         quizScore = item.score;
         quizPicked = item.picked;
+        _restoreCurrentQuizOptions(item.quizOptions);
         sub = 'quiz';
         break;
     }
     notifyListeners();
+  }
+
+  void _restoreCurrentQuizOptions(List<String> savedOptions) {
+    if (savedOptions.isEmpty || quizIdx >= _quiz.length) return;
+    final q = _quiz[quizIdx];
+    final seen = <String>{};
+    final options = [
+      for (final opt in savedOptions)
+        if (opt.trim().isNotEmpty && seen.add(opt)) opt,
+    ];
+    if (!options.contains(q.correct)) return;
+    _quiz = [
+      for (var i = 0; i < _quiz.length; i++)
+        if (i == quizIdx)
+          QuizItem(cardId: q.cardId, correct: q.correct, options: options)
+        else
+          _quiz[i],
+    ];
   }
 
   void startReview(List<int> ids, String mode) {
