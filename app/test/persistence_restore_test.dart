@@ -371,6 +371,36 @@ void main() {
     );
   });
 
+  test('restore normalizes translate history engine values', () {
+    final c = AppController();
+
+    c.restoreForTest({
+      'translateHistory': [
+        {
+          'source': 'halo',
+          'translation': '\u4f60\u597d',
+          'from': 'id',
+          'to': 'zh',
+          'engine': 'AI',
+          'at': '2026-07-01T00:00:00.000',
+        },
+        {
+          'source': 'makan',
+          'translation': '\u5403',
+          'from': 'id',
+          'to': 'zh',
+          'engine': 'legacy-online',
+          'at': '2026-07-01T00:01:00.000',
+        },
+      ],
+    });
+
+    expect(c.trHistory.map((h) => h.engine), ['ai', 'dict']);
+
+    c.trUseHistory(c.trHistory.last);
+    expect(c.trEngine, 'dict');
+  });
+
   test('restore accepts legacy string ids for AI-focused learning cards', () {
     final c = AppController();
 

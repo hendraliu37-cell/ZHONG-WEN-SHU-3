@@ -89,7 +89,7 @@ class TranslateHistoryItem {
         translation: _stringValue(j['translation']),
         from: _langCode(j['from'], fallback: 'zh'),
         to: _langCode(j['to'], fallback: 'id'),
-        engine: _stringValue(j['engine'], fallback: 'dict'),
+        engine: _translateEngine(j['engine']),
         pinyin: _nullableStringValue(j['pinyin']),
         at: _dateValue(j['at']),
       );
@@ -307,6 +307,11 @@ String? _nullableStringValue(Object? value) {
 String _langCode(Object? value, {required String fallback}) {
   final text = _stringValue(value).toLowerCase();
   return text == 'zh' || text == 'id' ? text : fallback;
+}
+
+String _translateEngine(Object? value) {
+  final text = _stringValue(value).toLowerCase();
+  return text == 'ai' ? 'ai' : 'dict';
 }
 
 bool _boolValue(Object? value, {bool fallback = false}) {
@@ -3452,7 +3457,7 @@ class AppController extends ChangeNotifier {
     _trSeq++;
     trFrom = item.from;
     trTo = item.to;
-    trEngine = item.engine;
+    trEngine = _translateEngine(item.engine);
     trSource = item.source;
     trResult = TranslationResult(
       translation: item.translation,
@@ -3470,7 +3475,7 @@ class AppController extends ChangeNotifier {
   }
 
   void trSetEngine(String engine) {
-    trEngine = engine;
+    trEngine = _translateEngine(engine);
     trResult = null;
     trError = null;
     notifyListeners();
