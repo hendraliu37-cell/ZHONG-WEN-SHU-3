@@ -202,6 +202,14 @@ class LlmService {
 
 String? _contentText(Object? content) {
   if (content is String) return content;
+  if (content is Map) {
+    final text =
+        content['text'] ??
+        content['content'] ??
+        content['output_text'] ??
+        content['message'];
+    return _contentText(text);
+  }
   if (content is List) {
     final out = StringBuffer();
     for (final part in content) {

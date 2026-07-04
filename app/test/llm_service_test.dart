@@ -53,6 +53,30 @@ void main() {
     expect(nested, 'Contoh: 我喜欢中文。');
   });
 
+  test('OpenModel text parser accepts single object content blocks', () {
+    expect(
+      parseOpenModelTextForTest({
+        'content': {'type': 'text', 'text': 'Ringkas: \u4f60\u597d = halo'},
+      }),
+      'Ringkas: \u4f60\u597d = halo',
+    );
+
+    expect(
+      parseOpenModelTextForTest({
+        'output': {
+          'content': [
+            {'type': 'output_text', 'text': 'Contoh: '},
+            {
+              'type': 'output_text',
+              'text': '\u6211\u559c\u6b22\u4e2d\u6587\u3002',
+            },
+          ],
+        },
+      }),
+      'Contoh: \u6211\u559c\u6b22\u4e2d\u6587\u3002',
+    );
+  });
+
   test('LLM proxy parser accepts raw JSON string responses', () {
     expect(
       parseLlmProxyReplyForTest('{"reply":"  Ringkas: 你好 = halo  "}'),
