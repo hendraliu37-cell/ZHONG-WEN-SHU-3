@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../models/room.dart';
 import '../state/app_controller.dart';
 import '../theme/tokens.dart';
 import '../theme/zws_theme.dart';
@@ -101,12 +102,46 @@ class _ChatPane extends StatefulWidget {
 class _ChatPaneState extends State<_ChatPane> {
   final _tec = TextEditingController();
   final _scrollCtrl = ScrollController();
+  bool _showGuruSuggest = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _tec.addListener(_syncGuruSuggest);
+  }
 
   @override
   void dispose() {
+    _tec.removeListener(_syncGuruSuggest);
     _tec.dispose();
     _scrollCtrl.dispose();
     super.dispose();
+  }
+
+  void _syncGuruSuggest() {
+    final value = _tec.value;
+    final rawCaret = value.selection.baseOffset;
+    final caret = rawCaret < 0
+        ? value.text.length
+        : rawCaret.clamp(0, value.text.length).toInt();
+    final before = value.text.substring(0, caret);
+    final token = before.split(RegExp(r'\s')).last;
+    final show = isGuruMentionPrefix(token);
+    if (show != _showGuruSuggest && mounted) {
+      setState(() => _showGuruSuggest = show);
+    }
+  }
+
+  void _insertGuruMention() {
+    final inserted = insertGuruMention(_tec.text, _tec.selection.baseOffset);
+    _tec.value = TextEditingValue(
+      text: inserted.text,
+      selection: TextSelection.collapsed(
+        offset: inserted.caret.clamp(0, inserted.text.length).toInt(),
+      ),
+    );
+    widget.controller.setChatInput(inserted.text);
+    setState(() => _showGuruSuggest = false);
   }
 
   void _send() {
@@ -202,6 +237,10 @@ class _ChatPaneState extends State<_ChatPane> {
         ),
         const SizedBox(height: 8),
         // input — pinned at bottom
+        if (_showGuruSuggest) ...[
+          _GuruMentionSuggestion(onTap: _insertGuruMention),
+          const SizedBox(height: 8),
+        ],
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
@@ -292,17 +331,17 @@ class _DailyMaterialStrip extends StatelessWidget {
         : 'Materi harian siap. Target: 喜欢, 想, 觉得.';
     return Material(
       color: t.surface,
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(9),
       child: Container(
-        padding: const EdgeInsets.fromLTRB(10, 7, 7, 7),
+        padding: const EdgeInsets.fromLTRB(9, 5, 5, 5),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(9),
           border: Border.all(color: t.line),
         ),
         child: Row(
           children: [
-            Container(width: 3, height: 28, color: t.seal),
-            const SizedBox(width: 9),
+            Container(width: 3, height: 22, color: t.seal),
+            const SizedBox(width: 8),
             Expanded(
               child: Text(
                 text,
@@ -320,7 +359,7 @@ class _DailyMaterialStrip extends StatelessWidget {
               onPressed: c.snoozeDailyMaterial,
               style: TextButton.styleFrom(
                 minimumSize: Size.zero,
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
               child: Text(
@@ -333,6 +372,45 @@ class _DailyMaterialStrip extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GuruMentionSuggestion extends StatelessWidget {
+  final VoidCallback onTap;
+  const _GuruMentionSuggestion({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = ZwsTheme.of(context);
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Material(
+        color: t.sealSoft,
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(10),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(ZwsIcons.chat, size: 14, color: t.seal),
+                const SizedBox(width: 6),
+                Text(
+                  '@Guru',
+                  style: ZwsFonts.sans(
+                    size: 13,
+                    weight: FontWeight.w800,
+                    color: t.seal,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
