@@ -178,6 +178,14 @@ class LlmService {
       _looksLikeModelSelectionError(body);
 
   String? _openModelText(dynamic data) {
+    if (data is Map) {
+      final outputText = data['output_text'];
+      if (outputText is String && outputText.trim().isNotEmpty) {
+        return outputText.trim();
+      }
+      final output = _contentText(data['output']);
+      if (output != null) return output;
+    }
     final content = data is Map ? data['content'] : null;
     return _contentText(content);
   }
@@ -200,8 +208,13 @@ String? _contentText(Object? content) {
       if (part is String) {
         out.write(part);
       } else if (part is Map) {
-        final text = part['text'] ?? part['content'];
-        if (text is String) out.write(text);
+        final text =
+            part['text'] ??
+            part['content'] ??
+            part['output_text'] ??
+            part['message'];
+        final nested = _contentText(text);
+        if (nested != null) out.write(nested);
       }
     }
     final text = out.toString().trim();

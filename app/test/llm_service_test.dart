@@ -33,6 +33,26 @@ void main() {
     expect(text, 'Ringkas: 你好 = halo');
   });
 
+  test('OpenModel text parser accepts responses-style output text', () {
+    expect(
+      parseOpenModelTextForTest({'output_text': ' Ringkas: 你好 = halo '}),
+      'Ringkas: 你好 = halo',
+    );
+
+    final nested = parseOpenModelTextForTest({
+      'output': [
+        {
+          'content': [
+            {'type': 'output_text', 'text': 'Contoh: '},
+            {'type': 'output_text', 'text': '我喜欢中文。'},
+          ],
+        },
+      ],
+    });
+
+    expect(nested, 'Contoh: 我喜欢中文。');
+  });
+
   test('LLM proxy parser accepts raw JSON string responses', () {
     expect(
       parseLlmProxyReplyForTest('{"reply":"  Ringkas: 你好 = halo  "}'),
