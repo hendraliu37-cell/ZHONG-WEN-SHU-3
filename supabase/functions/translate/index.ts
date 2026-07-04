@@ -14,27 +14,53 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
-function endpoint(baseRaw: string, path: "/v1/chat/completions" | "/v1/messages"): string {
+function endpoint(
+  baseRaw: string,
+  path: "/v1/chat/completions" | "/v1/messages",
+): string {
   const trimmed = baseRaw.trim().replace(/\/+$/, "");
   if (trimmed.endsWith(path)) return trimmed;
   const root = trimmed.replace(/\/v1$/, "");
   return `${root}${path}`;
 }
 
-function textFromOpenModelMessages(data: unknown): string {
-  const content = (data as { content?: unknown })?.content;
+function textFromContent(content: unknown): string {
   if (typeof content === "string") return content;
   if (!Array.isArray(content)) return "";
   return content
     .map((part) => {
       if (typeof part === "string") return part;
-      if (part && typeof part === "object" && typeof (part as { text?: unknown }).text === "string") {
-        return (part as { text: string }).text;
+      if (part && typeof part === "object") {
+        const obj = part as {
+          text?: unknown;
+          content?: unknown;
+          output_text?: unknown;
+          message?: unknown;
+        };
+        return textFromContent(
+          obj.text ?? obj.content ?? obj.output_text ?? obj.message,
+        );
       }
       return "";
     })
     .join("")
     .trim();
+}
+
+function textFromOpenModelMessages(data: unknown): string {
+  if (!data || typeof data !== "object") return "";
+  const obj = data as {
+    output_text?: unknown;
+    output?: unknown;
+    content?: unknown;
+  };
+  const outputText = typeof obj.output_text === "string"
+    ? obj.output_text.trim()
+    : "";
+  if (outputText) return outputText;
+  const output = textFromContent(obj.output);
+  if (output) return output;
+  return textFromContent(obj.content);
 }
 
 function parseTranslationReply(reply: string): Record<string, unknown> | null {
@@ -62,8 +88,7 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
 
-  const apiKey =
-    Deno.env.get("OPENMODEL_API_KEY") ??
+  const apiKey = Deno.env.get("OPENMODEL_API_KEY") ??
     Deno.env.get("OPENCODE_GO_API_KEY") ??
     Deno.env.get("OPENCODE_ZEN_API_KEY");
   if (!apiKey) return json({ error: "OPENMODEL_API_KEY not set" }, 503);
@@ -71,7 +96,13 @@ Deno.serve(async (req: Request) => {
   const authHeader = req.headers.get("Authorization") ?? "";
   if (!authHeader.startsWith("Bearer ")) return json({ error: "no_auth" }, 401);
 
-  let payload: { text?: string; from?: string; to?: string; track?: string; level?: string };
+  let payload: {
+    text?: string;
+    from?: string;
+    to?: string;
+    track?: string;
+    level?: string;
+  };
   try {
     payload = await req.json();
   } catch (_) {
@@ -87,18 +118,25 @@ Deno.serve(async (req: Request) => {
   if (from === to) return json({ error: "same_lang" }, 400);
 
   const usingOpenModel = Boolean(Deno.env.get("OPENMODEL_API_KEY"));
-  const baseRaw =
-    Deno.env.get("OPENMODEL_BASE_URL") ??
+  const baseRaw = Deno.env.get("OPENMODEL_BASE_URL") ??
     Deno.env.get("OPENCODE_GO_BASE_URL") ??
     Deno.env.get("OPENCODE_ZEN_BASE_URL") ??
     (usingOpenModel ? "https://api.openmodel.ai" : "https://api.deepseek.com");
   const isMessages = usingOpenModel || baseRaw.includes("openmodel.ai");
-  const llmEndpoint = endpoint(baseRaw, isMessages ? "/v1/messages" : "/v1/chat/completions");
+  const llmEndpoint = endpoint(
+    baseRaw,
+    isMessages ? "/v1/messages" : "/v1/chat/completions",
+  );
 
-  const direction = from === "zh" ? "Mandarin ke Indonesia" : "Indonesia ke Mandarin";
-  const hanziStyle = track === "traditional" ? "hanzi tradisional (繁體)" : "hanzi sederhana (简体)";
+  const direction = from === "zh"
+    ? "Mandarin ke Indonesia"
+    : "Indonesia ke Mandarin";
+  const hanziStyle = track === "traditional"
+    ? "hanzi tradisional (繁體)"
+    : "hanzi sederhana (简体)";
 
-  const systemPrompt = `Kamu penerjemah profesional ${direction}. Tugas: terjemahkan teks input dengan natural dan akurat.
+  const systemPrompt =
+    `Kamu penerjemah profesional ${direction}. Tugas: terjemahkan teks input dengan natural dan akurat.
 
 ATURAN:
 1. Terjemahan harus natural, bukan kata-per-kata. Ikuti konteks kalimat.
@@ -118,11 +156,15 @@ Contoh zh→id input "我喜欢吃饭":
 Contoh id→zh input "saya suka makan nasi":
 {"translation":"我喜欢吃米饭","pinyin":"wǒ xǐhuān chī mǐfàn","tokens":[{"h":"saya","m":"我","alts":[]},{"h":"suka","m":"喜欢","alts":["爱"]},{"h":"makan","m":"吃","alts":[]},{"h":"nasi","m":"米饭","alts":["饭"]}]}`;
 
-  const envModel =
-    Deno.env.get("OPENMODEL_MODEL") ??
+  const envModel = Deno.env.get("OPENMODEL_MODEL") ??
     Deno.env.get("OPENCODE_GO_MODEL") ??
     Deno.env.get("OPENCODE_ZEN_MODEL");
-  const modelList = ["deepseek-v4-flash", "deepseek-v4-flash-free", "deepseek-chat", "deepseek-v3"];
+  const modelList = [
+    "deepseek-v4-flash",
+    "deepseek-v4-flash-free",
+    "deepseek-chat",
+    "deepseek-v3",
+  ];
   if (envModel && !modelList.includes(envModel)) modelList.unshift(envModel);
   const seen = new Set<string>();
   const models = modelList.filter((m) => !seen.has(m) && seen.add(m));
@@ -166,7 +208,9 @@ Contoh id→zh input "saya suka makan nasi":
 
       if (resp.ok) {
         const data = await resp.json();
-        const reply = isMessages ? textFromOpenModelMessages(data) : data?.choices?.[0]?.message?.content;
+        const reply = isMessages
+          ? textFromOpenModelMessages(data)
+          : data?.choices?.[0]?.message?.content;
         if (typeof reply === "string" && reply.trim() !== "") {
           const parsed = parseTranslationReply(reply);
           if (parsed) return json({ ...parsed, model });
@@ -183,7 +227,11 @@ Contoh id→zh input "saya suka makan nasi":
             errors.push(`${model}: ${errText.slice(0, 100)}`);
             continue;
           }
-          return json({ error: "auth_failed", status: resp.status, detail: errText.slice(0, 300) }, 502);
+          return json({
+            error: "auth_failed",
+            status: resp.status,
+            detail: errText.slice(0, 300),
+          }, 502);
         }
         errors.push(`${model}: HTTP ${resp.status} ${errText.slice(0, 100)}`);
       }
@@ -193,7 +241,9 @@ Contoh id→zh input "saya suka makan nasi":
 
     // Retry once after a short delay if we got an empty reply (transient rate limit).
     if (gotEmpty) {
-      try { await new Promise((r) => setTimeout(r, 1200)); } catch (_) {}
+      try {
+        await new Promise((r) => setTimeout(r, 1200));
+      } catch (_) {}
       try {
         const resp2 = await fetch(llmEndpoint, {
           method: "POST",
@@ -229,7 +279,9 @@ Contoh id→zh input "saya suka makan nasi":
         });
         if (resp2.ok) {
           const data2 = await resp2.json();
-          const reply2 = isMessages ? textFromOpenModelMessages(data2) : data2?.choices?.[0]?.message?.content;
+          const reply2 = isMessages
+            ? textFromOpenModelMessages(data2)
+            : data2?.choices?.[0]?.message?.content;
           if (typeof reply2 === "string" && reply2.trim() !== "") {
             const parsed = parseTranslationReply(reply2);
             if (parsed) return json({ ...parsed, model, _retry: true });

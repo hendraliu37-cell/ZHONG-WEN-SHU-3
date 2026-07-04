@@ -34,23 +34,45 @@ function endpoint(
   return `${root}${path}`;
 }
 
-function textFromOpenModelMessages(data: unknown): string {
-  const content = (data as { content?: unknown })?.content;
+function textFromContent(content: unknown): string {
   if (typeof content === "string") return content;
   if (!Array.isArray(content)) return "";
   return content
     .map((part) => {
       if (typeof part === "string") return part;
       if (
-        part && typeof part === "object" &&
-        typeof (part as { text?: unknown }).text === "string"
+        part && typeof part === "object"
       ) {
-        return (part as { text: string }).text;
+        const obj = part as {
+          text?: unknown;
+          content?: unknown;
+          output_text?: unknown;
+          message?: unknown;
+        };
+        return textFromContent(
+          obj.text ?? obj.content ?? obj.output_text ?? obj.message,
+        );
       }
       return "";
     })
     .join("")
     .trim();
+}
+
+function textFromOpenModelMessages(data: unknown): string {
+  if (!data || typeof data !== "object") return "";
+  const obj = data as {
+    output_text?: unknown;
+    output?: unknown;
+    content?: unknown;
+  };
+  const outputText = typeof obj.output_text === "string"
+    ? obj.output_text.trim()
+    : "";
+  if (outputText) return outputText;
+  const output = textFromContent(obj.output);
+  if (output) return output;
+  return textFromContent(obj.content);
 }
 
 function buildSystem(track: string): string {
@@ -78,7 +100,8 @@ function appendBlock(existing: string | undefined, next: string): string {
 
 function looksLikeExample(line: string): boolean {
   return /[\u3400-\u9fff]/.test(line) &&
-    (line.includes("=") || line.includes("artinya") || /\([A-Za-z0-9üÜāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ ]+\)/.test(line));
+    (line.includes("=") || line.includes("artinya") ||
+      /\([A-Za-z0-9üÜāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ ]+\)/.test(line));
 }
 
 function formatGuruReply(raw: string): string {
