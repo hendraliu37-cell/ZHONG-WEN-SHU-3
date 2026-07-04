@@ -2244,12 +2244,10 @@ class AppController extends ChangeNotifier {
   void deckReview() {
     final d = openDeck;
     if (d == null) return;
-    startReview(
-      d.cardIds.isEmpty
-          ? makeSession(cards.keys.toList(), qCount)
-          : List.of(d.cardIds),
-      'srs',
-    );
+    baseCards = List.of(d.cardIds);
+    _deckCtx = d.id;
+    _clampQCount();
+    startReview(List.of(d.cardIds), 'srs');
   }
 
   /// Open the test picker for the currently open deck (keeps deck context).

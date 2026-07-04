@@ -93,6 +93,11 @@ void main() {
     expect(c.sub, 'testpick');
     expect(c.testHistory, isEmpty);
 
+    c.deckReview();
+    expect(c.sub, 'testpick');
+    expect(c.sessionCards, isEmpty);
+    expect(c.testHistory, isEmpty);
+
     c.startSpell();
     expect(c.sub, 'testpick');
     expect(c.testHistory, isEmpty);

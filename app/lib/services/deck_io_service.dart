@@ -103,7 +103,7 @@ class DeckIoService {
           card.traditional,
           card.pinyin,
           card.zhuyin,
-          card.meaningPreview,
+          card.meaning,
           card.exampleS,
           card.exampleT,
           card.exampleId,
@@ -162,6 +162,9 @@ class DeckIoService {
 
   @visibleForTesting
   List<int> buildExcelForTest(Iterable<VocabEntry> cards) => _buildExcel(cards);
+
+  @visibleForTesting
+  String buildCsvForTest(Iterable<VocabEntry> cards) => _buildCsv(cards);
 
   @visibleForTesting
   List<VocabEntry> rowsToCardsForTest(List<List<String>> rows) =>

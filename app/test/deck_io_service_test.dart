@@ -346,6 +346,25 @@ void main() {
     expect(cards.single.exampleId, "\u4f60\u597d 'umum'");
   });
 
+  test('CSV export preserves the full raw meaning field', () {
+    final service = DeckIoService();
+    const rawMeaning = 'makan; menyantap\nconsume';
+
+    final csv = service.buildCsvForTest([
+      const VocabEntry(
+        simplified: '\u5403',
+        traditional: '\u5403',
+        pinyin: 'chi1',
+        meaning: rawMeaning,
+        tone: 1,
+      ),
+    ]);
+    final rows = service.readDelimitedForTest(csv);
+
+    expect(rows, hasLength(2));
+    expect(rows[1][4], rawMeaning);
+  });
+
   test('roundtrips exported Excel rows back into cards', () {
     final service = DeckIoService();
     final bytes = service.buildExcelForTest([
