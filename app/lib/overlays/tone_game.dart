@@ -9,8 +9,11 @@ import '../widgets/ico.dart';
 class ToneGameOverlay extends StatelessWidget {
   final AppController controller;
   final bool desktop;
-  const ToneGameOverlay(
-      {super.key, required this.controller, required this.desktop});
+  const ToneGameOverlay({
+    super.key,
+    required this.controller,
+    required this.desktop,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -29,11 +32,19 @@ class ToneGameOverlay extends StatelessWidget {
             title: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Tebak Nada',
-                    style: ZwsFonts.sans(
-                        size: 15, weight: FontWeight.w800, color: t.ink)),
-                Mono('$shown / $total · ${c.toneScore} benar',
-                    size: 11, color: t.ink3),
+                Text(
+                  'Tebak Nada',
+                  style: ZwsFonts.sans(
+                    size: 15,
+                    weight: FontWeight.w800,
+                    color: t.ink,
+                  ),
+                ),
+                Mono(
+                  '$shown / $total · ${c.toneScore} benar',
+                  size: 11,
+                  color: t.ink3,
+                ),
               ],
             ),
           ),
@@ -57,14 +68,16 @@ class _Active extends StatelessWidget {
     final c = controller;
     final cur = c.toneCur;
     final answered = c.tonePicked != null;
-    const marks = {1: 'ˉ', 2: 'ˊ', 3: 'ˇ', 4: 'ˋ'};
+    const marks = {1: 'ˉ', 2: 'ˊ', 3: 'ˇ', 4: 'ˋ', 5: '˙'};
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
           const SizedBox(height: 8),
-          Text('Nada keberapa kata ini?',
-              style: ZwsFonts.sans(size: 12, color: t.ink3)),
+          Text(
+            'Nada keberapa kata ini?',
+            style: ZwsFonts.sans(size: 12, color: t.ink3),
+          ),
           const SizedBox(height: 6),
           Han(cur.han, size: 96, color: t.ink, height: 1.05),
           const SizedBox(height: 6),
@@ -83,9 +96,14 @@ class _Active extends StatelessWidget {
                 children: [
                   Icon(ZwsIcons.sound, size: 18, color: t.seal),
                   const SizedBox(width: 8),
-                  Text('Putar lagi',
-                      style: ZwsFonts.sans(
-                          size: 13, weight: FontWeight.w700, color: t.seal)),
+                  Text(
+                    'Putar lagi',
+                    style: ZwsFonts.sans(
+                      size: 13,
+                      weight: FontWeight.w700,
+                      color: t.seal,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -95,7 +113,7 @@ class _Active extends StatelessWidget {
             constraints: const BoxConstraints(maxWidth: 380),
             child: Row(
               children: [
-                for (final n in [1, 2, 3, 4]) ...[
+                for (final n in [1, 2, 3, 4, 5]) ...[
                   Expanded(
                     child: _ToneOpt(
                       mark: marks[n]!,
@@ -106,7 +124,7 @@ class _Active extends StatelessWidget {
                       onTap: () => c.pickTone(n),
                     ),
                   ),
-                  if (n != 4) const SizedBox(width: 9),
+                  if (n != 5) const SizedBox(width: 8),
                 ],
               ],
             ),
@@ -133,13 +151,14 @@ class _ToneOpt extends StatelessWidget {
   final bool correct;
   final bool picked;
   final VoidCallback onTap;
-  const _ToneOpt(
-      {required this.mark,
-      required this.n,
-      required this.answered,
-      required this.correct,
-      required this.picked,
-      required this.onTap});
+  const _ToneOpt({
+    required this.mark,
+    required this.n,
+    required this.answered,
+    required this.correct,
+    required this.picked,
+    required this.onTap,
+  });
   @override
   Widget build(BuildContext context) {
     final t = ZwsTheme.of(context);
@@ -172,7 +191,14 @@ class _ToneOpt extends StatelessWidget {
           ),
           child: Column(
             children: [
-              Text(mark, style: ZwsFonts.sans(size: 22, weight: FontWeight.w700, color: fg)),
+              Text(
+                mark,
+                style: ZwsFonts.sans(
+                  size: 22,
+                  weight: FontWeight.w700,
+                  color: fg,
+                ),
+              ),
               const SizedBox(height: 3),
               Text('$n', style: ZwsFonts.sans(size: 11, color: fg)),
             ],
@@ -200,18 +226,29 @@ class _Finish extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              Mono('${c.toneScore}',
-                  size: 60, weight: FontWeight.w700, color: t.seal),
+              Mono(
+                '${c.toneScore}',
+                size: 60,
+                weight: FontWeight.w700,
+                color: t.seal,
+              ),
               Mono('/$total', size: 22, color: t.ink3),
             ],
           ),
           const SizedBox(height: 8),
-          Text('Mantap!',
-              style: ZwsFonts.sans(
-                  size: 21, weight: FontWeight.w800, color: t.ink)),
+          Text(
+            'Mantap!',
+            style: ZwsFonts.sans(
+              size: 21,
+              weight: FontWeight.w800,
+              color: t.ink,
+            ),
+          ),
           const SizedBox(height: 6),
-          Text('Menyumbang ke nilai Praktek.',
-              style: ZwsFonts.sans(size: 13, color: t.ink2)),
+          Text(
+            'Menyumbang ke nilai Praktek.',
+            style: ZwsFonts.sans(size: 13, color: t.ink2),
+          ),
           const SizedBox(height: 22),
           Material(
             color: t.ink,
@@ -220,10 +257,18 @@ class _Finish extends StatelessWidget {
               onTap: c.startTone,
               borderRadius: BorderRadius.circular(12),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 13),
-                child: Text('Main lagi',
-                    style: ZwsFonts.sans(
-                        size: 14, weight: FontWeight.w700, color: t.bg)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 26,
+                  vertical: 13,
+                ),
+                child: Text(
+                  'Main lagi',
+                  style: ZwsFonts.sans(
+                    size: 14,
+                    weight: FontWeight.w700,
+                    color: t.bg,
+                  ),
+                ),
               ),
             ),
           ),
