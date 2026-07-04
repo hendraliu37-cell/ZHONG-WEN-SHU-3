@@ -151,7 +151,7 @@ void main() {
 
     c.restoreForTest({
       'cards': {
-        '1': {'s': 'åƒ', 't': 'åƒ', 'py': 'chi1', 'm': 'makan'},
+        '1': {'s': '\u5403', 't': '\u5403', 'py': 'chi1', 'm': 'makan'},
       },
       'testHistory': [
         {
@@ -186,6 +186,42 @@ void main() {
     expect(c.testHistory.single.index, 1);
     expect(c.testHistory.single.score, 1);
     expect(c.testHistory.single.completed, isTrue);
+  });
+
+  test('restore orders test history by latest update first', () {
+    final c = AppController();
+
+    c.restoreForTest({
+      'cards': {
+        '1': {'s': '\u5403', 't': '\u5403', 'py': 'chi1', 'm': 'makan'},
+      },
+      'testHistory': [
+        {
+          'id': 'older',
+          'mode': 'mc',
+          'title': 'Lebih lama',
+          'direction': 'zh2id',
+          'cardIds': [1],
+          'index': 0,
+          'score': 0,
+          'startedAt': '2026-07-01T00:00:00.000',
+          'updatedAt': '2026-07-01T00:10:00.000',
+        },
+        {
+          'id': 'newer',
+          'mode': 'mc',
+          'title': 'Lebih baru',
+          'direction': 'zh2id',
+          'cardIds': [1],
+          'index': 0,
+          'score': 0,
+          'startedAt': '2026-07-01T00:05:00.000',
+          'updatedAt': '2026-07-01T00:20:00.000',
+        },
+      ],
+    });
+
+    expect(c.testHistory.map((h) => h.id), ['newer', 'older']);
   });
 
   test('restore respects daily material snooze windows', () {

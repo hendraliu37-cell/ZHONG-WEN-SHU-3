@@ -211,25 +211,32 @@ class TestHistoryItem {
     updatedAt: updatedAt ?? this.updatedAt,
   );
 
-  factory TestHistoryItem.fromJson(Map<String, dynamic> j) => TestHistoryItem(
-    id: _stringValue(j['id']),
-    mode: _stringValue(j['mode'], fallback: 'mc'),
-    title: _stringValue(j['title'], fallback: 'Tes'),
-    deckId: _nullableStringValue(j['deckId'] ?? j['deck_id']),
-    direction: _stringValue(j['direction'], fallback: 'zh2id'),
-    cardIds: _jsonIntList(j['cardIds'] ?? j['card_ids']),
-    index: _jsonInt(j['index']) ?? 0,
-    score: _jsonInt(j['score']) ?? 0,
-    picked: _nullableStringValue(j['picked']),
-    quizOptions: _jsonStringList(j['quizOptions'] ?? j['quiz_options']),
-    spellInput: _stringValue(j['spellInput']),
-    spellChecked: _boolValue(j['spellChecked']),
-    spellCorrect: _boolValue(j['spellCorrect']),
-    flipped: _boolValue(j['flipped']),
-    completed: _boolValue(j['completed']),
-    startedAt: _dateValue(j['startedAt']),
-    updatedAt: _dateValue(j['updatedAt']),
-  );
+  factory TestHistoryItem.fromJson(Map<String, dynamic> j) {
+    final startedAt =
+        _dateValueOrNull(j['startedAt'] ?? j['started_at']) ??
+        DateTime.fromMillisecondsSinceEpoch(0);
+    final updatedAt =
+        _dateValueOrNull(j['updatedAt'] ?? j['updated_at']) ?? startedAt;
+    return TestHistoryItem(
+      id: _stringValue(j['id']),
+      mode: _stringValue(j['mode'], fallback: 'mc'),
+      title: _stringValue(j['title'], fallback: 'Tes'),
+      deckId: _nullableStringValue(j['deckId'] ?? j['deck_id']),
+      direction: _stringValue(j['direction'], fallback: 'zh2id'),
+      cardIds: _jsonIntList(j['cardIds'] ?? j['card_ids']),
+      index: _jsonInt(j['index']) ?? 0,
+      score: _jsonInt(j['score']) ?? 0,
+      picked: _nullableStringValue(j['picked']),
+      quizOptions: _jsonStringList(j['quizOptions'] ?? j['quiz_options']),
+      spellInput: _stringValue(j['spellInput']),
+      spellChecked: _boolValue(j['spellChecked']),
+      spellCorrect: _boolValue(j['spellCorrect']),
+      flipped: _boolValue(j['flipped']),
+      completed: _boolValue(j['completed']),
+      startedAt: startedAt,
+      updatedAt: updatedAt,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -323,18 +330,21 @@ bool _boolValue(Object? value, {bool fallback = false}) {
   return fallback;
 }
 
-DateTime _dateValue(Object? value) {
+DateTime? _dateValueOrNull(Object? value) {
   final text = _stringValue(value);
+  if (text.isEmpty) return null;
   final numeric = value is num
       ? value
       : (RegExp(r'^-?\d+(\.\d+)?$').hasMatch(text) ? num.tryParse(text) : null);
   if (numeric == null) {
-    return DateTime.tryParse(text) ?? DateTime.now();
+    return DateTime.tryParse(text);
   }
   final raw = numeric.toInt();
   final ms = raw.abs() >= 100000000000 ? raw : raw * 1000;
   return DateTime.fromMillisecondsSinceEpoch(ms, isUtc: true).toLocal();
 }
+
+DateTime _dateValue(Object? value) => _dateValueOrNull(value) ?? DateTime.now();
 
 const Map<String, String> _simpToTrad = {
   '这': '這',
@@ -1146,10 +1156,18 @@ class AppController extends ChangeNotifier {
         byId[incoming.id] = incoming;
       }
     }
-    testHistory = byId.values.toList()
-      ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-    testHistory = testHistory.take(_maxTestHistory).toList();
+    testHistory = _latestTestHistory(byId.values);
     await _save();
+  }
+
+  List<TestHistoryItem> _latestTestHistory(Iterable<TestHistoryItem> items) {
+    final sorted = items.toList()
+      ..sort((a, b) {
+        final updated = b.updatedAt.compareTo(a.updatedAt);
+        if (updated != 0) return updated;
+        return b.startedAt.compareTo(a.startedAt);
+      });
+    return sorted.take(_maxTestHistory).toList();
   }
 
   TestHistoryItem? _sanitizeTestHistoryItem(TestHistoryItem item) {
@@ -1424,14 +1442,14 @@ class AppController extends ChangeNotifier {
         .where((h) => h.source.trim().isNotEmpty && h.translation.isNotEmpty)
         .take(_maxTranslateHistory)
         .toList();
-    testHistory = _listOf(j['testHistory'])
-        .whereType<Map>()
-        .map(_testHistoryFromJsonSafely)
-        .nonNulls
-        .map(_sanitizeTestHistoryItem)
-        .nonNulls
-        .take(_maxTestHistory)
-        .toList();
+    testHistory = _latestTestHistory(
+      _listOf(j['testHistory'])
+          .whereType<Map>()
+          .map(_testHistoryFromJsonSafely)
+          .nonNulls
+          .map(_sanitizeTestHistoryItem)
+          .nonNulls,
+    );
     aiFocusCardIds = _listOf(j['aiFocusCardIds'])
         .map(_jsonInt)
         .nonNulls
@@ -1535,17 +1553,18 @@ class AppController extends ChangeNotifier {
           .take(_maxTranslateHistory)
           .map((h) => h.toJson())
           .toList(),
-      'testHistory': testHistory
-          .take(_maxTestHistory)
-          .map((h) => h.toJson())
-          .toList(),
+      'testHistory': _latestTestHistory(
+        testHistory,
+      ).map((h) => h.toJson()).toList(),
       'aiFocusCardIds': aiFocusCardIds.take(_maxAiFocusCards).toList(),
     });
     // Best-effort sync of progress to the cloud profile when signed in.
     if (auth.signedIn) {
       auth.pushStats(xp: xp, streak: streak, lastActiveDate: lastActiveDate);
       unawaited(
-        auth.syncTestHistory(testHistory.map((h) => h.toJson()).toList()),
+        auth.syncTestHistory(
+          _latestTestHistory(testHistory).map((h) => h.toJson()).toList(),
+        ),
       );
     }
   }
@@ -2340,10 +2359,10 @@ class AppController extends ChangeNotifier {
   }
 
   void _upsertTestHistory(TestHistoryItem item) {
-    testHistory = [
+    testHistory = _latestTestHistory([
       item,
       ...testHistory.where((h) => h.id != item.id),
-    ].take(_maxTestHistory).toList();
+    ]);
   }
 
   void _beginTestHistory(String mode) {
@@ -3166,14 +3185,12 @@ class AppController extends ChangeNotifier {
         if (cards.containsKey(id) && seenFocus.add(id)) id,
     ].take(_maxAiFocusCards).toList();
 
-    testHistory = testHistory
-        .map((item) {
-          final remappedIds = item.cardIds.map(mapped).toList();
-          return _sanitizeTestHistoryItem(item.copyWith(cardIds: remappedIds));
-        })
-        .nonNulls
-        .take(_maxTestHistory)
-        .toList();
+    testHistory = _latestTestHistory(
+      testHistory.map((item) {
+        final remappedIds = item.cardIds.map(mapped).toList();
+        return _sanitizeTestHistoryItem(item.copyWith(cardIds: remappedIds));
+      }).nonNulls,
+    );
     baseCards = baseCards.map(mapped).where(cards.containsKey).toList();
     sessionCards = sessionCards.map(mapped).where(cards.containsKey).toList();
   }
