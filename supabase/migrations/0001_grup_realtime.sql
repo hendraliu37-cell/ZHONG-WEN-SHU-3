@@ -164,4 +164,17 @@ grant execute on function public.join_room(text)        to authenticated;
 grant execute on function public.is_room_member(uuid)   to authenticated;
 
 -- Realtime: stream inserts on room_messages.
-alter publication supabase_realtime add table public.room_messages;
+do $$
+begin
+  if exists (
+    select 1 from pg_publication where pubname = 'supabase_realtime'
+  ) and not exists (
+    select 1
+    from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'room_messages'
+  ) then
+    alter publication supabase_realtime add table public.room_messages;
+  end if;
+end $$;

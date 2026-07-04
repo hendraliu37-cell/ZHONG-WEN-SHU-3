@@ -51,6 +51,12 @@ grant execute on function public.handle_available(text) to authenticated;
 -- from raw_user_meta_data, generates a unique numeric_id from a sequence.
 create sequence if not exists public.public_id_seq start 100000;
 
+select setval(
+  'public.public_id_seq',
+  greatest(coalesce((select max(public_id) from public.profiles), 99999), 99999),
+  true
+);
+
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
