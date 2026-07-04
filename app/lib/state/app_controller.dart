@@ -2265,11 +2265,13 @@ class AppController extends ChangeNotifier {
     bool correct, {
     int xpCorrect = 2,
     int xpWrong = 1,
+    bool persist = false,
   }) {
     if (!cards.containsKey(id)) return;
     final prev = srs[id] ?? SrsState();
     srs[id] = _fsrs.review(prev, correct ? Grade.good : Grade.again);
     xp += correct ? xpCorrect : xpWrong;
+    if (persist) unawaited(_save());
   }
 
   bool get hasActiveTestInProgress {
@@ -2539,7 +2541,13 @@ class AppController extends ChangeNotifier {
     if (q == null) return;
     final correct = opt == q.correct;
     if (correct) quizScore++;
-    _recordPractice(q.cardId, correct, xpCorrect: 0, xpWrong: 0);
+    _recordPractice(
+      q.cardId,
+      correct,
+      xpCorrect: 0,
+      xpWrong: 0,
+      persist: sub == 'listen',
+    );
     quizPicked = opt;
     _updateActiveTestHistory();
     notifyListeners();
@@ -2690,7 +2698,7 @@ class AppController extends ChangeNotifier {
     if (correct) toneScore++;
     if (sessionCards.isNotEmpty) {
       final id = sessionCards[toneIdx % sessionCards.length];
-      _recordPractice(id, correct, xpCorrect: 0, xpWrong: 0);
+      _recordPractice(id, correct, xpCorrect: 0, xpWrong: 0, persist: true);
     }
     notifyListeners();
   }
@@ -2763,7 +2771,7 @@ class AppController extends ChangeNotifier {
     matchMoves++;
     if (sel.pid == tile.pid && sel.kind != tile.kind) {
       matchMatched = [...matchMatched, tile.pid];
-      _recordPractice(tile.pid, true, xpCorrect: 0, xpWrong: 0);
+      _recordPractice(tile.pid, true, xpCorrect: 0, xpWrong: 0, persist: true);
       matchSel = null;
       if (matchMatched.length >= _matchPairs.length) {
         xp += 5;
@@ -2869,7 +2877,13 @@ class AppController extends ChangeNotifier {
     if (cur == null) return;
     final correct = opt == cur.correct;
     if (correct) speedScore++;
-    _recordPractice(cur.cardId, correct, xpCorrect: 0, xpWrong: 0);
+    _recordPractice(
+      cur.cardId,
+      correct,
+      xpCorrect: 0,
+      xpWrong: 0,
+      persist: true,
+    );
     speedIdx++;
     if (speedIdx >= _speed.length) {
       _speedTimer?.cancel();

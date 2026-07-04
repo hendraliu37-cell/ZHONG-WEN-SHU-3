@@ -269,6 +269,20 @@ void main() {
     expect(state.mastery, greaterThan(0));
   });
 
+  test('tone game answer persists before the game is finished', () async {
+    final c = AppController();
+    c.cards[0] = _vocab(0);
+
+    c.qCount = 1;
+    c.startTone();
+    final id = c.sessionCards.first;
+    c.pickTone(c.card(id).tone);
+
+    final saved = await _savedState();
+    expect(saved['srs']['$id']['reps'], 1);
+    expect(saved['srs']['$id']['new'], isFalse);
+  });
+
   test('tone game finish rewards only once on repeated next taps', () {
     final c = AppController();
     c.cards[0] = _vocab(0);
@@ -322,6 +336,60 @@ void main() {
 
     expect(c.xp, xpAfterFinish);
     expect(c.quizIdx, idxAfterFinish);
+  });
+
+  test('listening game answer persists before finishing', () async {
+    final c = AppController();
+    for (var i = 0; i < 2; i++) {
+      c.cards[i] = _vocab(i);
+    }
+
+    c.qCount = 2;
+    c.goListen();
+    final q = c.currentQuiz!;
+    c.pickQuiz(q.correct);
+
+    final saved = await _savedState();
+    expect(saved['srs']['${q.cardId}']['reps'], 1);
+    expect(c.quizIdx, 0);
+  });
+
+  test('speed game answer persists before finishing', () async {
+    final c = AppController();
+    for (var i = 0; i < 2; i++) {
+      c.cards[i] = _vocab(i);
+    }
+
+    c.qCount = 2;
+    c.startSpeed();
+    final q = c.speedCur!;
+    c.speedPick(q.correct);
+
+    final saved = await _savedState();
+    expect(saved['srs']['${q.cardId}']['reps'], 1);
+    expect(c.speedIdx, 1);
+    c.goGames();
+  });
+
+  test('match game pair persists before finishing', () async {
+    final c = AppController();
+    for (var i = 0; i < 4; i++) {
+      c.cards[i] = _vocab(i);
+    }
+
+    c.qCount = 4;
+    c.startMatch();
+    final first = c.matchTiles.first;
+    final pairIndex = c.matchTiles.indexWhere(
+      (tile) => tile.pid == first.pid && tile.kind != first.kind,
+    );
+
+    c.matchTap(0);
+    c.matchTap(pairIndex);
+
+    final saved = await _savedState();
+    expect(saved['srs']['${first.pid}']['reps'], 1);
+    expect(c.matchMatched, contains(first.pid));
   });
 
   test('spelling finish stays stable on repeated next taps', () {
@@ -667,4 +735,15 @@ class _SuccessfulGuruRoomService extends RoomService {
     this.track = track;
     return null;
   }
+}
+
+Future<Map<String, dynamic>> _savedState() async {
+  for (var i = 0; i < 20; i++) {
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString('zws_state_v1');
+    if (raw == null) continue;
+    return Map<String, dynamic>.from(jsonDecode(raw) as Map);
+  }
+  fail('Expected app state to be persisted');
 }
