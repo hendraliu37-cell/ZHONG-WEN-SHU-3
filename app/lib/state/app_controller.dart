@@ -91,7 +91,7 @@ class TranslateHistoryItem {
         to: _langCode(j['to'], fallback: 'id'),
         engine: _translateEngine(j['engine']),
         pinyin: _nullableStringValue(j['pinyin']),
-        at: _dateValue(j['at']),
+        at: _dateValueOrNull(j['at']) ?? DateTime.fromMillisecondsSinceEpoch(0),
       );
 
   Map<String, dynamic> toJson() => {
@@ -343,8 +343,6 @@ DateTime? _dateValueOrNull(Object? value) {
   final ms = raw.abs() >= 100000000000 ? raw : raw * 1000;
   return DateTime.fromMillisecondsSinceEpoch(ms, isUtc: true).toLocal();
 }
-
-DateTime _dateValue(Object? value) => _dateValueOrNull(value) ?? DateTime.now();
 
 const Map<String, String> _simpToTrad = {
   '这': '這',
@@ -1435,13 +1433,13 @@ class AppController extends ChangeNotifier {
         .where((m) => m.text.trim().isNotEmpty)
         .toList();
     messages = _latestChatMessages(restoredMessages);
-    trHistory = _listOf(j['translateHistory'])
-        .whereType<Map>()
-        .map(_translateHistoryFromJsonSafely)
-        .nonNulls
-        .where((h) => h.source.trim().isNotEmpty && h.translation.isNotEmpty)
-        .take(_maxTranslateHistory)
-        .toList();
+    trHistory = _latestTranslateHistory(
+      _listOf(j['translateHistory'])
+          .whereType<Map>()
+          .map(_translateHistoryFromJsonSafely)
+          .nonNulls
+          .where((h) => h.source.trim().isNotEmpty && h.translation.isNotEmpty),
+    );
     testHistory = _latestTestHistory(
       _listOf(j['testHistory'])
           .whereType<Map>()
@@ -1549,10 +1547,9 @@ class AppController extends ChangeNotifier {
       'chatHistory': _latestChatMessages(
         messages,
       ).map((m) => m.toJson()).toList(),
-      'translateHistory': trHistory
-          .take(_maxTranslateHistory)
-          .map((h) => h.toJson())
-          .toList(),
+      'translateHistory': _latestTranslateHistory(
+        trHistory,
+      ).map((h) => h.toJson()).toList(),
       'testHistory': _latestTestHistory(
         testHistory,
       ).map((h) => h.toJson()).toList(),
@@ -3457,7 +3454,7 @@ class AppController extends ChangeNotifier {
       pinyin: result.pinyin,
       at: DateTime.now(),
     );
-    trHistory = [
+    trHistory = _latestTranslateHistory([
       item,
       ...trHistory.where(
         (h) =>
@@ -3466,7 +3463,14 @@ class AppController extends ChangeNotifier {
             h.from != item.from ||
             h.to != item.to,
       ),
-    ].take(_maxTranslateHistory).toList();
+    ]);
+  }
+
+  List<TranslateHistoryItem> _latestTranslateHistory(
+    Iterable<TranslateHistoryItem> items,
+  ) {
+    final sorted = items.toList()..sort((a, b) => b.at.compareTo(a.at));
+    return sorted.take(_maxTranslateHistory).toList();
   }
 
   void trUseHistory(TranslateHistoryItem item) {

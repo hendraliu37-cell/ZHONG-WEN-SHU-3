@@ -407,6 +407,37 @@ void main() {
     );
   });
 
+  test('restore orders translate history by latest timestamp first', () {
+    final c = AppController();
+
+    c.restoreForTest({
+      'translateHistory': [
+        {
+          'source': 'lama',
+          'translation': '\u65e7',
+          'from': 'id',
+          'to': 'zh',
+          'at': '2026-07-01T00:00:00.000',
+        },
+        {
+          'source': 'baru',
+          'translation': '\u65b0',
+          'from': 'id',
+          'to': 'zh',
+          'at': '2026-07-01T00:05:00.000',
+        },
+        {
+          'source': 'tanpa waktu',
+          'translation': '\u8bb0\u5f55',
+          'from': 'id',
+          'to': 'zh',
+        },
+      ],
+    });
+
+    expect(c.trHistory.map((h) => h.source), ['baru', 'lama', 'tanpa waktu']);
+  });
+
   test('restore normalizes translate history engine values', () {
     final c = AppController();
 
@@ -431,9 +462,9 @@ void main() {
       ],
     });
 
-    expect(c.trHistory.map((h) => h.engine), ['ai', 'dict']);
+    expect(c.trHistory.map((h) => h.engine), ['dict', 'ai']);
 
-    c.trUseHistory(c.trHistory.last);
+    c.trUseHistory(c.trHistory.first);
     expect(c.trEngine, 'dict');
   });
 
