@@ -47,12 +47,13 @@ class TranslateToken {
   }
 
   TranslateToken copyWith({
+    String? hanzi,
     String? pinyin,
     String? meaning,
     int? hsk,
     List<String>? altMeanings,
   }) => TranslateToken(
-    hanzi: hanzi,
+    hanzi: hanzi ?? this.hanzi,
     pinyin: pinyin ?? this.pinyin,
     meaning: meaning ?? this.meaning,
     hsk: hsk ?? this.hsk,
@@ -145,6 +146,10 @@ class TranslationService {
     '卖': '賣',
     '开': '開',
     '关': '關',
+  };
+
+  static final Map<String, String> _fallbackTradToSimp = {
+    for (final e in _fallbackSimpToTrad.entries) e.value: e.key,
   };
 
   SupabaseClient? get _sb {
@@ -273,7 +278,11 @@ class TranslationService {
         if (data['error'] is String) {
           lastError = 'Server: ${data['error']}';
         } else {
-          final parsed = _parseLlmTranslation(data);
+          final parsed = _parseLlmTranslation(
+            data,
+            track: track,
+            targetIsChinese: to == 'zh',
+          );
           if (parsed != null) {
             lastError = null;
             return parsed;
@@ -324,7 +333,9 @@ class TranslationService {
       return null;
     }
     final data = _decodeJsonObject(reply);
-    final parsed = data == null ? null : _parseLlmTranslation(data);
+    final parsed = data == null
+        ? null
+        : _parseLlmTranslation(data, track: track, targetIsChinese: to == 'zh');
     if (parsed != null) {
       lastError = null;
       return parsed;
@@ -352,16 +363,28 @@ class TranslationService {
     }
   }
 
-  TranslationResult? _parseLlmTranslation(Map data) {
-    final trans = _translationText(data);
+  TranslationResult? _parseLlmTranslation(
+    Map data, {
+    required String track,
+    required bool targetIsChinese,
+  }) {
+    final rawTrans = _translationText(data);
+    final trans = targetIsChinese
+        ? _normalizeHanziForTrack(rawTrans, track)
+        : rawTrans;
     if (trans.isEmpty) return null;
     final tokens = _tokensFromJson(data['tokens']);
     final pinyin = _stringish(data['pinyin']);
     return TranslationResult(
       translation: trans,
       pinyin: pinyin.isEmpty ? null : pinyin,
-      alternatives: _tokensFromJson(data['alternatives']),
-      tokens: tokens.map(_enrich).toList(),
+      alternatives: _tokensFromJson(
+        data['alternatives'],
+      ).map((t) => _normalizeTokenForTrack(t, track)).toList(),
+      tokens: tokens
+          .map((t) => _normalizeTokenForTrack(t, track))
+          .map(_enrich)
+          .toList(),
     );
   }
 
@@ -849,6 +872,16 @@ class TranslationService {
   String _displayHanzi(_DictEntry e, String track) =>
       track == 'traditional' ? e.traditional : e.simplified;
 
+  TranslateToken _normalizeTokenForTrack(TranslateToken token, String track) {
+    final hanzi = _normalizeHanziForTrack(token.hanzi, track);
+    return hanzi == token.hanzi ? token : token.copyWith(hanzi: hanzi);
+  }
+
+  String _normalizeHanziForTrack(String text, String track) {
+    if (track == 'traditional') return _toTraditional(text);
+    return _toSimplified(text);
+  }
+
   /// Convert simplified hanzi to traditional using the dictionary.
   String _toTraditional(String simplified) {
     final out = StringBuffer();
@@ -857,6 +890,16 @@ class TranslationService {
       out.write(e?.traditional ?? _fallbackSimpToTrad[ch] ?? ch);
     }
     return VocabEntry.normalizeModernTraditional(out.toString());
+  }
+
+  /// Convert traditional hanzi to simplified using the dictionary.
+  String _toSimplified(String traditional) {
+    final out = StringBuffer();
+    for (final ch in traditional.split('')) {
+      final e = _dict[ch];
+      out.write(e?.simplified ?? _fallbackTradToSimp[ch] ?? ch);
+    }
+    return out.toString();
   }
 }
 

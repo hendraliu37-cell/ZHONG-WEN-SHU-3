@@ -89,6 +89,45 @@ void main() {
     expect(snakeResult!.translation, 'makan');
   });
 
+  test('AI translate normalizes Chinese output to traditional track', () async {
+    final service = TranslationService(
+      llm: _FakeLlmService(
+        '{"translation":"\\u6211\\u559c\\u6b22\\u8fd9\\u672c\\u4e66","tokens":[{"hanzi":"\\u6211\\u559c\\u6b22\\u5403\\u996d","meaning":"saya suka makan"}],"alternatives":[{"hanzi":"\\u559c\\u6b22","meaning":"suka"}]}',
+      ),
+    );
+
+    final result = await service.translate(
+      'saya suka buku ini',
+      from: 'id',
+      to: 'zh',
+      track: 'traditional',
+    );
+
+    expect(result, isNotNull);
+    expect(result!.translation, '\u6211\u559c\u6b61\u9019\u672c\u66f8');
+    expect(result.tokens.single.hanzi, '\u6211\u559c\u6b61\u5403\u98ef');
+    expect(result.alternatives.single.hanzi, '\u559c\u6b61');
+  });
+
+  test('AI translate normalizes Chinese output to simplified track', () async {
+    final service = TranslationService(
+      llm: _FakeLlmService(
+        '{"translation":"\\u6211\\u559c\\u6b61\\u9019\\u672c\\u66f8","tokens":[{"hanzi":"\\u6211\\u559c\\u6b61\\u5403\\u98ef","meaning":"saya suka makan"}]}',
+      ),
+    );
+
+    final result = await service.translate(
+      'saya suka buku ini',
+      from: 'id',
+      to: 'zh',
+      track: 'simplified',
+    );
+
+    expect(result, isNotNull);
+    expect(result!.translation, '\u6211\u559c\u6b22\u8fd9\u672c\u4e66');
+    expect(result.tokens.single.hanzi, '\u6211\u559c\u6b22\u5403\u996d');
+  });
+
   test('AI translate accepts loose token alternatives from JSON', () async {
     final service = TranslationService(
       llm: _FakeLlmService(
