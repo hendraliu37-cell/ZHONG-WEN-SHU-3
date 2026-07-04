@@ -440,12 +440,12 @@ class _SpellSoal extends _UjianSoal {
                   ? () => onAnswer(_correct)
                   : () => _check(onSetState),
               borderRadius: BorderRadius.circular(10),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(vertical: 13),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 13),
                 child: Center(
                   child: Text(
-                    'Periksa',
-                    style: TextStyle(
+                    _checked ? 'Lanjut' : 'Periksa',
+                    style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
                       fontSize: 15,
@@ -481,6 +481,7 @@ class _ToneSoal extends _UjianSoal {
     2: 'Kedua (2)',
     3: 'Ketiga (3)',
     4: 'Keempat (4)',
+    5: 'Netral (5)',
   };
 
   @override
@@ -500,7 +501,7 @@ class _ToneSoal extends _UjianSoal {
           Center(child: Mono(pinyin, size: 14, color: t.ink3)),
         ],
         const SizedBox(height: 20),
-        for (final tno in [1, 2, 3, 4]) ...[
+        for (final tno in [1, 2, 3, 4, 5]) ...[
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: SizedBox(

@@ -50,7 +50,8 @@ void main() {
         await tester.enterText(find.byType(TextField), 'x');
         await tester.tap(find.text('Periksa'));
         await tester.pumpAndSettle();
-        await tester.tap(find.text('Periksa'));
+        expect(find.text('Lanjut'), findsOneWidget);
+        await tester.tap(find.text('Lanjut'));
       } else if (find.textContaining('NADA SUKU').evaluate().isNotEmpty) {
         seen.add('tone');
         await tester.tap(find.textContaining('Nada Pertama').first);
@@ -85,6 +86,36 @@ void main() {
     );
 
     expect(find.text('Soal 1/25'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('final exam supports neutral tone questions', (tester) async {
+    final c = AppController();
+    c.cards[1] = _vocab(
+      hanzi: '\u5417',
+      pinyin: 'ma5',
+      meaning: 'partikel tanya',
+      tone: 5,
+    );
+
+    await tester.pumpWidget(
+      ZwsTheme(
+        tokens: ZwsTokens.light,
+        child: MaterialApp(home: UjianAkhirOverlay(controller: c)),
+      ),
+    );
+
+    var sawNeutralTone = false;
+    for (var i = 0; i < 6; i++) {
+      await tester.pumpAndSettle();
+      if (find.text('Nilai Ujian Akhir').evaluate().isNotEmpty) break;
+      sawNeutralTone =
+          await _answerNeutralToneExamQuestion(tester) || sawNeutralTone;
+    }
+
+    expect(sawNeutralTone, isTrue);
+    expect(find.text('Nilai Ujian Akhir'), findsOneWidget);
+    expect(c.lastUjianAkhirPct, 100);
     expect(tester.takeException(), isNull);
   });
 
@@ -132,10 +163,31 @@ Future<void> _answerCurrentQuestion(WidgetTester tester) async {
     await tester.enterText(find.byType(TextField), 'x');
     await tester.tap(find.text('Periksa'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Periksa'));
+    await tester.tap(find.text('Lanjut'));
   } else if (find.textContaining('NADA SUKU').evaluate().isNotEmpty) {
     await tester.tap(find.textContaining('Nada ').first);
   } else {
     fail('Unknown final exam question type');
   }
+}
+
+Future<bool> _answerNeutralToneExamQuestion(WidgetTester tester) async {
+  if (find.textContaining('PILIH ARTI').evaluate().isNotEmpty) {
+    await tester.tap(find.text('partikel tanya'));
+    return false;
+  }
+  if (find.textContaining('TULIS HANZI').evaluate().isNotEmpty) {
+    await tester.enterText(find.byType(TextField), '\u5417');
+    await tester.tap(find.text('Periksa'));
+    await tester.pumpAndSettle();
+    expect(find.text('Lanjut'), findsOneWidget);
+    await tester.tap(find.text('Lanjut'));
+    return false;
+  }
+  if (find.textContaining('NADA SUKU').evaluate().isNotEmpty) {
+    expect(find.textContaining('Nada Netral'), findsOneWidget);
+    await tester.tap(find.textContaining('Nada Netral').first);
+    return true;
+  }
+  fail('Unknown final exam question type');
 }
