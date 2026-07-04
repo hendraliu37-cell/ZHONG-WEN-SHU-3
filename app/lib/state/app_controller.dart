@@ -1183,6 +1183,8 @@ class AppController extends ChangeNotifier {
     xp = 0;
     streak = 0;
     lastTestPct = 0;
+    lastUjianAkhirPct = 0;
+    lastActiveDate = null;
     onboarded = false;
   }
 
@@ -1255,6 +1257,7 @@ class AppController extends ChangeNotifier {
   Future<void> logout() async {
     await auth.signOut();
     _resetProfileToGuest();
+    await _save();
     notifyListeners();
   }
 

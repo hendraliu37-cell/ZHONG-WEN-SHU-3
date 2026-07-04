@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -508,6 +510,44 @@ void main() {
     expect(c.srs[2]!.difficulty, 0);
     expect(c.srs[2]!.reps, 0);
     expect(c.srs[2]!.isNew, isTrue);
+  });
+
+  test('logout persists guest profile reset locally', () async {
+    final c = AppController()
+      ..onboarded = true
+      ..profileName = 'Hendra'
+      ..profileHandle = 'hendra'
+      ..profileId = '#1234'
+      ..avatarUrl = 'https://example.com/avatar.png'
+      ..xp = 900
+      ..streak = 7
+      ..lastTestPct = 88
+      ..lastUjianAkhirPct = 91
+      ..lastActiveDate = '2026-07-04';
+
+    await c.logout();
+
+    expect(c.onboarded, isFalse);
+    expect(c.profileName, 'Murid');
+    expect(c.profileHandle, isEmpty);
+    expect(c.profileId, isEmpty);
+    expect(c.avatarUrl, isNull);
+    expect(c.xp, 0);
+    expect(c.streak, 0);
+    expect(c.lastTestPct, 0);
+    expect(c.lastUjianAkhirPct, 0);
+    expect(c.lastActiveDate, isNull);
+
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString('zws_state_v1');
+    expect(raw, isNotNull);
+    final saved = Map<String, dynamic>.from(jsonDecode(raw!) as Map);
+    expect(saved['onboarded'], isFalse);
+    expect(saved['xp'], 0);
+    expect(saved['streak'], 0);
+    expect(saved['lastTestPct'], 0);
+    expect(saved['lastUjianAkhirPct'], 0);
+    expect(saved['lastActiveDate'], isNull);
   });
 }
 
