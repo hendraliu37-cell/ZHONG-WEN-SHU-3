@@ -455,7 +455,19 @@ void main() {
       Map<String, dynamic>.from((data['cards'] as List).first as Map),
     );
     final c = AppController();
-    c.cards[1] = packCard;
+    c.cards[1] = VocabEntry(
+      simplified: packCard.simplified,
+      traditional: packCard.traditional,
+      pinyin: 'old ${packCard.pinyin}',
+      zhuyin: packCard.zhuyin,
+      meaning: packCard.meaning,
+      exampleS: packCard.exampleS,
+      exampleT: packCard.exampleT,
+      exampleId: packCard.exampleId,
+      tone: packCard.tone,
+      hskLevel: packCard.hskLevel,
+      tocflLevel: packCard.tocflLevel,
+    );
     c.srs[1] = SrsState(stability: 20, reps: 4, isNew: false);
     c.decks.add(
       Deck(
@@ -491,6 +503,7 @@ void main() {
     final newId = updatedDeck.cardIds.first;
     expect(newId, isNot(1));
     expect(c.cards.containsKey(1), isFalse);
+    expect(c.cards[newId]?.pinyin, packCard.pinyin);
     expect(c.srs[newId]?.reps, 4);
     expect(c.aiFocusCardIds, [newId]);
     expect(c.testHistory.single.cardIds, [newId]);

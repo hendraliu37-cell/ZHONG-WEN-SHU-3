@@ -2985,6 +2985,17 @@ class AppController extends ChangeNotifier {
     return out;
   }
 
+  Map<String, List<int>> _cardIdsBySimplified(Iterable<int> ids) {
+    final out = <String, List<int>>{};
+    for (final id in ids) {
+      final v = cards[id];
+      final key = v?.simplified.trim();
+      if (key == null || key.isEmpty) continue;
+      out.putIfAbsent(key, () => <int>[]).add(id);
+    }
+    return out;
+  }
+
   int _addCardWithSrs(VocabEntry v, SrsState state) {
     final id = _nextId++;
     cards[id] = v;
@@ -3030,14 +3041,21 @@ class AppController extends ChangeNotifier {
         final list = _packCards(data['cards']);
         final oldIds = List<int>.of(deck.cardIds);
         final oldIdsBySignature = _cardIdsBySignature(oldIds);
+        final oldIdsBySimplified = _cardIdsBySimplified(oldIds);
         final newIds = <int>[];
         for (final cj in list) {
           final vocab = VocabEntry.fromJson(cj);
           final sig = _cardSignature(vocab);
           final matchingOldIds = oldIdsBySignature[sig];
-          final oldId = matchingOldIds != null && matchingOldIds.isNotEmpty
+          var oldId = matchingOldIds != null && matchingOldIds.isNotEmpty
               ? matchingOldIds.removeAt(0)
               : null;
+          if (oldId == null) {
+            final sameHanzi = oldIdsBySimplified[vocab.simplified.trim()];
+            if (sameHanzi != null && sameHanzi.isNotEmpty) {
+              oldId = sameHanzi.removeAt(0);
+            }
+          }
           final state = oldId == null
               ? SrsState()
               : _copySrs(srs[oldId] ?? SrsState());
