@@ -142,6 +142,21 @@ void main() {
     expect(cards.single.meaning, 'belajar');
   });
 
+  test('imports parenthesized Chinese variant headers', () {
+    final service = DeckIoService();
+    final rows = service.readDelimitedForTest(
+      'Chinese (Simplified),Chinese (Traditional),Pinyin,English\n'
+      '\u5b66\u4e60,\u5b78\u7fd2,xue2 xi2,belajar',
+    );
+    final cards = service.rowsToCardsForTest(rows);
+
+    expect(cards, hasLength(1));
+    expect(cards.single.simplified, '\u5b66\u4e60');
+    expect(cards.single.traditional, '\u5b78\u7fd2');
+    expect(cards.single.pinyin, 'xue2 xi2');
+    expect(cards.single.meaning, 'belajar');
+  });
+
   test('imports Mandarin-language headers without creating header cards', () {
     final service = DeckIoService();
     final rows = service.readDelimitedForTest(

@@ -364,6 +364,7 @@ class DeckIoService {
     var simplified = get(row, [
       'simplified',
       'simplified_chinese',
+      'chinese_simplified',
       's',
       'front',
       'hanzi',
@@ -386,6 +387,7 @@ class DeckIoService {
     var traditional = get(row, [
       'traditional',
       'traditional_chinese',
+      'chinese_traditional',
       't',
       'traditional_hanzi',
     ]);
@@ -575,8 +577,10 @@ class DeckIoService {
   bool _isKnownHeader(String value) => const {
     'simplified',
     'simplified_chinese',
+    'chinese_simplified',
     'traditional',
     'traditional_chinese',
+    'chinese_traditional',
     'front',
     'back',
     'hanzi',
