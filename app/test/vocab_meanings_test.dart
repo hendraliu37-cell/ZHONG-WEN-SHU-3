@@ -58,4 +58,20 @@ void main() {
     expect(entry.hskLevel, 2);
     expect(entry.tocflLevel, 3);
   });
+
+  test('normalizes imported tone values into playable range', () {
+    VocabEntry entry(Object? tone) => VocabEntry.fromJson({
+      's': '\u5417',
+      't': '\u5417',
+      'py': 'ma5',
+      'm': 'partikel tanya',
+      'tone': tone,
+    });
+
+    expect(entry('5.0').tone, 5);
+    expect(entry(0).tone, 5);
+    expect(entry('0').tone, 5);
+    expect(entry(6).tone, 1);
+    expect(entry('bad').tone, 1);
+  });
 }

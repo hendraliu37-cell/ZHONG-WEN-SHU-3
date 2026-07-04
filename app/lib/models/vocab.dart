@@ -63,7 +63,7 @@ class VocabEntry {
     exampleS: _string(j['exs'] ?? j['example_s']),
     exampleT: normalizeModernTraditional(_string(j['ext'] ?? j['example_t'])),
     exampleId: _string(j['exi'] ?? j['example_id']),
-    tone: _intish(j['tone']) ?? 1,
+    tone: _tone(j['tone']),
     hskLevel: _intish(j['hsk']),
     tocflLevel: _intish(j['tocfl']),
   );
@@ -108,6 +108,13 @@ class VocabEntry {
     final text = value.toString().trim();
     if (text.isEmpty) return null;
     return int.tryParse(text) ?? double.tryParse(text)?.toInt();
+  }
+
+  static int _tone(Object? value) {
+    final parsed = _intish(value);
+    if (parsed == null) return 1;
+    if (parsed == 0) return 5;
+    return parsed >= 1 && parsed <= 5 ? parsed : 1;
   }
 
   static String normalizeModernTraditional(String value) {
