@@ -1448,12 +1448,9 @@ class AppController extends ChangeNotifier {
           .map(_sanitizeTestHistoryItem)
           .nonNulls,
     );
-    aiFocusCardIds = _listOf(j['aiFocusCardIds'])
-        .map(_jsonInt)
-        .nonNulls
-        .where((id) => cards.containsKey(id))
-        .take(_maxAiFocusCards)
-        .toList();
+    aiFocusCardIds = _sanitizeAiFocusCardIds(
+      _listOf(j['aiFocusCardIds']).map(_jsonInt).nonNulls,
+    );
     // safety: ensure every card has an srs row
     for (final id in cards.keys) {
       srs.putIfAbsent(id, () => SrsState());
@@ -1553,7 +1550,7 @@ class AppController extends ChangeNotifier {
       'testHistory': _latestTestHistory(
         testHistory,
       ).map((h) => h.toJson()).toList(),
-      'aiFocusCardIds': aiFocusCardIds.take(_maxAiFocusCards).toList(),
+      'aiFocusCardIds': _sanitizeAiFocusCardIds(aiFocusCardIds),
     });
     // Best-effort sync of progress to the cloud profile when signed in.
     if (auth.signedIn) {
@@ -1730,6 +1727,17 @@ class AppController extends ChangeNotifier {
     if (listEquals(next, aiFocusCardIds)) return false;
     aiFocusCardIds = next;
     return true;
+  }
+
+  List<int> _sanitizeAiFocusCardIds(Iterable<int> ids) {
+    final seen = <int>{};
+    final out = <int>[];
+    for (final id in ids) {
+      if (!cards.containsKey(id) || !seen.add(id)) continue;
+      out.add(id);
+      if (out.length >= _maxAiFocusCards) break;
+    }
+    return out;
   }
 
   String _dailyMaterialSearchText(DailyMaterial mat) {
@@ -3176,11 +3184,7 @@ class AppController extends ChangeNotifier {
   void _remapLearningReferences(Map<int, int> idRemap) {
     if (idRemap.isEmpty) return;
     int mapped(int id) => idRemap[id] ?? id;
-    final seenFocus = <int>{};
-    aiFocusCardIds = [
-      for (final id in aiFocusCardIds.map(mapped))
-        if (cards.containsKey(id) && seenFocus.add(id)) id,
-    ].take(_maxAiFocusCards).toList();
+    aiFocusCardIds = _sanitizeAiFocusCardIds(aiFocusCardIds.map(mapped));
 
     testHistory = _latestTestHistory(
       testHistory.map((item) {

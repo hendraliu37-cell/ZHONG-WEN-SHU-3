@@ -468,7 +468,7 @@ void main() {
     expect(c.trEngine, 'dict');
   });
 
-  test('restore accepts legacy string ids for AI-focused learning cards', () {
+  test('restore deduplicates legacy ids for AI-focused learning cards', () {
     final c = AppController();
 
     c.restoreForTest({
@@ -476,7 +476,7 @@ void main() {
         '1': {'s': '吃', 't': '吃', 'py': 'chi1', 'm': 'makan'},
         '2': {'s': '喝', 't': '喝', 'py': 'he1', 'm': 'minum'},
       },
-      'aiFocusCardIds': ['2', 1, 'bad-id', 99],
+      'aiFocusCardIds': ['2', 1, '2', 99, 1, 'bad-id'],
     });
 
     expect(c.aiFocusCardIds, [2, 1]);
