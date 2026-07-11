@@ -306,6 +306,41 @@ void main() {
     expect(cards.last.meaning, 'belajar');
   });
 
+  test('uses Anki columns directive as the import header', () {
+    final service = DeckIoService();
+    final rows = service.readDelimitedForTest(
+      '#separator:tab\n'
+      '#html:false\n'
+      '#columns:Expression\tReading\tMeaning\tExtra\n'
+      '\u4f60\u597d\tni3 hao3\thalo\tsapaan umum\n'
+      '\u5b66\u4e60\txue2 xi2\tbelajar\tkata kerja',
+    );
+    final cards = service.rowsToCardsForTest(rows);
+
+    expect(cards, hasLength(2));
+    expect(cards.first.simplified, '\u4f60\u597d');
+    expect(cards.first.pinyin, 'ni3 hao3');
+    expect(cards.first.meaning, 'halo');
+    expect(cards.first.exampleId, 'sapaan umum');
+    expect(cards.last.simplified, '\u5b66\u4e60');
+    expect(cards.last.meaning, 'belajar');
+  });
+
+  test('ignores unknown Anki columns directive and infers card fields', () {
+    final service = DeckIoService();
+    final rows = service.readDelimitedForTest(
+      '#separator:tab\n'
+      '#columns:Field 1\tField 2\tField 3\n'
+      '\u5403\tchi1\tmakan',
+    );
+    final cards = service.rowsToCardsForTest(rows);
+
+    expect(cards, hasLength(1));
+    expect(cards.single.simplified, '\u5403');
+    expect(cards.single.pinyin, 'chi1');
+    expect(cards.single.meaning, 'makan');
+  });
+
   test('imports Anki semicolon separator directive', () {
     final service = DeckIoService();
     final rows = service.readDelimitedForTest(

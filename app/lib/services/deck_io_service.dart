@@ -302,10 +302,22 @@ class DeckIoService {
   }
 
   List<VocabEntry> _rowsToCards(List<List<String>> rows) {
+    final declaredHeader = rows
+        .map(_columnsDirectiveHeader)
+        .whereType<List<String>>()
+        .firstOrNull;
     final dataRows = rows.where((row) => !_isImportDirective(row)).toList();
     if (dataRows.isEmpty) return const [];
-    final first = dataRows.first.map(_normalizeHeader).toList();
-    final hasHeader = _looksLikeHeaderRow(dataRows.first, first);
+    final normalizedDeclared = declaredHeader?.map(_normalizeHeader).toList();
+    final useDeclaredHeader =
+        declaredHeader != null &&
+        normalizedDeclared != null &&
+        _looksLikeHeaderRow(declaredHeader, normalizedDeclared);
+    final first = useDeclaredHeader
+        ? normalizedDeclared
+        : dataRows.first.map(_normalizeHeader).toList();
+    final hasHeader =
+        useDeclaredHeader || _looksLikeHeaderRow(dataRows.first, first);
     if (!hasHeader) {
       return dataRows
           .map(_headerlessRowToCard)
@@ -323,10 +335,20 @@ class DeckIoService {
     }
 
     return dataRows
-        .skip(1)
+        .skip(useDeclaredHeader ? 0 : 1)
         .map((row) => _rowToCard(row, get))
         .whereType<VocabEntry>()
         .toList();
+  }
+
+  List<String>? _columnsDirectiveHeader(List<String> row) {
+    if (row.isEmpty) return null;
+    final first = row.first.replaceFirst('\uFEFF', '').trim();
+    if (!first.toLowerCase().startsWith('#columns:')) return null;
+    return [
+      first.substring('#columns:'.length).trim(),
+      ...row.skip(1).map((cell) => cell.trim()),
+    ];
   }
 
   bool _isDelimiterDirective(List<String> row) {
@@ -338,6 +360,10 @@ class DeckIoService {
 
   bool _isImportDirective(List<String> row) {
     if (_isDelimiterDirective(row)) return true;
+    if (row.isNotEmpty &&
+        row.first.trim().toLowerCase().startsWith('#columns:')) {
+      return true;
+    }
     if (row.isEmpty || row.skip(1).any((cell) => cell.trim().isNotEmpty)) {
       return false;
     }
@@ -346,8 +372,7 @@ class DeckIoService {
         first.startsWith('#html:') ||
         first.startsWith('#notetype column:') ||
         first.startsWith('#deck column:') ||
-        first.startsWith('#tags column:') ||
-        first.startsWith('#columns:');
+        first.startsWith('#tags column:');
   }
 
   bool _looksLikeHeaderRow(List<String> row, List<String> normalized) {
